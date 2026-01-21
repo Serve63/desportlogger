@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="nl">
+<head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1" /> <title>Logboek - Woensdag</title> <style> @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Sora:wght@400;500;600&display=swap"); :root { --paper: #2a2c30; --ink: #eef0f3; --accent: #b5b7bb; --accent-2: #8f9298; --muted: #c2c6cc; --line: #6a6f78; --card: #1f2125; } * { box-sizing: border-box; } body { margin: 0; font-family: "Sora", system-ui, sans-serif; color: var(--ink); background: radial-gradient(600px 380px at 12% 18%, rgba(240, 242, 246, 0.08) 0%, transparent 70%), radial-gradient(720px 460px at 82% 12%, rgba(200, 204, 210, 0.10) 0%, transparent 68%), radial-gradient(520px 360px at 68% 72%, rgba(232, 235, 240, 0.06) 0%, transparent 72%), radial-gradient(420px 300px at 22% 78%, rgba(170, 175, 182, 0.08) 0%, transparent 75%), radial-gradient(360px 240px at 52% 40%, rgba(210, 214, 220, 0.05) 0%, transparent 75%), linear-gradient(135deg, #2a2c30 0%, #1f2126 50%, #15171b 100%); min-height: 100vh; display: flex; justify-content: center; padding: 32px 16px 64px; } .sheet { width: min(980px, 100%); padding: 12px 4px 24px; position: relative; } header { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; margin-bottom: 24px; position: relative; z-index: 1; } h1 { font-family: "Cormorant Garamond", serif; font-size: clamp(2.2rem, 3.8vw, 3.4rem); margin: 0; letter-spacing: 0.02em; } .day-line { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 6px; } .day-arrow { position: static; transform: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25); color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.85rem; line-height: 1; background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.18), transparent 60%), linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.35)); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25); transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease; } .day-arrow:hover { border-color: rgba(255, 255, 255, 0.45); color: #ffffff; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35); transform: scale(1.04); } .grid { display: grid; grid-template-columns: 3.2fr 0.32fr 0.32fr 0.4fr; gap: 12px 16px; position: relative; z-index: 1; animation: fadeUp 0.8s ease-out; } .grid .header { font-weight: 600; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.16em; color: var(--muted); padding: 8px 4px; border-bottom: 2px solid var(--line); } .row { display: contents; } input { width: 100%; border: 1.5px solid #6a6f78; border-radius: 12px; padding: 10px 12px; font-family: inherit; font-size: 0.85rem; background: #d1d4d9; color: #1b1d22; transition: border-color 0.2s ease, box-shadow 0.2s ease; } input:focus { outline: none; border-color: #9aa0a8; box-shadow: 0 0 0 3px rgba(238, 240, 243, 0.15); } .mini-field { max-width: 90px; justify-self: start; text-align: center; padding: 8px 8px; } input::placeholder { color: #6c717a; } .exercise-cell { display: flex; flex-direction: column; gap: 4px; border: 1.5px solid #6a6f78; border-radius: 14px; background: #d1d4d9; padding: 6px 10px 8px; transition: border-color 0.2s ease, box-shadow 0.2s ease; } .exercise-cell:focus-within { border-color: #9aa0a8; box-shadow: 0 0 0 3px rgba(238, 240, 243, 0.15); } .exercise-cell .exercise-name, .exercise-cell .exercise-note { border: none; background: transparent; padding: 4px 2px; border-radius: 0; box-shadow: none; } .exercise-cell .exercise-name { font-size: 0.85rem; font-weight: 500; color: #1b1d22; } .exercise-cell .exercise-note { font-size: 0.78rem; color: #4a4f57; } .exercise-cell .exercise-note::placeholder { color: #6c717a; } @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } @media (max-width: 720px) { .grid { grid-template-columns: 1fr 1fr; } .grid .header:nth-child(3), .grid .header:nth-child(4) { display: none; } .row input:nth-of-type(3), .row input:nth-of-type(4) { display: none; } .sheet { padding: 16px 8px 24px; } } @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } .grid .header { display: none; } } input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type="number"] { -moz-appearance: textfield; appearance: textfield; } .training-count { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); } .year-trigger { background: none; border: none; padding: 0; margin: 0; font: inherit; color: var(--ink); font-weight: 700; letter-spacing: 0.18em; cursor: pointer; } .year-trigger:hover { text-decoration: none; } .year-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(10, 10, 12, 0.45); z-index: 1000; padding: 24px; } .year-modal.is-open { display: flex; } .year-modal__content { width: min(420px, 100%); background: #e6e8ec; color: #1b1d22; border-radius: 16px; padding: 20px 20px 18px; border: 1px solid #b9bcc3; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35); position: relative; } .year-modal__content h2 { margin: 0 0 12px; font-size: 1.1rem; } .year-modal__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 0.95rem; } .year-modal__close { position: absolute; top: 10px; right: 12px; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: #1b1d22; } .year-total { margin-top: 10px; padding-top: 10px; border-top: 1px solid #b9bcc3; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .grid {
+        animation: none;
+      }
+
+      .day-arrow {
+        transition: none;
+      }
+    }
+</style></head>
+<body> <main class="sheet"> <header> <div> <div class="training-count"><button class="year-trigger" type="button">2026:</button> 27 sessies</div> <h1>Logboek Training</h1> <div class="day-line"> <a class="day-arrow" href="dinsdag.html" aria-label="Vorige dag">&#x2039;</a> <div class="day-tag">Woensdag</div> <a class="day-arrow" href="donderdag.html" aria-label="Volgende dag">&#x203A;</a></div></div>
+</header> <section class="grid" aria-label="Oefeningen"> <div class="header">Oefening</div> <div class="header">Sets</div> <div class="header">Reps</div> <div class="header">Gewicht</div> <div class="row"> <div class="exercise-cell"> <input class="exercise-name" type="text" name="oefening-1" placeholder="Oefening" value="Shoulder Press Machine" /> <input type="text" class="exercise-note" name="note-1" placeholder="Notitie" /></div> <input type="text" class="mini-field" name="sets-1" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /> <input type="text" class="mini-field" name="reps-1" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /> <input type="text" class="mini-field" name="gewicht-1" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div> <div class="row"> <div class="exercise-cell"> <input class="exercise-name" type="text" name="oefening-2" placeholder="Oefening" value="Lateral Shoulder Machine" /> <input type="text" class="exercise-note" name="note-2" placeholder="Notitie" /></div> <input type="text" class="mini-field" name="sets-2" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /> <input type="text" class="mini-field" name="reps-2" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /> <input type="text" class="mini-field" name="gewicht-2" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div> <div class="row"> <div class="exercise-cell"> <input class="exercise-name" type="text" name="oefening-3" placeholder="Oefening" value="Rear Delt Machine" /> <input type="text" class="exercise-note" name="note-3" placeholder="Notitie" /></div> <input type="text" class="mini-field" name="sets-3" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /> <input type="text" class="mini-field" name="reps-3" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /> <input type="text" class="mini-field" name="gewicht-3" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div> <div class="row"> <div class="exercise-cell"> <input class="exercise-name" type="text" name="oefening-4" placeholder="Oefening" value="Seated Leg Curl" /> <input type="text" class="exercise-note" name="note-4" placeholder="Notitie" /></div> <input type="text" class="mini-field" name="sets-4" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /> <input type="text" class="mini-field" name="reps-4" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /> <input type="text" class="mini-field" name="gewicht-4" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div> <div class="row"> <div class="exercise-cell"> <input class="exercise-name" type="text" name="oefening-5" placeholder="Oefening" value="Leg Extensions" /> <input type="text" class="exercise-note" name="note-5" placeholder="Notitie" /></div> <input type="text" class="mini-field" name="sets-5" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /> <input type="text" class="mini-field" name="reps-5" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /> <input type="text" class="mini-field" name="gewicht-5" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div> <div class="row"> <div class="exercise-cell"> <input class="exercise-name" type="text" name="oefening-6" placeholder="Oefening" value="Shrugs" /> <input type="text" class="exercise-note" name="note-6" placeholder="Notitie" /></div> <input type="text" class="mini-field" name="sets-6" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /> <input type="text" class="mini-field" name="reps-6" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /> <input type="text" class="mini-field" name="gewicht-6" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></section></main> <div class="year-modal" id="yearModal" aria-hidden="true"> <div class="year-modal__content" role="dialog" aria-modal="true" aria-labelledby="yearModalTitle"> <button class="year-modal__close" type="button" aria-label="Sluiten">&times;</button> <h2 id="yearModalTitle">Voorgaande jaren</h2> <ul class="year-modal__list"> <li><strong>2022:</strong> 10</li> <li><strong>2023:</strong> 5</li> <li><strong>2024:</strong> 40</li> <li><strong>2025:</strong> 280</li> <li><strong>2026 (tot heden):</strong> 27</li> <li class="year-total"><strong>Totaal:</strong> 362 sessies</li></ul></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    (() => {
+      const dayTargets = {
+        0: "zondag.html",
+        1: "index.html",
+        2: "dinsdag.html",
+        3: "woensdag.html",
+        4: "donderdag.html",
+        5: "index.html",
+        6: "zaterdag.html",
+      };
+
+      const todayTarget = dayTargets[new Date().getDay()];
+      if (todayTarget && !window.location.pathname.endsWith(todayTarget)) {
+        window.location.replace(todayTarget);
+        return;
+      }
+
+      const yearTrigger = document.querySelector(".year-trigger");
+      const yearModal = document.getElementById("yearModal");
+      const yearClose = document.querySelector(".year-modal__close");
+
+      if (yearTrigger && yearModal && yearClose) {
+        const openModal = () => {
+          yearModal.classList.add("is-open");
+          yearModal.setAttribute("aria-hidden", "false");
+        };
+        const closeModal = () => {
+          yearModal.classList.remove("is-open");
+          yearModal.setAttribute("aria-hidden", "true");
+        };
+
+        yearTrigger.addEventListener("click", () => {
+          if (yearModal.classList.contains("is-open")) {
+            closeModal();
+          } else {
+            openModal();
+          }
+        });
+        yearClose.addEventListener("click", closeModal);
+        yearModal.addEventListener("click", (event) => {
+          if (event.target === yearModal) closeModal();
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") closeModal();
+        });
+      }
+
+      const clampInput = (input) => {
+        const max = Number(input.dataset.max || 999);
+        input.addEventListener("input", () => {
+          let value = input.value.replace(/\D+/g, "");
+          if (value === "") {
+            input.value = "";
+            return;
+          }
+          const num = Number(value);
+          input.value = String(Math.min(num, max));
+        });
+      };
+
+      document.querySelectorAll("input[data-max]").forEach(clampInput);
+
+      if (!window.supabase) return;
+
+      const supabase = window.supabase.createClient(
+        "https://lqgcitosiyahgwqluwtb.supabase.co",
+        "sb_publishable_dGMK5ruFsyWkF3ne43AS1A_lHURUBhI"
+      );
+
+      const day = document.querySelector(".day-tag")?.textContent?.trim();
+      const rows = Array.from(document.querySelectorAll(".row"));
+      if (!day || rows.length === 0) return;
+
+      const getRowData = (row, index) => {
+        const nameInput = row.querySelector(".exercise-name");
+        const noteInput = row.querySelector(".exercise-note");
+        const setsInput = row.querySelector('input[name^="sets-"]');
+        const repsInput = row.querySelector('input[name^="reps-"]');
+        const weightInput = row.querySelector('input[name^="gewicht-"]');
+
+        const toInt = (value) => {
+          if (value === "" || value == null) return null;
+          const num = Number(value);
+          return Number.isNaN(num) ? null : num;
+        };
+
+        return {
+          day,
+          exercise_index: index + 1,
+          exercise_name: nameInput?.value?.trim() || null,
+          note: noteInput?.value?.trim() || null,
+          sets: toInt(setsInput?.value),
+          reps: toInt(repsInput?.value),
+          weight: toInt(weightInput?.value),
+        };
+      };
+
+      const upsertRow = async (row, index) => {
+        const payload = getRowData(row, index);
+        const { error } = await supabase
+          .from("workout_entries")
+          .upsert(payload, { onConflict: "day,exercise_index" });
+        if (error) console.warn("Supabase save failed", error);
+      };
+
+      const timers = new Map();
+      rows.forEach((row, index) => {
+        row.querySelectorAll("input").forEach((input) => {
+          input.addEventListener("input", () => {
+            if (timers.has(index)) clearTimeout(timers.get(index));
+            timers.set(index, setTimeout(() => upsertRow(row, index), 500));
+          });
+        });
+      });
+
+      (async () => {
+        const { data, error } = await supabase
+          .from("workout_entries")
+          .select("*")
+          .eq("day", day)
+          .order("exercise_index");
+        if (error) {
+          console.warn("Supabase load failed", error);
+          return;
+        }
+        data.forEach((item) => {
+          const row = rows[item.exercise_index - 1];
+          if (!row) return;
+          const nameInput = row.querySelector(".exercise-name");
+          const noteInput = row.querySelector(".exercise-note");
+          const setsInput = row.querySelector('input[name^="sets-"]');
+          const repsInput = row.querySelector('input[name^="reps-"]');
+          const weightInput = row.querySelector('input[name^="gewicht-"]');
+
+          if (nameInput && item.exercise_name != null) nameInput.value = item.exercise_name;
+          if (noteInput && item.note != null) noteInput.value = item.note;
+          if (setsInput && item.sets != null) setsInput.value = item.sets;
+          if (repsInput && item.reps != null) repsInput.value = item.reps;
+          if (weightInput && item.weight != null) weightInput.value = item.weight;
+        });
+      })();
+    })();
+  </script>
+
+</body>
+</html>
