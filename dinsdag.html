@@ -33,185 +33,6 @@
         gap: 8px 10px;
       }
 
-      .grid .header {
-        font-size: 0.7rem;
-        letter-spacing: 0.12em;
-        padding: 6px 2px;
-      }
-
-      .mini-field {
-        max-width: none;
-        width: 100%;
-        text-align: center;
-        padding: 6px 6px;
-        font-size: 0.8rem;
-      }
-
-      .exercise-cell {
-        padding: 6px 8px 8px;
-      }
-
-      .exercise-cell .exercise-name {
-        font-size: 0.9rem;
-      }
-
-      .exercise-cell .exercise-note {
-        font-size: 0.75rem;
-      }
-    }
-
-    @media (max-width: 520px) {
-      .grid {
-        grid-template-columns: minmax(0, 0.3fr) minmax(0, 1.1fr) minmax(0, 0.45fr) minmax(0, 0.45fr) minmax(0, 0.55fr);
-        gap: 6px 8px;
-      }
-
-      .grid .header {
-        font-size: 0.65rem;
-        letter-spacing: 0.1em;
-      }
-
-      input {
-        font-size: 0.8rem;
-        padding: 8px 8px;
-      }
-
-      .exercise-cell .exercise-name {
-        font-size: 0.85rem;
-      }
-
-      .exercise-cell .exercise-note {
-        font-size: 0.72rem;
-      }
-    }
-
-
-    .grid {
-      column-gap: 0;
-    }
-
-    .row > .exercise-cell {
-      border-radius: 14px 0 0 14px;
-    }
-
-    .row > .mini-field {
-      border-radius: 0;
-      border-left: 0;
-    }
-
-    .row > .mini-field:last-of-type {
-      border-radius: 0 14px 14px 0;
-    }
-
-
-
-    :root {
-      --stroke: #7a8089;
-      --surface: #b8bcc3;
-      --surface-2: #aeb3ba;
-      --shadow: rgba(0, 0, 0, 0.22);
-    }
-
-    .grid {
-      row-gap: 10px;
-    }
-
-    input {
-      border: 1px solid var(--stroke);
-      background: #3b3f45;
-      font-size: 0.9rem;
-      padding: 8px 10px;
-    }
-
-    .exercise-cell {
-      border: 1px solid var(--stroke);
-      background: #3b3f45;
-      padding: 6px 10px 7px;
-      box-shadow: none;
-    }
-
-    .exercise-cell:focus-within {
-      border-color: #a1a6ae;
-      box-shadow: 0 0 0 2px rgba(238, 240, 243, 0.14);
-    }
-
-    .row > .mini-field {
-      border-left: 0.5px solid var(--stroke);
-    }
-
-    .row > .mini-field:last-of-type {
-      border-right: 1px solid var(--stroke);
-    }
-
-    .year-modal__content {
-      border-radius: 14px;
-      box-shadow: 0 14px 28px var(--shadow);
-    }
-
-
-
-    .grid {
-      row-gap: 8px;
-    }
-
-    .exercise-cell {
-      padding: 4px 8px 6px;
-    }
-
-    .exercise-cell .exercise-name {
-      font-size: 0.82rem;
-    }
-
-    .exercise-cell .exercise-note {
-      font-size: 0.7rem;
-    }
-
-    input {
-      padding: 6px 8px;
-    }
-
-    .mini-field {
-      padding: 6px 6px;
-      font-size: 0.78rem;
-    }
-
-    .day-line {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 6px;
-      margin-bottom: 10px;
-    }
-
-    .day-trigger {
-      background: none;
-      border: none;
-      color: var(--ink);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.2em;
-      font-size: 0.9rem;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .day-trigger:hover {
-      opacity: 0.85;
-    }
-
-    .day-modal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(10, 10, 12, 0.45);
-      z-index: 1000;
-      padding: 24px;
-    }
-
     .day-modal.is-open {
       display: flex;
     }
@@ -322,10 +143,6 @@
       gap: 12px;
     }
 
-    .grid .header {
-      display: none;
-    }
-
     .row {
       display: flex;
       align-items: flex-start;
@@ -371,10 +188,6 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
-    }
-
-    .grid .header {
-      display: none;
     }
 
     .row {
@@ -445,6 +258,22 @@
       text-align: center;
       font-size: 0.78rem;
       width: 100%;
+    }
+
+
+
+    .grid .header {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .check-header {
+      text-align: center;
     }
 
 </style></head>
