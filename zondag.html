@@ -524,11 +524,24 @@
       };
 
       const timers = new Map();
+      const scheduleSave = (row, index, immediate = false) => {
+        if (timers.has(index)) clearTimeout(timers.get(index));
+        const delay = immediate ? 0 : 500;
+        timers.set(index, setTimeout(() => upsertRow(row, index), delay));
+      };
+
       rows.forEach((row, index) => {
         row.querySelectorAll("input").forEach((input) => {
           input.addEventListener("input", () => {
-            if (timers.has(index)) clearTimeout(timers.get(index));
-            timers.set(index, setTimeout(() => upsertRow(row, index), 500));
+            const value = input.value ?? "";
+            if (value === "") {
+              scheduleSave(row, index, true);
+              return;
+            }
+            scheduleSave(row, index, false);
+          });
+          input.addEventListener("blur", () => {
+            scheduleSave(row, index, true);
           });
         });
       });
