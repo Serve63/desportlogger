@@ -516,11 +516,33 @@
 
       document.querySelectorAll("input[data-max]").forEach(clampInput);
 
+      const launchConfetti = () => {
+        const layer = document.createElement("div");
+        layer.className = "confetti-layer";
+        document.body.appendChild(layer);
+
+        const pieces = 45;
+        for (let i = 0; i < pieces; i++) {
+          const piece = document.createElement("span");
+          piece.className = "confetti";
+          piece.style.left = Math.random() * 100 + "vw";
+          piece.style.animationDelay = (Math.random() * 0.2) + "s";
+          piece.style.opacity = (0.6 + Math.random() * 0.4).toString();
+          piece.style.transform = `translateY(-10px) rotate(${Math.random() * 360}deg)`;
+          layer.appendChild(piece);
+        }
+
+        setTimeout(() => {
+          layer.remove();
+        }, 1400);
+      };
+
       window.addEventListener("DOMContentLoaded", () => {
         const footerCheck = document.querySelector(".footer-check");
         if (!footerCheck) return;
         footerCheck.addEventListener("click", () => {
-          footerCheck.classList.toggle("is-on");
+          const isOn = footerCheck.classList.toggle("is-on");
+          if (isOn) launchConfetti();
         });
       });
 
