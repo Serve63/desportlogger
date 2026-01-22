@@ -7,6 +7,7 @@ create table if not exists workout_entries (
   sets integer,
   reps integer,
   weight integer,
+  completed boolean default false,
   updated_at timestamptz default now()
 );
 
@@ -23,3 +24,6 @@ create policy "public insert" on workout_entries
 
 create policy "public update" on workout_entries
   for update using (true);
+
+
+alter table workout_entries add column if not exists completed boolean default false;
