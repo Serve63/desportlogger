@@ -367,7 +367,37 @@
         height: 36px;
       }
     }
-  </style>
+  
+
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1100;
+    }
+
+    .confetti {
+      position: absolute;
+      top: -10px;
+      width: 6px;
+      height: 10px;
+      background: #2ea043;
+      opacity: 0.9;
+      border-radius: 2px;
+      animation: confettiFall 1.2s linear forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-10px) rotate(0deg);
+      }
+      100% {
+        transform: translateY(110vh) rotate(360deg);
+      }
+    }
+
+</style>
 
 </head>
 <body> <main class="sheet"> <header> <div> <div class="training-count"><button class="year-trigger" type="button">2026:</button> 27 sessies</div> <h1>Servé's Logboek</h1> <div class="day-line"><button class="day-trigger" type="button">Maandag</button></div></div>
