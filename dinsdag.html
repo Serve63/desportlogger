@@ -387,6 +387,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  
   <script>
     (() => {
       const dayTargets = {
@@ -480,15 +481,12 @@
 
       document.querySelectorAll("input[data-max]").forEach(clampInput);
 
-
       const footerCheck = document.querySelector(".footer-check");
       if (footerCheck) {
         footerCheck.addEventListener("click", () => {
           footerCheck.classList.toggle("is-on");
         });
       }
-
-      });
 
       if (!window.supabase) return;
 
@@ -534,7 +532,6 @@
         if (error) console.warn("Supabase save failed", error);
       };
 
-      const timers = new Map();
       const getColumnForInput = (input) => {
         if (input.classList.contains("exercise-name")) return "exercise_name";
         if (input.classList.contains("exercise-note")) return "note";
@@ -554,6 +551,8 @@
           .match({ day, exercise_index: index + 1 });
         if (error) console.warn("Supabase clear failed", error);
       };
+
+      const timers = new Map();
       const scheduleSave = (row, index, immediate = false) => {
         if (timers.has(index)) clearTimeout(timers.get(index));
         const delay = immediate ? 0 : 500;
@@ -598,8 +597,6 @@
 
           if (nameInput && item.exercise_name != null) nameInput.value = item.exercise_name;
           if (noteInput && item.note != null) noteInput.value = item.note;
-          const toggle = row.querySelector(".complete-toggle");
-          if (toggle) toggle.checked = Boolean(item.completed);
           if (setsInput && item.sets != null) setsInput.value = item.sets;
           if (repsInput && item.reps != null) repsInput.value = item.reps;
           if (weightInput && item.weight != null) weightInput.value = item.weight;
@@ -607,6 +604,7 @@
       })();
     })();
   </script>
+
 
 
   <div class="footer-toggle">
