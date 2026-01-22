@@ -463,6 +463,20 @@
 
       document.querySelectorAll("input[data-max]").forEach(clampInput);
 
+      const toggleRowComplete = (row, checked) => {
+        if (!row) return;
+        row.classList.toggle("completed", checked);
+      };
+
+      document.querySelectorAll(".row").forEach((row) => {
+        const toggle = row.querySelector(".complete-toggle");
+        if (!toggle) return;
+        toggleRowComplete(row, toggle.checked);
+        toggle.addEventListener("change", () => {
+          toggleRowComplete(row, toggle.checked);
+        });
+      });
+
       if (!window.supabase) return;
 
       const supabase = window.supabase.createClient(
