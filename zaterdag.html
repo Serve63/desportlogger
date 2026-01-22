@@ -481,12 +481,13 @@
 
       document.querySelectorAll("input[data-max]").forEach(clampInput);
 
-      const footerCheck = document.querySelector(".footer-check");
-      if (footerCheck) {
+      window.addEventListener("DOMContentLoaded", () => {
+        const footerCheck = document.querySelector(".footer-check");
+        if (!footerCheck) return;
         footerCheck.addEventListener("click", () => {
           footerCheck.classList.toggle("is-on");
         });
-      }
+      });
 
       if (!window.supabase) return;
 
