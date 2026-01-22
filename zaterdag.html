@@ -524,6 +524,25 @@
       };
 
       const timers = new Map();
+      const getColumnForInput = (input) => {
+        if (input.classList.contains("exercise-name")) return "exercise_name";
+        if (input.classList.contains("exercise-note")) return "note";
+        const name = input.getAttribute("name") || "";
+        if (name.startsWith("sets-")) return "sets";
+        if (name.startsWith("reps-")) return "reps";
+        if (name.startsWith("gewicht-")) return "weight";
+        return null;
+      };
+
+      const clearField = async (row, index, input) => {
+        const column = getColumnForInput(input);
+        if (!column) return;
+        const { error } = await supabase
+          .from("workout_entries")
+          .update({ [column]: null })
+          .match({ day, exercise_index: index + 1 });
+        if (error) console.warn("Supabase clear failed", error);
+      };
       const scheduleSave = (row, index, immediate = false) => {
         if (timers.has(index)) clearTimeout(timers.get(index));
         const delay = immediate ? 0 : 500;
@@ -535,6 +554,7 @@
           input.addEventListener("input", () => {
             const value = input.value ?? "";
             if (value === "") {
+              clearField(row, index, input);
               scheduleSave(row, index, true);
               return;
             }
