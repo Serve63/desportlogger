@@ -136,10 +136,28 @@
       display: grid;
 
     .row.completed {
+      background: rgba(46, 160, 67, 0.22);
+      box-shadow: inset 0 0 0 1px rgba(46, 160, 67, 0.35);
+      border-radius: 12px;
+      padding: 6px 6px;
+    }
+
+    .row.completed > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .row.completed .exercise-cell .exercise-name,
+    .row.completed .exercise-cell .exercise-note {
+      color: #e8f6ec;
+    }
+
+    .row.completed {
       position: relative;
     }
 
-    .row.completed::before {
+    /* removed */
+.row.completed::before {
       content: "";
       position: absolute;
       inset: -6px;
