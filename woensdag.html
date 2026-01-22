@@ -1,92 +1,129 @@
 <!doctype html>
 <html lang="nl">
-<head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1" /> <title>Logboek - Woensdag</title> <style> @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Sora:wght@400;500;600&display=swap"); :root { --paper: #2a2c30; --ink: #eef0f3; --accent: #b5b7bb; --accent-2: #8f9298; --muted: #c2c6cc; --line: #6a6f78; --card: #1f2125; } * { box-sizing: border-box; } body { margin: 0; font-family: "Sora", system-ui, sans-serif; color: var(--ink); background: radial-gradient(600px 380px at 12% 18%, rgba(240, 242, 246, 0.08) 0%, transparent 70%), radial-gradient(720px 460px at 82% 12%, rgba(200, 204, 210, 0.10) 0%, transparent 68%), radial-gradient(520px 360px at 68% 72%, rgba(232, 235, 240, 0.06) 0%, transparent 72%), radial-gradient(420px 300px at 22% 78%, rgba(170, 175, 182, 0.08) 0%, transparent 75%), radial-gradient(360px 240px at 52% 40%, rgba(210, 214, 220, 0.05) 0%, transparent 75%), linear-gradient(135deg, #2a2c30 0%, #1f2126 50%, #15171b 100%); min-height: 100vh; display: flex; justify-content: center; padding: 32px 16px 64px; } .sheet { width: min(980px, 100%); padding: 12px 4px 24px; position: relative; } header { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; margin-bottom: 24px; position: relative; z-index: 1; } h1 { font-family: "Cormorant Garamond", serif; font-size: clamp(2.2rem, 3.8vw, 3.4rem); margin: 0; letter-spacing: 0.02em; } .day-line { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 6px;
-      margin-bottom: 10px; } .day-arrow { position: static; transform: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25); color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.85rem; line-height: 1; background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.18), transparent 60%), linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.35)); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25); transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease; } .day-arrow:hover { border-color: rgba(255, 255, 255, 0.45); color: #ffffff; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35); transform: scale(1.04); } .grid { display: grid; grid-template-columns: 0.24fr 2.96fr 0.32fr 0.32fr 0.4fr; gap: 12px 16px; position: relative; z-index: 1; animation: fadeUp 0.8s ease-out; } .grid .header { font-weight: 600; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.16em; color: var(--muted); padding: 8px 4px 12px; border-bottom: 2px solid var(--line); } .row { display: contents; } input { width: 100%; border: 1.5px solid #6a6f78; border-radius: 12px; padding: 10px 12px; font-family: inherit; font-size: 0.85rem; background: #3b3f45; color: #f1f2f4; transition: border-color 0.2s ease, box-shadow 0.2s ease; } input:focus { outline: none; border-color: #9aa0a8; box-shadow: 0 0 0 3px rgba(238, 240, 243, 0.15); } .mini-field { max-width: 90px; justify-self: start; text-align: center; padding: 8px 8px; } input::placeholder { color: #b4b7bc; } .exercise-cell { display: flex; flex-direction: column; gap: 4px; border: 1.5px solid #6a6f78; border-radius: 14px; background: #3b3f45; padding: 6px 10px 8px; transition: border-color 0.2s ease, box-shadow 0.2s ease; } .exercise-cell:focus-within { border-color: #9aa0a8; box-shadow: 0 0 0 3px rgba(238, 240, 243, 0.15); } .exercise-cell .exercise-name, .exercise-cell .exercise-note { border: none; background: transparent; padding: 4px 2px; border-radius: 0; box-shadow: none; } .exercise-cell .exercise-name { font-size: 0.85rem; font-weight: 500; color: #f1f2f4; } .exercise-cell .exercise-note { font-size: 0.78rem; color: #c6c8cc; } .exercise-cell .exercise-note::placeholder { color: #b4b7bc; } @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }   input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type="number"] { -moz-appearance: textfield; appearance: textfield; } .training-count { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); } .year-trigger { background: none; border: none; padding: 0; margin: 0; font: inherit; color: var(--ink); font-weight: 700; letter-spacing: 0.18em; cursor: pointer; } .year-trigger:hover { text-decoration: none; } .year-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(10, 10, 12, 0.45); z-index: 1000; padding: 24px; } .year-modal.is-open { display: flex; } .year-modal__content { width: min(420px, 100%); background: #3b3f45; color: #f1f2f4; border-radius: 16px; padding: 20px 20px 18px; border: 1px solid #b9bcc3; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35); position: relative; } .year-modal__content h2 { margin: 0 0 12px; font-size: 1.1rem; } .year-modal__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 0.95rem; } .year-modal__close { position: absolute; top: 10px; right: 12px; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: #f1f2f4; } .year-total { margin-top: 10px; padding-top: 10px; border-top: 1px solid #b9bcc3; }
+<head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1" /> <title>Logboek - Woensdag</title> 
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Sora:wght@400;500;600&display=swap");
 
-    @media (prefers-reduced-motion: reduce) {
-      .grid {
-        animation: none;
-      }
+    :root {
+      --paper: #2a2c30;
+      --ink: #eef0f3;
+      --muted: #c2c6cc;
+      --line: #6a6f78;
+      --stroke: #7a8089;
+      --field: #3b3f45;
     }
 
-    @media (max-width: 720px) {
-      body {
-        padding: 20px 12px 48px;
-      }
+    * {
+      box-sizing: border-box;
+    }
 
-      header {
-        gap: 10px;
-        margin-bottom: 18px;
-      }
-
-      h1 {
-        font-size: clamp(1.9rem, 6.5vw, 2.4rem);
-      }
-
-      .training-count {
-        font-size: 0.75rem;
-        letter-spacing: 0.14em;
-      }
-
-      .grid {
-        grid-template-columns: minmax(0, 0.3fr) minmax(0, 1.3fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(0, 0.6fr);
-        gap: 8px 10px;
-      }
-
-    .day-modal.is-open {
+    body {
+      margin: 0;
+      font-family: "Sora", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(600px 380px at 12% 18%, rgba(240, 242, 246, 0.08) 0%, transparent 70%),
+        radial-gradient(720px 460px at 82% 12%, rgba(200, 204, 210, 0.10) 0%, transparent 68%),
+        radial-gradient(520px 360px at 68% 72%, rgba(232, 235, 240, 0.06) 0%, transparent 72%),
+        radial-gradient(420px 300px at 22% 78%, rgba(170, 175, 182, 0.08) 0%, transparent 75%),
+        radial-gradient(360px 240px at 52% 40%, rgba(210, 214, 220, 0.05) 0%, transparent 75%),
+        linear-gradient(135deg, #2a2c30 0%, #1f2126 50%, #15171b 100%);
+      min-height: 100vh;
       display: flex;
+      justify-content: center;
+      padding: 32px 16px 64px;
     }
 
-    .day-modal__content {
-      width: min(420px, 100%);
-      background: #e6e8ec;
-      color: #1b1d22;
-      border-radius: 14px;
-      padding: 20px 20px 18px;
-      border: 1px solid #b9bcc3;
-      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+    .sheet {
+      width: min(980px, 100%);
+      padding: 12px 4px 24px;
       position: relative;
     }
 
-    .day-modal__content h2 {
-      margin: 0 0 12px;
-      font-size: 1.05rem;
-    }
-
-    .day-modal__grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .day-modal__grid a {
-      text-decoration: none;
-      color: #1b1d22;
-      background: #cfd3d9;
-      border: 1px solid #b9bcc3;
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-weight: 600;
+    header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
       text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
     }
 
-    .day-modal__grid a:hover {
-      background: #d9dde3;
+    h1 {
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(2.2rem, 3.8vw, 3.4rem);
+      margin: 0;
+      letter-spacing: 0.02em;
     }
 
-    .day-modal__close {
-      position: absolute;
-      top: 10px;
-      right: 12px;
+    .training-count {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+    }
+
+    .year-trigger {
+      background: none;
       border: none;
-      background: transparent;
-      font-size: 1.5rem;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      color: var(--ink);
+      font-weight: 700;
+      letter-spacing: 0.18em;
       cursor: pointer;
-      color: #1b1d22;
     }
 
+    .day-line {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+
+    .day-trigger {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      color: var(--ink);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1.6fr) 76px 76px 90px;
+      column-gap: 12px;
+      row-gap: 10px;
+      align-items: start;
+    }
+
+    .grid .header {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
     .check-header {
       text-align: center;
+    }
+
+    .row {
+      display: contents;
     }
 
     .complete-toggle {
@@ -115,13 +152,44 @@
       background: #eaffef;
     }
 
-    .complete-toggle:checked + .exercise-cell::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: rgba(46, 160, 67, 0.18);
-      border-radius: 14px 0 0 14px;
-      pointer-events: none;
+    .exercise-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .exercise-cell .exercise-name,
+    .exercise-cell .exercise-note {
+      border: none;
+      background: transparent;
+      padding: 2px 0;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .exercise-cell .exercise-note {
+      color: #c6c8cc;
+      font-size: 0.78rem;
+    }
+
+    .mini-wrap {
+      width: 100%;
+    }
+
+    .mini-field {
+      border: 1px solid var(--stroke);
+      background: var(--field);
+      border-radius: 6px;
+      padding: 6px 6px;
+      text-align: center;
+      font-size: 0.78rem;
+      width: 100%;
+      color: var(--ink);
+    }
+
+    .complete-toggle:checked + .exercise-cell {
+      color: #e8f6ec;
     }
 
     .complete-toggle:checked + .exercise-cell .exercise-name,
@@ -129,154 +197,137 @@
       color: #e8f6ec;
     }
 
-    .complete-toggle:checked + .exercise-cell ~ .mini-field {
+    .complete-toggle:checked + .exercise-cell ~ .mini-wrap .mini-field {
       background: #2f3b35;
       border-color: #3b8f5b;
       color: #e8f6ec;
     }
 
-
-
-    .grid {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    input::placeholder {
+      color: #b4b7bc;
     }
 
-    .row {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      flex-wrap: wrap;
+    .year-modal,
+    .day-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 10, 12, 0.45);
+      z-index: 1000;
+      padding: 24px;
     }
 
-    .exercise-cell,
-    input,
-    .mini-field {
+    .year-modal.is-open,
+    .day-modal.is-open {
+      display: flex;
+    }
+
+    .year-modal__content,
+    .day-modal__content {
+      width: min(420px, 100%);
+      background: #3b3f45;
+      color: #f1f2f4;
+      border-radius: 14px;
+      padding: 20px 20px 18px;
+      border: 1px solid #b9bcc3;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+
+    .year-modal__content h2,
+    .day-modal__content h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .year-modal__list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    .year-total {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #b9bcc3;
+    }
+
+    .day-modal__grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .day-modal__grid a {
+      text-decoration: none;
+      color: #f1f2f4;
+      background: #2f3338;
+      border: 1px solid #b9bcc3;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .day-modal__grid a:hover {
+      background: #3b3f45;
+    }
+
+    .year-modal__close,
+    .day-modal__close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
       border: none;
       background: transparent;
-      box-shadow: none;
-    }
-
-    .exercise-cell {
-      padding: 0;
-      border-radius: 0;
-      flex: 1 1 280px;
-      min-width: 220px;
-    }
-
-    .exercise-cell .exercise-name,
-    .exercise-cell .exercise-note {
-      padding: 2px 0;
-    }
-
-    .mini-field {
-      padding: 2px 0;
-      width: 64px;
-      text-align: left;
-    }
-
-    .mini-field::placeholder,
-    .exercise-cell .exercise-note::placeholder,
-    input::placeholder {
-      opacity: 0.6;
-    }
-
-
-
-    .grid {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 22px minmax(0, 1.6fr) minmax(0, 80px) minmax(0, 80px) minmax(0, 90px);
-      column-gap: 12px;
-      row-gap: 6px;
-      align-items: start;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .row:last-child {
-      border-bottom: none;
-    }
-
-    .exercise-cell {
-      flex: none;
-      min-width: 0;
-    }
-
-    .mini-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .mini-field {
-      width: 100%;
-      text-align: left;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .complete-toggle {
-      margin-top: 18px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #f1f2f4;
     }
 
     @media (max-width: 720px) {
-      .row {
-        grid-template-columns: 22px minmax(0, 1.2fr) minmax(0, 70px) minmax(0, 70px) minmax(0, 80px);
+      body {
+        padding: 20px 12px 48px;
+      }
+
+      header {
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        font-size: clamp(1.9rem, 6.5vw, 2.4rem);
+      }
+
+      .training-count {
+        font-size: 0.75rem;
+        letter-spacing: 0.14em;
+      }
+
+      .grid {
+        grid-template-columns: 22px minmax(0, 1.2fr) 66px 66px 76px;
         column-gap: 10px;
       }
     }
 
     @media (max-width: 520px) {
-      .row {
-        grid-template-columns: 22px minmax(0, 1fr) minmax(0, 60px) minmax(0, 60px) minmax(0, 70px);
+      .grid {
+        grid-template-columns: 22px minmax(0, 1fr) 58px 58px 68px;
         column-gap: 8px;
       }
     }
 
-
-
-    .exercise-cell,
-    .exercise-cell .exercise-name,
-    .exercise-cell .exercise-note {
-      border: none;
-      background: transparent;
-      box-shadow: none;
-      padding-left: 0;
+    @media (prefers-reduced-motion: reduce) {
+      .grid {
+        animation: none;
+      }
     }
-
-    .mini-field {
-      border: 1px solid var(--stroke);
-      background: #3b3f45;
-      border-radius: 6px;
-      padding: 6px 6px;
-      text-align: center;
-      font-size: 0.78rem;
-      width: 100%;
-    }
-
-
-
-    .grid .header {
-      display: block;
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .check-header {
-      text-align: center;
-    }
-
-</style></head>
+  </style>
+</head>
 <body> <main class="sheet"> <header> <div> <div class="training-count"><button class="year-trigger" type="button">2026:</button> 27 sessies</div> <h1>Logboek Training</h1> <div class="day-line"><button class="day-trigger" type="button">Woensdag</button></div></div>
 </header> <section class="grid" aria-label="Oefeningen"> <div class="header check-header">✓</div> <div class="header">Oefening</div> <div class="header">Sets</div> <div class="header">Reps</div> <div class="header">Gewicht</div> <div class="row"> <input type="checkbox" class="complete-toggle" aria-label="Oefening afvinken" /> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-1" placeholder="Oefening" value="Shoulder Press Machine" /> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-1" placeholder="Notitie" /></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-1" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-1" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-1" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <input type="checkbox" class="complete-toggle" aria-label="Oefening afvinken" /> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-2" placeholder="Oefening" value="Lateral Shoulder Machine" /> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-2" placeholder="Notitie" /></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-2" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-2" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-2" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <input type="checkbox" class="complete-toggle" aria-label="Oefening afvinken" /> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-3" placeholder="Oefening" value="Rear Delt Machine" /> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-3" placeholder="Notitie" /></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-3" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-3" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-3" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <input type="checkbox" class="complete-toggle" aria-label="Oefening afvinken" /> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-4" placeholder="Oefening" value="Seated Leg Curl" /> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-4" placeholder="Notitie" /></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-4" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-4" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-4" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <input type="checkbox" class="complete-toggle" aria-label="Oefening afvinken" /> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-5" placeholder="Oefening" value="Leg Extensions" /> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-5" placeholder="Notitie" /></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-5" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-5" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-5" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <input type="checkbox" class="complete-toggle" aria-label="Oefening afvinken" /> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-6" placeholder="Oefening" value="Shrugs" /> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-6" placeholder="Notitie" /></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-6" placeholder="Sets" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-6" placeholder="Reps" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-6" placeholder="Gewicht" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div></section></main> <div class="year-modal" id="yearModal" aria-hidden="true"> <div class="year-modal__content" role="dialog" aria-modal="true" aria-labelledby="yearModalTitle"> <button class="year-modal__close" type="button" aria-label="Sluiten">&times;</button> <h2 id="yearModalTitle">Voorgaande jaren</h2> <ul class="year-modal__list"> <li><strong>2022:</strong> 10</li> <li><strong>2023:</strong> 5</li> <li><strong>2024:</strong> 40</li> <li><strong>2025:</strong> 280</li> <li><strong>2026 (tot heden):</strong> 27</li> <li class="year-total"><strong>Totaal:</strong> 362 sessies</li></ul></div></div>
 
