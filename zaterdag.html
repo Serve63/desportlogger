@@ -387,6 +387,44 @@
       height: 0;
     }
 
+
+
+    .footer-toggle {
+      position: fixed;
+      bottom: 24px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .footer-check {
+      pointer-events: auto;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: #2f3338;
+      display: inline-grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .footer-check.is-on {
+      background: #2ea043;
+      border-color: #2ea043;
+    }
+
+    .footer-check.is-on::after {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: #eaffef;
+    }
+
 </style>
 </head>
 <body> <main class="sheet"> <header> <div> <div class="training-count"><button class="year-trigger" type="button">2026:</button> 27 sessies</div> <h1>Servé's Logboek</h1> <div class="day-line"><button class="day-trigger" type="button">Zaterdag</button></div></div>
@@ -501,6 +539,15 @@
       };
 
       document.querySelectorAll("input[data-max]").forEach(clampInput);
+
+
+      const footerCheck = document.querySelector(".footer-check");
+      if (footerCheck) {
+        footerCheck.addEventListener("click", () => {
+          footerCheck.classList.toggle("is-on");
+        });
+      }
+
       });
 
       if (!window.supabase) return;
@@ -620,6 +667,11 @@
       })();
     })();
   </script>
+
+
+  <div class="footer-toggle">
+    <button class="footer-check" type="button" aria-label="Markeer als afgerond"></button>
+  </div>
 
 </body>
 </html>
