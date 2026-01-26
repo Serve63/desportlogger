@@ -667,17 +667,30 @@
           .eq("year", currentYear)
           .single();
         
-        if (error && error.code === 'PGRST116') {
-          // Geen record gevonden, maak nieuwe aan met count 27
-          const { data: newData, error: insertError } = await supabase
-            .from("session_counts")
-            .insert({ year: currentYear, count: 27 })
-            .select()
-            .single();
-          return newData?.count || 27;
+        if (error) {
+          // PGRST116 = geen resultaten gevonden
+          if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
+            console.log("No session count found, creating new record with 20");
+            // Geen record gevonden, maak nieuwe aan met count 20
+            const { data: newData, error: insertError } = await supabase
+              .from("session_counts")
+              .insert({ year: currentYear, count: 20 })
+              .select()
+              .single();
+            
+            if (insertError) {
+              console.error("Error creating session count:", insertError);
+              return 20; // Fallback
+            }
+            
+            return newData?.count || 20;
+          } else {
+            console.error("Error getting session count:", error);
+            return 20; // Fallback
+          }
         }
         
-        return data?.count || 27;
+        return data?.count || 20;
       };
 
       const updateSessionCount = async (increment = true) => {
