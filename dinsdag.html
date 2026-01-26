@@ -371,9 +371,14 @@
 
     .confetti-layer {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh;
       pointer-events: none;
-      overflow: hidden;
+      overflow: visible;
       z-index: 1100;
     }
 
@@ -393,7 +398,7 @@
         transform: translateY(-10px) rotate(0deg);
       }
       100% {
-        transform: translateY(120vh) rotate(360deg);
+        transform: translateY(calc(100vh + 20px)) rotate(360deg);
       }
     }
 
@@ -521,11 +526,12 @@
         layer.className = "confetti-layer";
         document.body.appendChild(layer);
 
-        const pieces = 160;
+        const pieces = 300;
+        const viewportWidth = window.innerWidth;
         for (let i = 0; i < pieces; i++) {
           const piece = document.createElement("span");
           piece.className = "confetti";
-          piece.style.left = Math.random() * 100 + "vw";
+          piece.style.left = (Math.random() * viewportWidth) + "px";
           piece.style.animationDelay = (Math.random() * 0.2) + "s";
           piece.style.opacity = (0.6 + Math.random() * 0.4).toString();
           piece.style.transform = `translateY(-10px) rotate(${Math.random() * 360}deg)`;
