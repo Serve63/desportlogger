@@ -650,44 +650,71 @@
 
       // Functie om sessie count op te halen en bij te werken
       const getSessionCount = async () => {
-        const currentYear = new Date().getFullYear();
-        const { data, error } = await supabase
-          .from("session_counts")
-          .select("count")
-          .eq("year", currentYear)
-          .single();
-        
-        if (error && error.code === 'PGRST116') {
-          // Geen record gevonden, maak nieuwe aan met count 27
-          const { data: newData, error: insertError } = await supabase
+        try {
+          const currentYear = new Date().getFullYear();
+          const { data, error } = await supabase
             .from("session_counts")
-            .insert({ year: currentYear, count: 27 })
-            .select()
+            .select("count")
+            .eq("year", currentYear)
             .single();
-          return newData?.count || 27;
+          
+          if (error) {
+            // PGRST116 = geen resultaten gevonden
+            if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
+              console.log("No session count found, creating new record with 27");
+              // Geen record gevonden, maak nieuwe aan met count 27
+              const { data: newData, error: insertError } = await supabase
+                .from("session_counts")
+                .insert({ year: currentYear, count: 27 })
+                .select()
+                .single();
+              
+              if (insertError) {
+                console.error("Error creating session count:", insertError);
+                return 27; // Fallback
+              }
+              
+              return newData?.count || 27;
+            } else {
+              console.error("Error getting session count:", error);
+              return 27; // Fallback
+            }
+          }
+          
+          return data?.count || 27;
+        } catch (error) {
+          console.error("Error in getSessionCount:", error);
+          return 27; // Fallback
         }
-        
-        return data?.count || 27;
       };
 
       const incrementSessionCount = async () => {
         try {
+          console.log("incrementSessionCount called");
           const currentYear = new Date().getFullYear();
-          const currentCount = await getSessionCount();
-          const newCount = currentCount + 1;
+          console.log("Current year:", currentYear);
           
-          const { error } = await supabase
+          const currentCount = await getSessionCount();
+          console.log("Current count:", currentCount);
+          
+          const newCount = currentCount + 1;
+          console.log("New count:", newCount);
+          
+          const { data, error } = await supabase
             .from("session_counts")
             .upsert({ year: currentYear, count: newCount }, { onConflict: 'year' });
           
           if (error) {
             console.error("Error updating session count:", error);
+            alert("Fout bij updaten sessie count: " + error.message);
             return;
           }
           
+          console.log("Session count updated successfully:", data);
           updateSessionCountDisplay(newCount);
         } catch (error) {
           console.error("Error in incrementSessionCount:", error);
+          alert("Fout: " + error.message);
         }
       };
 
@@ -715,11 +742,14 @@
         
         footerCheck.addEventListener("click", (e) => {
           e.preventDefault();
+          console.log("Footer check clicked");
           const wasOn = footerCheck.classList.contains("is-on");
           const isOn = footerCheck.classList.toggle("is-on");
+          console.log("wasOn:", wasOn, "isOn:", isOn);
           
           if (isOn && !wasOn) {
             // Alleen verhogen wanneer het wordt aangezet (niet bij uitzetten)
+            console.log("Incrementing session count");
             incrementSessionCount();
             launchConfetti();
           }
