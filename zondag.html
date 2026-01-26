@@ -390,7 +390,7 @@
       background: #2ea043;
       opacity: 0.9;
       border-radius: 2px;
-      animation: confettiFall 3s linear forwards;
+      animation: confettiFall 10s linear forwards;
     }
 
     @keyframes confettiFall {
@@ -526,23 +526,37 @@
         layer.className = "confetti-layer";
         document.documentElement.appendChild(layer);
 
-        const pieces = 300;
         const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
         
-        for (let i = 0; i < pieces; i++) {
-          const piece = document.createElement("span");
-          piece.className = "confetti";
-          piece.style.left = (Math.random() * viewportWidth) + "px";
-          piece.style.animationDelay = (Math.random() * 0.2) + "s";
-          piece.style.opacity = (0.6 + Math.random() * 0.4).toString();
-          piece.style.transform = `translateY(-10px) rotate(${Math.random() * 360}deg)`;
-          layer.appendChild(piece);
-        }
+        const createConfettiBatch = (batchSize = 50) => {
+          for (let i = 0; i < batchSize; i++) {
+            const piece = document.createElement("span");
+            piece.className = "confetti";
+            piece.style.left = (Math.random() * viewportWidth) + "px";
+            piece.style.animationDelay = (Math.random() * 0.5) + "s";
+            piece.style.opacity = (0.6 + Math.random() * 0.4).toString();
+            piece.style.transform = `translateY(-10px) rotate(${Math.random() * 360}deg)`;
+            layer.appendChild(piece);
+          }
+        };
 
-        setTimeout(() => {
-          layer.remove();
-        }, 3200);
+        // Initial batch
+        createConfettiBatch(100);
+
+        // Continue generating confetti every second for 10 seconds
+        let elapsed = 0;
+        const interval = setInterval(() => {
+          elapsed += 1;
+          createConfettiBatch(30);
+          
+          if (elapsed >= 10) {
+            clearInterval(interval);
+            setTimeout(() => {
+              layer.remove();
+            }, 11000);
+          }
+        }, 1000);
       };
 
       window.addEventListener("DOMContentLoaded", () => {
