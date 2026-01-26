@@ -988,13 +988,21 @@
 
       // Functie om alle rows opnieuw te indexeren en op te slaan
       const reindexAndSaveAllRows = async () => {
+        console.log("reindexAndSaveAllRows aangeroepen voor dag:", day);
         const allRows = Array.from(document.querySelectorAll(".row"));
+        console.log("Aantal rows:", allRows.length);
         // Verwijder eerst alle oude entries voor deze dag
-        await supabase.from("workout_entries").delete().eq("day", day);
+        const { error: deleteError } = await supabase.from("workout_entries").delete().eq("day", day);
+        if (deleteError) {
+          console.error("Fout bij verwijderen oude entries:", deleteError);
+        } else {
+          console.log("Oude entries verwijderd");
+        }
         // Sla alle rows opnieuw op met nieuwe indices
         for (let i = 0; i < allRows.length; i++) {
           await upsertRow(allRows[i], i);
         }
+        console.log("Alle rows opnieuw opgeslagen");
       };
 
       // Functie om event listeners toe te voegen aan een row
@@ -1093,11 +1101,14 @@
         // Functie om oefening te verwijderen
         deleteExerciseBtn.addEventListener("click", async () => {
           if (selectedRow) {
+            console.log("Verwijderen oefening...");
             // Verwijder de row uit de DOM
             selectedRow.remove();
             closeModal();
             // Herindexeer en sla alle rows opnieuw op
+            console.log("Herindexeren en opslaan...");
             await reindexAndSaveAllRows();
+            console.log("Oefening verwijderd en opgeslagen");
           }
         });
 
@@ -1152,7 +1163,9 @@
           attachRowEventListeners(newRow, existingRows.length);
 
           // Sla de nieuwe row op in Supabase
+          console.log("Opslaan nieuwe oefening in Supabase...");
           await upsertRow(newRow, existingRows.length);
+          console.log("Nieuwe oefening opgeslagen");
 
           // Focus op het naam veld
           const nameInput = newRow.querySelector(".exercise-name");
