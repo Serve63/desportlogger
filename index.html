@@ -488,35 +488,49 @@
         });
       }
 
-      const yearTrigger = document.querySelector(".year-trigger");
-      const yearModal = document.getElementById("yearModal");
-      const yearClose = document.querySelector(".year-modal__close");
+      const setupYearTrigger = () => {
+        const yearTrigger = document.querySelector(".year-trigger");
+        const yearModal = document.getElementById("yearModal");
+        const yearClose = document.querySelector(".year-modal__close");
 
-      if (yearTrigger && yearModal && yearClose) {
-        const openModal = () => {
-          yearModal.classList.add("is-open");
-          yearModal.setAttribute("aria-hidden", "false");
-        };
-        const closeModal = () => {
-          yearModal.classList.remove("is-open");
-          yearModal.setAttribute("aria-hidden", "true");
-        };
+        if (yearTrigger && yearModal && yearClose) {
+          const openModal = () => {
+            yearModal.classList.add("is-open");
+            yearModal.setAttribute("aria-hidden", "false");
+          };
+          const closeModal = () => {
+            yearModal.classList.remove("is-open");
+            yearModal.setAttribute("aria-hidden", "true");
+          };
 
-        yearTrigger.addEventListener("click", () => {
-          if (yearModal.classList.contains("is-open")) {
-            closeModal();
-          } else {
-            openModal();
+          // Verwijder oude event listeners door te clonen
+          const newYearTrigger = yearTrigger.cloneNode(true);
+          yearTrigger.parentNode.replaceChild(newYearTrigger, yearTrigger);
+
+          newYearTrigger.addEventListener("click", () => {
+            if (yearModal.classList.contains("is-open")) {
+              closeModal();
+            } else {
+              openModal();
+            }
+          });
+          
+          // Setup close button en modal events (alleen eenmalig)
+          if (!yearClose.dataset.listenerAttached) {
+            yearClose.addEventListener("click", closeModal);
+            yearClose.dataset.listenerAttached = "true";
+            yearModal.addEventListener("click", (event) => {
+              if (event.target === yearModal) closeModal();
+            });
+            document.addEventListener("keydown", (event) => {
+              if (event.key === "Escape") closeModal();
+            });
           }
-        });
-        yearClose.addEventListener("click", closeModal);
-        yearModal.addEventListener("click", (event) => {
-          if (event.target === yearModal) closeModal();
-        });
-        document.addEventListener("keydown", (event) => {
-          if (event.key === "Escape") closeModal();
-        });
-      }
+        }
+      };
+
+      // Initialiseer year trigger bij het laden
+      setupYearTrigger();
 
       const clampInput = (input) => {
         const max = Number(input.dataset.max || 999);
@@ -677,12 +691,15 @@
         }
       };
 
+
       const updateSessionCountDisplay = (count) => {
         const trainingCountEl = document.querySelector(".training-count");
         if (trainingCountEl) {
           const yearButton = trainingCountEl.querySelector(".year-trigger");
           const year = yearButton?.textContent?.replace(":", "") || new Date().getFullYear();
           trainingCountEl.innerHTML = `<button class="year-trigger" type="button">${year}:</button> ${count} sessies`;
+          // Herstel de event listener na het updaten
+          setupYearTrigger();
         }
       };
 
