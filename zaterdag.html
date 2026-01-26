@@ -25,6 +25,9 @@
     html, body {
       height: 100%;
       overflow: hidden;
+      position: fixed;
+      width: 100%;
+      touch-action: none;
     }
 
     body::-webkit-scrollbar {
@@ -37,7 +40,7 @@
       font-family: "Sora", system-ui, sans-serif;
       color: var(--ink);
       background: #1f2126;
-      min-height: 100vh;
+      height: 100%;
       display: flex;
       justify-content: center;
       align-items: flex-start;
@@ -319,21 +322,21 @@
 
     @media (max-width: 720px) {
       body {
-        padding: 24px 16px 100px;
+        padding: 16px 16px 70px;
       }
 
       header {
-        gap: 8px;
-        margin-bottom: 16px;
+        gap: 6px;
+        margin-bottom: 12px;
       }
 
       h1 {
-        font-size: clamp(1.9rem, 6.5vw, 2.4rem);
+        font-size: clamp(1.8rem, 6vw, 2.2rem);
       }
 
       .training-count {
-        margin-top: 20px;
-        font-size: 0.75rem;
+        margin-top: 12px;
+        font-size: 0.7rem;
         letter-spacing: 0.14em;
       }
 
