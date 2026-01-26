@@ -706,7 +706,11 @@
           
           if (error) {
             console.error("Error updating session count:", error);
-            alert("Fout bij updaten sessie count: " + error.message);
+            if (error.message?.includes("Could not find the table") || error.message?.includes("relation") || error.message?.includes("does not exist")) {
+              alert("De session_counts tabel bestaat nog niet in Supabase. Voer de SQL uit uit supabase.sql om de tabel aan te maken.");
+            } else {
+              alert("Fout bij updaten sessie count: " + error.message);
+            }
             return;
           }
           
