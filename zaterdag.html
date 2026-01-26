@@ -37,9 +37,10 @@
       font-family: "Sora", system-ui, sans-serif;
       color: var(--ink);
       background: #1f2126;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
+      align-items: flex-start;
       padding: 40px 12px 48px;
     }
 
@@ -318,12 +319,12 @@
 
     @media (max-width: 720px) {
       body {
-        padding: 18px 10px 40px;
+        padding: 24px 16px 100px;
       }
 
       header {
-        gap: 10px;
-        margin-bottom: 18px;
+        gap: 8px;
+        margin-bottom: 16px;
       }
 
       h1 {
@@ -331,6 +332,7 @@
       }
 
       .training-count {
+        margin-top: 20px;
         font-size: 0.75rem;
         letter-spacing: 0.14em;
       }
@@ -641,12 +643,17 @@
         }, 200);
       };
 
-      if (!window.supabase) return;
+      if (!window.supabase) {
+        console.error("Supabase library niet geladen!");
+        return;
+      }
 
+      console.log("Supabase library gevonden, client aanmaken...");
       const supabase = window.supabase.createClient(
         "https://lqgcitosiyahgwqluwtb.supabase.co",
         "sb_publishable_dGMK5ruFsyWkF3ne43AS1A_lHURUBhI"
       );
+      console.log("Supabase client aangemaakt");
 
       // Functie om sessie count op te halen en bij te werken
       const getSessionCount = async () => {
@@ -756,10 +763,17 @@
 
       const upsertRow = async (row, index) => {
         const payload = getRowData(row, index);
-        const { error } = await supabase
+        console.log("Saving data:", payload);
+        const { data, error } = await supabase
           .from("workout_entries")
-          .upsert(payload, { onConflict: "day,exercise_index" });
-        if (error) console.warn("Supabase save failed", error);
+          .upsert(payload, { onConflict: "day,exercise_index" })
+          .select();
+        if (error) {
+          console.error("Supabase save failed:", error);
+          console.error("Payload was:", payload);
+        } else {
+          console.log("Saved successfully:", data);
+        }
       };
 
       const getColumnForInput = (input) => {
@@ -807,15 +821,17 @@
       });
 
       (async () => {
+        console.log("Loading data for day:", day);
         const { data, error } = await supabase
           .from("workout_entries")
           .select("*")
           .eq("day", day)
           .order("exercise_index");
         if (error) {
-          console.warn("Supabase load failed", error);
+          console.error("Supabase load failed:", error);
           return;
         }
+        console.log("Loaded data:", data);
         data.forEach((item) => {
           const row = rows[item.exercise_index - 1];
           if (!row) return;
