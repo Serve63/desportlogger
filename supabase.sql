@@ -27,3 +27,20 @@ create policy "public update" on workout_entries
 
 
 alter table workout_entries add column if not exists completed boolean default false;
+
+create table if not exists session_counts (
+  year integer primary key,
+  count integer not null default 0,
+  updated_at timestamptz default now()
+);
+
+alter table session_counts enable row level security;
+
+create policy "public read" on session_counts
+  for select using (true);
+
+create policy "public insert" on session_counts
+  for insert with check (true);
+
+create policy "public update" on session_counts
+  for update using (true);

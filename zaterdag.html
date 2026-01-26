@@ -568,21 +568,78 @@
         }, 1000);
       };
 
-      window.addEventListener("DOMContentLoaded", () => {
-        const footerCheck = document.querySelector(".footer-check");
-        if (!footerCheck) return;
-        footerCheck.addEventListener("click", () => {
-          const isOn = footerCheck.classList.toggle("is-on");
-          if (isOn) launchConfetti();
-        });
-      });
-
       if (!window.supabase) return;
 
       const supabase = window.supabase.createClient(
         "https://lqgcitosiyahgwqluwtb.supabase.co",
         "sb_publishable_dGMK5ruFsyWkF3ne43AS1A_lHURUBhI"
       );
+
+      // Functie om sessie count op te halen en bij te werken
+      const getSessionCount = async () => {
+        const currentYear = new Date().getFullYear();
+        const { data, error } = await supabase
+          .from("session_counts")
+          .select("count")
+          .eq("year", currentYear)
+          .single();
+        
+        if (error && error.code === 'PGRST116') {
+          // Geen record gevonden, maak nieuwe aan met count 27
+          const { data: newData, error: insertError } = await supabase
+            .from("session_counts")
+            .insert({ year: currentYear, count: 27 })
+            .select()
+            .single();
+          return newData?.count || 27;
+        }
+        
+        return data?.count || 27;
+      };
+
+      const incrementSessionCount = async () => {
+        const currentYear = new Date().getFullYear();
+        const currentCount = await getSessionCount();
+        const newCount = currentCount + 1;
+        
+        const { error } = await supabase
+          .from("session_counts")
+          .upsert({ year: currentYear, count: newCount }, { onConflict: 'year' });
+        
+        if (!error) {
+          updateSessionCountDisplay(newCount);
+        }
+      };
+
+      const updateSessionCountDisplay = (count) => {
+        const trainingCountEl = document.querySelector(".training-count");
+        if (trainingCountEl) {
+          const yearButton = trainingCountEl.querySelector(".year-trigger");
+          const year = yearButton?.textContent?.replace(":", "") || new Date().getFullYear();
+          trainingCountEl.innerHTML = `<button class="year-trigger" type="button">${year}:</button> ${count} sessies`;
+        }
+      };
+
+      // Laad de huidige sessie count
+      (async () => {
+        const count = await getSessionCount();
+        updateSessionCountDisplay(count);
+      })();
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const footerCheck = document.querySelector(".footer-check");
+        if (!footerCheck) return;
+        footerCheck.addEventListener("click", () => {
+          const wasOn = footerCheck.classList.contains("is-on");
+          const isOn = footerCheck.classList.toggle("is-on");
+          
+          if (isOn && !wasOn) {
+            // Alleen verhogen wanneer het wordt aangezet (niet bij uitzetten)
+            incrementSessionCount();
+            launchConfetti();
+          }
+        });
+      });
 
       const day = document.querySelector(".day-trigger")?.textContent?.trim() ||
         document.querySelector(".day-tag")?.textContent?.trim();
