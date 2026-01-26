@@ -448,21 +448,6 @@
   
   <script>
     (() => {
-      const dayTargets = {
-        0: "zondag.html",
-        1: "index.html",
-        2: "dinsdag.html",
-        3: "woensdag.html",
-        4: "donderdag.html",
-        5: "index.html",
-        6: "zaterdag.html",
-      };
-
-      const todayTarget = dayTargets[new Date().getDay()];
-      if (todayTarget && !window.location.pathname.endsWith(todayTarget)) {
-        window.location.replace(todayTarget);
-        return;
-      }
 
       const dayTrigger = document.querySelector(".day-trigger");
       const dayModal = document.getElementById("dayModal");
