@@ -491,43 +491,43 @@
       }
 
       const setupYearTrigger = () => {
-        const yearTrigger = document.querySelector(".year-trigger");
-        const yearModal = document.getElementById("yearModal");
-        const yearClose = document.querySelector(".year-modal__close");
+      const yearTrigger = document.querySelector(".year-trigger");
+      const yearModal = document.getElementById("yearModal");
+      const yearClose = document.querySelector(".year-modal__close");
 
-        if (yearTrigger && yearModal && yearClose) {
-          const openModal = () => {
-            yearModal.classList.add("is-open");
-            yearModal.setAttribute("aria-hidden", "false");
-          };
-          const closeModal = () => {
-            yearModal.classList.remove("is-open");
-            yearModal.setAttribute("aria-hidden", "true");
-          };
+      if (yearTrigger && yearModal && yearClose) {
+        const openModal = () => {
+          yearModal.classList.add("is-open");
+          yearModal.setAttribute("aria-hidden", "false");
+        };
+        const closeModal = () => {
+          yearModal.classList.remove("is-open");
+          yearModal.setAttribute("aria-hidden", "true");
+        };
 
           // Verwijder oude event listeners door te clonen
           const newYearTrigger = yearTrigger.cloneNode(true);
           yearTrigger.parentNode.replaceChild(newYearTrigger, yearTrigger);
 
           newYearTrigger.addEventListener("click", () => {
-            if (yearModal.classList.contains("is-open")) {
-              closeModal();
-            } else {
-              openModal();
-            }
-          });
+          if (yearModal.classList.contains("is-open")) {
+            closeModal();
+          } else {
+            openModal();
+          }
+        });
           
           // Setup close button en modal events (alleen eenmalig)
           if (!yearClose.dataset.listenerAttached) {
-            yearClose.addEventListener("click", closeModal);
+        yearClose.addEventListener("click", closeModal);
             yearClose.dataset.listenerAttached = "true";
-            yearModal.addEventListener("click", (event) => {
-              if (event.target === yearModal) closeModal();
-            });
-            document.addEventListener("keydown", (event) => {
-              if (event.key === "Escape") closeModal();
-            });
-          }
+        yearModal.addEventListener("click", (event) => {
+          if (event.target === yearModal) closeModal();
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") closeModal();
+        });
+      }
         }
       };
 
@@ -695,16 +695,16 @@
         }
       };
 
-      const incrementSessionCount = async () => {
+      const updateSessionCount = async (increment = true) => {
         try {
-          console.log("incrementSessionCount called");
+          console.log(increment ? "incrementSessionCount called" : "decrementSessionCount called");
           const currentYear = new Date().getFullYear();
           console.log("Current year:", currentYear);
           
           const currentCount = await getSessionCount();
           console.log("Current count:", currentCount);
           
-          const newCount = currentCount + 1;
+          const newCount = increment ? currentCount + 1 : Math.max(0, currentCount - 1);
           console.log("New count:", newCount);
           
           const { data, error } = await supabase
@@ -724,10 +724,13 @@
           console.log("Session count updated successfully:", data);
           updateSessionCountDisplay(newCount);
         } catch (error) {
-          console.error("Error in incrementSessionCount:", error);
+          console.error("Error in updateSessionCount:", error);
           alert("Fout: " + error.message);
         }
       };
+
+      const incrementSessionCount = () => updateSessionCount(true);
+      const decrementSessionCount = () => updateSessionCount(false);
 
       const updateSessionCountDisplay = (count) => {
         const trainingCountEl = document.querySelector(".training-count");
@@ -758,10 +761,14 @@
           console.log("wasOn:", wasOn, "isOn:", isOn);
           
           if (isOn && !wasOn) {
-            // Alleen verhogen wanneer het wordt aangezet (niet bij uitzetten)
+            // Verhogen wanneer het wordt aangezet
             console.log("Incrementing session count");
             incrementSessionCount();
             launchConfetti();
+          } else if (!isOn && wasOn) {
+            // Verlagen wanneer het wordt uitgezet
+            console.log("Decrementing session count");
+            decrementSessionCount();
           }
         });
       });
