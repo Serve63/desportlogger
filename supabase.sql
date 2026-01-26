@@ -25,6 +25,8 @@ create policy "public insert" on workout_entries
 create policy "public update" on workout_entries
   for update using (true);
 
+create policy "public delete" on workout_entries
+  for delete using (true);
 
 alter table workout_entries add column if not exists completed boolean default false;
 

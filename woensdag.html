@@ -527,7 +527,6 @@
 
   <div class="exercise-modal" id="exerciseModal" aria-hidden="true">
     <div class="exercise-modal__content" role="dialog" aria-modal="true">
-      <button class="exercise-modal__close" type="button" aria-label="Sluiten">&times;</button>
       <div class="exercise-modal__actions">
         <button type="button" class="add-exercise">Nieuwe oefening toevoegen</button>
         <button type="button" class="delete-exercise delete">Oefening verwijderen</button>
@@ -1032,12 +1031,11 @@
       // Exercise context menu functionaliteit (nu met toegang tot Supabase functies)
       const setupExerciseContextMenu = () => {
         const exerciseModal = document.getElementById("exerciseModal");
-        const exerciseClose = document.querySelector(".exercise-modal__close");
         const addExerciseBtn = document.querySelector(".add-exercise");
         const deleteExerciseBtn = document.querySelector(".delete-exercise");
         let selectedRow = null;
 
-        if (!exerciseModal || !exerciseClose || !addExerciseBtn || !deleteExerciseBtn) return;
+        if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
 
         const openModal = (row) => {
           selectedRow = row;
@@ -1051,7 +1049,6 @@
           selectedRow = null;
         };
 
-        exerciseClose.addEventListener("click", closeModal);
         exerciseModal.addEventListener("click", (event) => {
           if (event.target === exerciseModal) closeModal();
         });
