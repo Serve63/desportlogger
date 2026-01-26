@@ -530,10 +530,20 @@
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
         
         const createConfettiBatch = (batchSize = 50) => {
+          // Verdeel de breedte in zones voor gelijkmatige distributie
+          const zones = Math.max(20, Math.floor(viewportWidth / 50));
+          const zoneWidth = viewportWidth / zones;
+          
           for (let i = 0; i < batchSize; i++) {
             const piece = document.createElement("span");
             piece.className = "confetti";
-            piece.style.left = (Math.random() * viewportWidth) + "px";
+            
+            // Verdeel gelijkmatig over zones met wat random variatie
+            const zoneIndex = i % zones;
+            const basePosition = zoneIndex * zoneWidth;
+            const randomOffset = (Math.random() - 0.5) * zoneWidth * 0.8; // 80% van zone breedte
+            piece.style.left = Math.max(0, Math.min(viewportWidth - 10, basePosition + randomOffset)) + "px";
+            
             piece.style.animationDelay = (Math.random() * 0.5) + "s";
             piece.style.opacity = (0.6 + Math.random() * 0.4).toString();
             piece.style.transform = `translateY(-10px) rotate(${Math.random() * 360}deg)`;
