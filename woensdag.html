@@ -373,13 +373,13 @@
       position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
       width: 100vw;
       height: 100vh;
+      margin: 0;
+      padding: 0;
       pointer-events: none;
       overflow: visible;
-      z-index: 1100;
+      z-index: 9999;
     }
 
     .confetti {
@@ -524,10 +524,12 @@
       const launchConfetti = () => {
         const layer = document.createElement("div");
         layer.className = "confetti-layer";
-        document.body.appendChild(layer);
+        document.documentElement.appendChild(layer);
 
         const pieces = 300;
-        const viewportWidth = window.innerWidth;
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        
         for (let i = 0; i < pieces; i++) {
           const piece = document.createElement("span");
           piece.className = "confetti";
