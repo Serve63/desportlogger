@@ -530,19 +530,15 @@
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
         
         const createConfettiBatch = (batchSize = 50) => {
-          // Verdeel de breedte in zones voor gelijkmatige distributie
-          const zones = Math.max(20, Math.floor(viewportWidth / 50));
-          const zoneWidth = viewportWidth / zones;
-          
+          // Verdeel de breedte gelijkmatig - zorg dat elke positie confetti krijgt
           for (let i = 0; i < batchSize; i++) {
             const piece = document.createElement("span");
             piece.className = "confetti";
             
-            // Verdeel gelijkmatig over zones met wat random variatie
-            const zoneIndex = i % zones;
-            const basePosition = zoneIndex * zoneWidth;
-            const randomOffset = (Math.random() - 0.5) * zoneWidth * 0.8; // 80% van zone breedte
-            piece.style.left = Math.max(0, Math.min(viewportWidth - 10, basePosition + randomOffset)) + "px";
+            // Gelijkmatige verdeling over de hele breedte met kleine random variatie
+            const uniformPosition = (i / batchSize) * viewportWidth;
+            const randomVariation = (Math.random() - 0.5) * (viewportWidth / batchSize) * 0.6;
+            piece.style.left = Math.max(0, Math.min(viewportWidth - 10, uniformPosition + randomVariation)) + "px";
             
             piece.style.animationDelay = (Math.random() * 0.5) + "s";
             piece.style.opacity = (0.6 + Math.random() * 0.4).toString();
@@ -552,13 +548,13 @@
         };
 
         // Initial batch
-        createConfettiBatch(100);
+        createConfettiBatch(150);
 
         // Continue generating confetti every second for 10 seconds
         let elapsed = 0;
         const interval = setInterval(() => {
           elapsed += 1;
-          createConfettiBatch(30);
+          createConfettiBatch(50);
           
           if (elapsed >= 10) {
             clearInterval(interval);
