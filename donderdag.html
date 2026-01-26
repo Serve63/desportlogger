@@ -924,8 +924,18 @@
         });
       });
 
-      const day = document.querySelector(".day-trigger")?.textContent?.trim() ||
-        document.querySelector(".day-tag")?.textContent?.trim();
+      // Bepaal de dag naam op basis van het bestand voor Supabase
+      const getDayName = () => {
+        const path = window.location.pathname;
+        if (path.includes("dinsdag")) return "Dinsdag";
+        if (path.includes("woensdag")) return "Woensdag";
+        if (path.includes("donderdag")) return "Donderdag";
+        if (path.includes("zaterdag")) return "Zaterdag";
+        if (path.includes("zondag")) return "Zondag";
+        return "Maandag"; // default voor index.html
+      };
+      
+      const day = getDayName();
       const rows = Array.from(document.querySelectorAll(".row"));
       if (!day || rows.length === 0) return;
 
