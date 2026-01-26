@@ -266,8 +266,72 @@
       background: #3b3f45;
     }
 
+    .exercise-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 10, 12, 0.45);
+      z-index: 1000;
+      padding: 24px;
+    }
+
+    .exercise-modal.is-open {
+      display: flex;
+    }
+
+    .exercise-modal__content {
+      width: min(320px, 90%);
+      background: #3b3f45;
+      color: #f1f2f4;
+      border-radius: 14px;
+      padding: 20px 20px 18px;
+      border: 1px solid #b9bcc3;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+
+    .exercise-modal__content h2 {
+      margin: 0 0 16px;
+      font-size: 1.05rem;
+    }
+
+    .exercise-modal__actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .exercise-modal__actions button {
+      text-decoration: none;
+      color: #f1f2f4;
+      background: #2f3338;
+      border: 1px solid #b9bcc3;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-weight: 600;
+      text-align: center;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .exercise-modal__actions button:hover {
+      background: #3b3f45;
+    }
+
+    .exercise-modal__actions button.delete {
+      color: #ff6b6b;
+      border-color: #ff6b6b;
+    }
+
+    .exercise-modal__actions button.delete:hover {
+      background: rgba(255, 107, 107, 0.1);
+    }
+
     .year-modal__close,
-    .day-modal__close {
+    .day-modal__close,
+    .exercise-modal__close {
       position: absolute;
       top: 10px;
       right: 12px;
@@ -457,6 +521,17 @@
     </div>
   </div>
 
+  <div class="exercise-modal" id="exerciseModal" aria-hidden="true">
+    <div class="exercise-modal__content" role="dialog" aria-modal="true" aria-labelledby="exerciseModalTitle">
+      <button class="exercise-modal__close" type="button" aria-label="Sluiten">&times;</button>
+      <h2 id="exerciseModalTitle">Oefening opties</h2>
+      <div class="exercise-modal__actions">
+        <button type="button" class="add-exercise">Nieuwe oefening toevoegen</button>
+        <button type="button" class="delete-exercise delete">Oefening verwijderen</button>
+      </div>
+    </div>
+  </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   
@@ -536,6 +611,145 @@
 
       // Initialiseer year trigger bij het laden
       setupYearTrigger();
+
+      // Exercise context menu functionaliteit
+      const setupExerciseContextMenu = () => {
+        const exerciseModal = document.getElementById("exerciseModal");
+        const exerciseClose = document.querySelector(".exercise-modal__close");
+        const addExerciseBtn = document.querySelector(".add-exercise");
+        const deleteExerciseBtn = document.querySelector(".delete-exercise");
+        let selectedRow = null;
+
+        if (!exerciseModal || !exerciseClose || !addExerciseBtn || !deleteExerciseBtn) return;
+
+        const openModal = (row) => {
+          selectedRow = row;
+          exerciseModal.classList.add("is-open");
+          exerciseModal.setAttribute("aria-hidden", "false");
+        };
+
+        const closeModal = () => {
+          exerciseModal.classList.remove("is-open");
+          exerciseModal.setAttribute("aria-hidden", "true");
+          selectedRow = null;
+        };
+
+        exerciseClose.addEventListener("click", closeModal);
+        exerciseModal.addEventListener("click", (event) => {
+          if (event.target === exerciseModal) closeModal();
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && exerciseModal.classList.contains("is-open")) {
+            closeModal();
+          }
+        });
+
+        // Touch long press detection
+        let touchTimer = null;
+        let touchStartTime = 0;
+        const LONG_PRESS_DURATION = 500; // 500ms
+
+        const handleTouchStart = (e, row) => {
+          touchStartTime = Date.now();
+          touchTimer = setTimeout(() => {
+            e.preventDefault();
+            openModal(row);
+          }, LONG_PRESS_DURATION);
+        };
+
+        const handleTouchEnd = () => {
+          if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+          }
+        };
+
+        const handleTouchMove = () => {
+          if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+          }
+        };
+
+        // Voeg touch event listeners toe aan alle rows
+        const rows = document.querySelectorAll(".row");
+        rows.forEach((row) => {
+          row.addEventListener("touchstart", (e) => handleTouchStart(e, row), { passive: false });
+          row.addEventListener("touchend", handleTouchEnd);
+          row.addEventListener("touchmove", handleTouchMove);
+          row.addEventListener("touchcancel", handleTouchEnd);
+        });
+
+        // Functie om oefening te verwijderen
+        deleteExerciseBtn.addEventListener("click", () => {
+          if (selectedRow) {
+            selectedRow.remove();
+            closeModal();
+          }
+        });
+
+        // Functie om nieuwe oefening toe te voegen
+        addExerciseBtn.addEventListener("click", () => {
+          const grid = document.querySelector(".grid");
+          if (!grid) return;
+
+          // Bepaal het volgende nummer voor de nieuwe oefening
+          const existingRows = document.querySelectorAll(".row");
+          const nextIndex = existingRows.length + 1;
+
+          // Maak nieuwe row
+          const newRow = document.createElement("div");
+          newRow.className = "row";
+          newRow.innerHTML = `
+            <div class="exercise-cell">
+              <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-${nextIndex}" placeholder="Geef je oefening een naam" />
+              <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-${nextIndex}" />
+            </div>
+            <div class="mini-wrap" data-label="Sets">
+              <input type="text" class="mini-field" name="sets-${nextIndex}" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" />
+            </div>
+            <div class="mini-wrap" data-label="Reps">
+              <input type="text" class="mini-field" name="reps-${nextIndex}" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" />
+            </div>
+            <div class="mini-wrap" data-label="Gewicht">
+              <input type="text" class="mini-field" name="gewicht-${nextIndex}" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" />
+            </div>
+          `;
+
+          // Voeg toe aan het einde van de grid (na de laatste row)
+          if (existingRows.length > 0) {
+            existingRows[existingRows.length - 1].after(newRow);
+          } else {
+            // Als er geen rows zijn, voeg toe na de header-row
+            const headerRow = document.querySelector(".header-row");
+            if (headerRow) {
+              headerRow.after(newRow);
+            } else {
+              grid.appendChild(newRow);
+            }
+          }
+
+          // Voeg touch event listeners toe aan de nieuwe row
+          newRow.addEventListener("touchstart", (e) => handleTouchStart(e, newRow), { passive: false });
+          newRow.addEventListener("touchend", handleTouchEnd);
+          newRow.addEventListener("touchmove", handleTouchMove);
+          newRow.addEventListener("touchcancel", handleTouchEnd);
+
+          // Voeg clampInput toe aan de nieuwe inputs
+          newRow.querySelectorAll("input[data-max]").forEach(clampInput);
+
+          // Focus op het naam veld
+          const nameInput = newRow.querySelector(".exercise-name");
+          if (nameInput) {
+            setTimeout(() => nameInput.focus(), 100);
+          }
+
+          closeModal();
+        });
+      };
+
+      // Initialiseer exercise context menu
+      setupExerciseContextMenu();
 
       const clampInput = (input) => {
         const max = Number(input.dataset.max || 999);
