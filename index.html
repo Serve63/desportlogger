@@ -657,16 +657,23 @@
       };
 
       const incrementSessionCount = async () => {
-        const currentYear = new Date().getFullYear();
-        const currentCount = await getSessionCount();
-        const newCount = currentCount + 1;
-        
-        const { error } = await supabase
-          .from("session_counts")
-          .upsert({ year: currentYear, count: newCount }, { onConflict: 'year' });
-        
-        if (!error) {
+        try {
+          const currentYear = new Date().getFullYear();
+          const currentCount = await getSessionCount();
+          const newCount = currentCount + 1;
+          
+          const { error } = await supabase
+            .from("session_counts")
+            .upsert({ year: currentYear, count: newCount }, { onConflict: 'year' });
+          
+          if (error) {
+            console.error("Error updating session count:", error);
+            return;
+          }
+          
           updateSessionCountDisplay(newCount);
+        } catch (error) {
+          console.error("Error in incrementSessionCount:", error);
         }
       };
 
@@ -688,7 +695,9 @@
       window.addEventListener("DOMContentLoaded", () => {
         const footerCheck = document.querySelector(".footer-check");
         if (!footerCheck) return;
-        footerCheck.addEventListener("click", () => {
+        
+        footerCheck.addEventListener("click", (e) => {
+          e.preventDefault();
           const wasOn = footerCheck.classList.contains("is-on");
           const isOn = footerCheck.classList.toggle("is-on");
           
@@ -813,7 +822,7 @@
 
 
   <div class="footer-toggle">
-    <button class="footer-check" type="button" aria-label="Markeer als afgerond" onclick="this.classList.toggle("is-on");"></button>
+    <button class="footer-check" type="button" aria-label="Markeer als afgerond"></button>
   </div>
 
 </body>
