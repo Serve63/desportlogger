@@ -694,7 +694,27 @@
           return data?.count || 20;
         } catch (error) {
           console.error("Error in getSessionCount:", error);
-          return 27; // Fallback
+          return 20; // Fallback
+        }
+      };
+
+      // Functie om sessie count te resetten naar 20
+      const resetSessionCountTo20 = async () => {
+        try {
+          const currentYear = new Date().getFullYear();
+          const { error } = await supabase
+            .from("session_counts")
+            .upsert({ year: currentYear, count: 20 }, { onConflict: 'year' });
+          
+          if (error) {
+            console.error("Error resetting session count:", error);
+            return;
+          }
+          
+          console.log("Session count reset to 20");
+          updateSessionCountDisplay(20);
+        } catch (error) {
+          console.error("Error in resetSessionCountTo20:", error);
         }
       };
 
@@ -747,10 +767,16 @@
         }
       };
 
-      // Laad de huidige sessie count
+      // Laad de huidige sessie count en reset naar 20 als nodig
       (async () => {
         const count = await getSessionCount();
-        updateSessionCountDisplay(count);
+        // Als de count niet 20 is, reset naar 20
+        if (count !== 20) {
+          console.log(`Current count is ${count}, resetting to 20`);
+          await resetSessionCountTo20();
+        } else {
+          updateSessionCountDisplay(count);
+        }
       })();
 
       window.addEventListener("DOMContentLoaded", () => {
