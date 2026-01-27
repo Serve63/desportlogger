@@ -266,6 +266,10 @@
       background: #3b3f45;
     }
 
+    .day-modal__grid a.is-today {
+      color: #2ea043;
+    }
+
     .exercise-modal {
       position: fixed;
       inset: 0;
@@ -689,10 +693,14 @@
               link.dataset.originalText = link.textContent;
             }
             link.textContent = "Vandaag";
-          } else if (link.dataset.originalText) {
+            link.classList.add("is-today");
+          } else {
             // Herstel de originele tekst als het niet meer vandaag is
-            link.textContent = link.dataset.originalText;
-            delete link.dataset.originalText;
+            if (link.dataset.originalText) {
+              link.textContent = link.dataset.originalText;
+              delete link.dataset.originalText;
+            }
+            link.classList.remove("is-today");
           }
         });
       };
