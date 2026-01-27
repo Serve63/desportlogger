@@ -664,6 +664,42 @@
       // Update de button tekst bij het laden
       updateDayTriggerText();
 
+      // Update dag-menu links: toon "Vandaag" voor de huidige dag
+      const updateDayModalLinks = () => {
+        const dayModalLinks = document.querySelectorAll(".day-modal__grid a");
+        if (!dayModalLinks.length) return;
+
+        const today = new Date().getDay(); // 0 = zondag, 1 = maandag, etc.
+        const dayMapping = {
+          "index.html": 1,      // Maandag
+          "dinsdag.html": 2,    // Dinsdag
+          "woensdag.html": 3,   // Woensdag
+          "donderdag.html": 4,   // Donderdag
+          "zaterdag.html": 6,    // Zaterdag
+          "zondag.html": 0       // Zondag
+        };
+
+        dayModalLinks.forEach((link) => {
+          const href = link.getAttribute("href");
+          const dayNumber = dayMapping[href];
+          
+          if (dayNumber !== undefined && dayNumber === today) {
+            // Bewaar de originele tekst in een data attribuut
+            if (!link.dataset.originalText) {
+              link.dataset.originalText = link.textContent;
+            }
+            link.textContent = "Vandaag";
+          } else if (link.dataset.originalText) {
+            // Herstel de originele tekst als het niet meer vandaag is
+            link.textContent = link.dataset.originalText;
+            delete link.dataset.originalText;
+          }
+        });
+      };
+
+      // Update de menu links bij het laden
+      updateDayModalLinks();
+
 
       const clampInput = (input) => {
         const max = Number(input.dataset.max || 999);
