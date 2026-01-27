@@ -539,6 +539,26 @@
   
   <script>
     (() => {
+      // Redirect naar de juiste dag pagina als het niet vandaag is
+      const today = new Date().getDay(); // 0 = zondag, 1 = maandag, etc.
+      const dayPages = {
+        0: "zondag.html",   // Zondag
+        1: "index.html",     // Maandag
+        2: "dinsdag.html",   // Dinsdag
+        3: "woensdag.html",  // Woensdag
+        4: "donderdag.html", // Donderdag
+        5: "index.html",     // Vrijdag (geen aparte pagina, gebruik maandag)
+        6: "zaterdag.html"   // Zaterdag
+      };
+      
+      const todayPage = dayPages[today];
+      const currentPage = window.location.pathname.split("/").pop() || "index.html";
+      
+      // Als de huidige pagina niet de pagina van vandaag is, redirect
+      if (currentPage !== todayPage) {
+        window.location.replace(todayPage);
+        return; // Stop verdere uitvoering
+      }
 
       const dayTrigger = document.querySelector(".day-trigger");
       const dayModal = document.getElementById("dayModal");
