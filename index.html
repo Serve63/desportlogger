@@ -614,6 +614,35 @@
       // Initialiseer year trigger bij het laden
       setupYearTrigger();
 
+      // Update day-trigger button tekst: "Vandaag" als het vandaag is, anders de dag naam
+      const updateDayTriggerText = () => {
+        const dayTrigger = document.querySelector(".day-trigger");
+        if (!dayTrigger) return;
+
+        // Bepaal welke dag deze pagina representeert
+        const getPageDay = () => {
+          const path = window.location.pathname;
+          if (path.includes("dinsdag")) return 2; // Dinsdag = 2
+          if (path.includes("woensdag")) return 3; // Woensdag = 3
+          if (path.includes("donderdag")) return 4; // Donderdag = 4
+          if (path.includes("zaterdag")) return 6; // Zaterdag = 6
+          if (path.includes("zondag")) return 0; // Zondag = 0
+          return 1; // Maandag = 1 (default voor index.html)
+        };
+
+        // Bepaal de dag namen
+        const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+        
+        const today = new Date().getDay(); // 0 = zondag, 1 = maandag, etc.
+        const pageDay = getPageDay();
+        const pageDayName = dayNames[pageDay];
+
+        // Als het vandaag dezelfde dag is als de pagina, toon "Vandaag", anders de dag naam
+        dayTrigger.textContent = today === pageDay ? "Vandaag" : pageDayName;
+      };
+
+      // Update de button tekst bij het laden
+      updateDayTriggerText();
 
       const clampInput = (input) => {
         const max = Number(input.dataset.max || 999);
