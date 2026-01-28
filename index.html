@@ -29,7 +29,7 @@
       --footer-offset: 72px;
     
       --exercise-font: 0.72rem;
-      --note-font: 0.65rem;
+      --note-font: 0.6rem;
       --mini-font: 0.75rem;
     }
 
@@ -423,7 +423,7 @@
         --footer-offset: 68px;
       
         --exercise-font: 16px;
-        --note-font: 14px;
+        --note-font: 12px;
         --mini-font: 16px;
       }
 
@@ -1034,9 +1034,25 @@
         updateSessionCountDisplay(finalCount);
       })();
 
+      const getPageDayNumber = () => {
+        const path = window.location.pathname;
+        if (path.includes("dinsdag")) return 2;
+        if (path.includes("woensdag")) return 3;
+        if (path.includes("donderdag")) return 4;
+        if (path.includes("zaterdag")) return 6;
+        if (path.includes("zondag")) return 0;
+        return 1;
+      };
+
       window.addEventListener("DOMContentLoaded", () => {
         const footerCheck = document.querySelector(".footer-check");
         const footerToggle = document.querySelector(".footer-toggle");
+        const today = new Date().getDay();
+        const pageDay = getPageDayNumber();
+        if (footerToggle && today !== pageDay) {
+          footerToggle.remove();
+          return;
+        }
         if (footerToggle) {
           const preventScroll = (event) => {
             if (event.cancelable) event.preventDefault();
