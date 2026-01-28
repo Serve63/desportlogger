@@ -24,6 +24,9 @@
       --line: #6a6f78;
       --stroke: #7a8089;
       --field: #3b3f45;
+      --page-top: 40px;
+      --page-bottom: 72px;
+      --footer-offset: 36px;
     }
 
     * {
@@ -35,7 +38,7 @@
       overflow: hidden;
       position: fixed;
       width: 100%;
-      touch-action: none;
+      touch-action: pan-y;
     }
 
     body::-webkit-scrollbar {
@@ -52,13 +55,17 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 40px 12px 48px;
+      padding: var(--page-top) 12px calc(var(--page-bottom) + env(safe-area-inset-bottom));
     }
 
     .sheet {
       width: min(980px, 100%);
       padding: 8px 2px 18px;
       position: relative;
+      max-height: calc(100vh - var(--page-top) - var(--page-bottom) - env(safe-area-inset-bottom));
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
     }
 
     header {
@@ -360,7 +367,7 @@
 
     .footer-toggle {
       position: fixed;
-      bottom: calc(48px + env(safe-area-inset-bottom));
+      bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
       left: 0;
       right: 0;
       display: flex;
@@ -402,7 +409,13 @@
 
     @media (max-width: 720px) {
       body {
-        padding: 16px 16px 70px;
+        padding: var(--page-top) 16px calc(var(--page-bottom) + env(safe-area-inset-bottom));
+      }
+
+      :root {
+        --page-top: 16px;
+        --page-bottom: 80px;
+        --footer-offset: 32px;
       }
 
       header {
@@ -551,7 +564,7 @@
   
   <script>
     (() => {
-      const APP_VERSION = "2026-01-28-4";
+      const APP_VERSION = "2026-01-28-5";
       const withVersion = (url) => {
         const separator = url.includes("?") ? "&" : "?";
         return `${url}${separator}v=${APP_VERSION}`;
