@@ -27,6 +27,10 @@
       --page-top: 113px;
       --page-bottom: 72px;
       --footer-offset: 72px;
+    
+      --exercise-font: 0.72rem;
+      --note-font: 0.65rem;
+      --mini-font: 0.75rem;
     }
 
     * {
@@ -181,13 +185,13 @@
     }
 
     .exercise-cell .exercise-name {
-      font-size: 0.72rem;
+      font-size: var(--exercise-font);
       font-weight: 500;
     }
 
     .exercise-cell .exercise-note {
       color: #c6c8cc;
-      font-size: 0.65rem;
+      font-size: var(--note-font);
     }
 
     .mini-wrap {
@@ -203,7 +207,7 @@
       height: 42px;
       padding: 0;
       text-align: center;
-      font-size: 0.75rem;
+      font-size: var(--mini-font);
       line-height: 1;
       display: inline-flex;
       align-items: center;
@@ -417,6 +421,10 @@
         --page-top: 73px;
         --page-bottom: 96px;
         --footer-offset: 68px;
+      
+        --exercise-font: 16px;
+        --note-font: 14px;
+        --mini-font: 16px;
       }
 
       header {
@@ -447,15 +455,6 @@
       .mini-field {
         width: 40px;
         height: 40px;
-        font-size: 16px !important;
-      }
-
-      .exercise-cell .exercise-name {
-        font-size: 16px !important;
-      }
-
-      .exercise-cell .exercise-note {
-        font-size: 14px !important;
       }
     }
 
@@ -473,15 +472,6 @@
       .mini-field {
         width: 36px;
         height: 36px;
-        font-size: 16px !important;
-      }
-
-      .exercise-cell .exercise-name {
-        font-size: 16px !important;
-      }
-
-      .exercise-cell .exercise-note {
-        font-size: 14px !important;
       }
     }
   
@@ -1185,6 +1175,7 @@
           await upsertRow(allRows[i], i);
         }
         console.log("Alle rows opnieuw opgeslagen");
+        updateDynamicLayout();
       };
 
       // Functie om event listeners toe te voegen aan een row
@@ -1204,10 +1195,6 @@
           });
         });
       };
-
-      getCurrentRows().forEach((row) => {
-        attachRowEventListeners(row);
-      });
 
       const buildRow = (displayIndex) => {
         const row = document.createElement("div");
@@ -1262,6 +1249,15 @@
         rows[rows.length - 1].before(row);
       };
 
+      const insertRowBeforeSelected = (row, selectedRow) => {
+        if (!row) return false;
+        if (selectedRow && selectedRow.parentNode) {
+          selectedRow.before(row);
+          return true;
+        }
+        return false;
+      };
+
       const initRow = (row) => {
         if (!row) return;
         row.querySelectorAll("input[data-max]").forEach(clampInput);
@@ -1270,6 +1266,48 @@
           attachTouchListeners(row);
         }
       };
+
+      const updateDynamicLayout = () => {
+        const rows = getCurrentRows();
+        const count = rows.length;
+        const isNarrow = window.matchMedia("(max-width: 720px)").matches;
+        const baseSizes = isNarrow
+          ? { exercise: 16, note: 14, mini: 16 }
+          : { exercise: 11.5, note: 10.5, mini: 12 };
+        const scale = count > 6 ? Math.max(0.75, 1 - (count - 6) * 0.04) : 1;
+
+        const setVar = (name, value) => {
+          document.documentElement.style.setProperty(name, `${value.toFixed(2)}px`);
+        };
+        setVar("--exercise-font", baseSizes.exercise * scale);
+        setVar("--note-font", baseSizes.note * scale);
+        setVar("--mini-font", baseSizes.mini * scale);
+
+        const footerToggle = document.querySelector(".footer-toggle");
+        if (footerToggle && rows.length) {
+          const lastRow = rows[rows.length - 1];
+          const footerRect = footerToggle.getBoundingClientRect();
+          const buttonHeight = footerRect.height || 36;
+          const viewportHeight = window.innerHeight;
+          const lastRect = lastRow.getBoundingClientRect();
+          const gap = 16;
+          const minTop = 12;
+          const maxTop = viewportHeight - buttonHeight - 12;
+          const desiredTop = Math.min(lastRect.bottom + gap, maxTop);
+          const finalTop = Math.max(minTop, desiredTop);
+          footerToggle.style.top = `${finalTop}px`;
+          footerToggle.style.bottom = "auto";
+        }
+      };
+
+      getCurrentRows().forEach((row) => {
+        attachRowEventListeners(row);
+      });
+      updateDynamicLayout();
+
+      window.addEventListener("resize", () => {
+        updateDynamicLayout();
+      });
 
       // Exercise context menu functionaliteit (nu met toegang tot Supabase functies)
       let attachTouchListeners = null;
@@ -1367,8 +1405,11 @@
           // Maak nieuwe row
           const newRow = buildRow(nextIndex);
 
-          // Voeg toe boven de laatste row
-          insertRowBeforeLast(newRow);
+          // Voeg toe boven de ingehouden (geselecteerde) row
+          const inserted = insertRowBeforeSelected(newRow, selectedRow);
+          if (!inserted) {
+            insertRowBeforeLast(newRow);
+          }
 
           // Initialiseer de nieuwe row
           initRow(newRow);
@@ -1430,6 +1471,7 @@
           if (repsInput && item.reps != null) repsInput.value = item.reps;
           if (weightInput && item.weight != null) weightInput.value = item.weight;
         });
+        updateDynamicLayout();
       })();
     })();
   </script>
