@@ -24,9 +24,9 @@
       --line: #6a6f78;
       --stroke: #7a8089;
       --field: #3b3f45;
-      --page-top: 40px;
+      --page-top: 64px;
       --page-bottom: 72px;
-      --footer-offset: 36px;
+      --footer-offset: 60px;
     }
 
     * {
@@ -413,9 +413,9 @@
       }
 
       :root {
-        --page-top: 16px;
-        --page-bottom: 80px;
-        --footer-offset: 32px;
+        --page-top: 36px;
+        --page-bottom: 90px;
+        --footer-offset: 56px;
       }
 
       header {
@@ -564,7 +564,7 @@
   
   <script>
     (() => {
-      const APP_VERSION = "2026-01-28-5";
+      const APP_VERSION = "2026-01-28-6";
       const withVersion = (url) => {
         const separator = url.includes("?") ? "&" : "?";
         return `${url}${separator}v=${APP_VERSION}`;
