@@ -63,7 +63,14 @@
       padding: var(--page-top) 12px calc(var(--page-bottom) + env(safe-area-inset-bottom));
     }
 
+    
+    .sheet::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
     .sheet {
+      scrollbar-width: none;
       width: min(980px, 100%);
       padding: 8px 2px 18px;
       position: relative;
@@ -170,32 +177,36 @@
     }
 
     .exercise-cell {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      display: grid;
+      grid-template-columns: 16px 1fr;
+      column-gap: 6px;
+      row-gap: 4px;
+      align-items: center;
       min-width: 0;
-      position: relative;
     }
 
     .drag-handle {
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
-      border: 1px solid var(--line);
-      background: #2f3338;
+      grid-column: 1;
+      grid-row: 1;
+      align-self: start;
+      width: 14px;
+      height: 14px;
+      border: none;
+      background: transparent;
+      box-shadow: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: var(--muted);
       cursor: grab;
       user-select: none;
       touch-action: none;
-      margin-bottom: 2px;
+      padding: 0;
+      margin-top: 2px;
     }
 
     .drag-handle::before {
       content: "≡";
-      font-size: 14px;
+      font-size: 12px;
       line-height: 1;
     }
 
@@ -214,11 +225,15 @@
     }
 
     .exercise-cell .exercise-name {
+      grid-column: 2;
+      grid-row: 1;
       font-size: var(--exercise-font);
       font-weight: 500;
     }
 
     .exercise-cell .exercise-note {
+      grid-column: 2;
+      grid-row: 2;
       color: #c6c8cc;
       font-size: var(--note-font);
     }
