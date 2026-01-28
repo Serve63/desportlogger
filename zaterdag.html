@@ -19,8 +19,8 @@
     @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Sora:wght@400;500;600&display=swap");
 
     :root {
-      --exercise-font: 0.72rem;
-      --note-font: 0.6rem;
+      --exercise-font: 0.66rem;
+      --note-font: 0.54rem;
       --mini-font: 0.75rem;
       --ink: #eef0f3;
       --muted: #c2c6cc;
@@ -172,7 +172,35 @@
       flex-direction: column;
       gap: 4px;
       min-width: 0;
+      position: relative;
     }
+
+    .drag-handle {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: #2f3338;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      margin-bottom: 2px;
+    }
+
+    .drag-handle::before {
+      content: "≡";
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .row.is-dragging {
+      opacity: 0.6;
+    }
+
 
     .exercise-cell .exercise-name,
     .exercise-cell .exercise-note {
@@ -368,7 +396,11 @@
       color: #f1f2f4;
     }
 
-    .footer-toggle {
+    
+    body.not-today .footer-toggle {
+      display: none;
+    }
+.footer-toggle {
       touch-action: none;
       position: fixed;
       bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
@@ -421,8 +453,8 @@
         --page-bottom: 96px;
         --footer-offset: 68px;
       
-        --exercise-font: 16px;
-        --note-font: 12px;
+        --exercise-font: 14px;
+        --note-font: 11px;
         --mini-font: 16px;
       }
 
@@ -1196,6 +1228,7 @@
         row.className = "row";
         row.innerHTML = `
             <div class="exercise-cell">
+              <button class="drag-handle" type="button" aria-label="Verplaats oefening"></button>
               <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-${displayIndex}" placeholder="Geef je oefening een naam" />
               <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-${displayIndex}" />
             </div>
@@ -1253,8 +1286,20 @@
         return false;
       };
 
+      const ensureRowHandle = (row) => {
+        const cell = row.querySelector(".exercise-cell");
+        if (!cell) return;
+        if (cell.querySelector(".drag-handle")) return;
+        const handle = document.createElement("button");
+        handle.className = "drag-handle";
+        handle.type = "button";
+        handle.setAttribute("aria-label", "Verplaats oefening");
+        cell.prepend(handle);
+      };
+
       const initRow = (row) => {
         if (!row) return;
+        ensureRowHandle(row);
         row.querySelectorAll("input[data-max]").forEach(clampInput);
         attachRowEventListeners(row);
         if (typeof attachTouchListeners === "function") {
@@ -1279,7 +1324,7 @@
         setVar("--mini-font", baseSizes.mini * scale);
 
         const footerToggle = document.querySelector(".footer-toggle");
-        if (footerToggle && rows.length) {
+        if (footerToggle && rows.length && !document.body.classList.contains("not-today")) {
           const lastRow = rows[rows.length - 1];
           const footerRect = footerToggle.getBoundingClientRect();
           const buttonHeight = footerRect.height || 36;
@@ -1297,6 +1342,7 @@
 
       getCurrentRows().forEach((row) => {
         attachRowEventListeners(row);
+        ensureRowHandle(row);
       });
       updateDynamicLayout();
 
@@ -1340,6 +1386,7 @@
         const LONG_PRESS_DURATION = 500; // 500ms
 
         const handleTouchStart = (e, row) => {
+          if (e.target && e.target.closest && e.target.closest(".drag-handle")) return;
           touchTimer = setTimeout(() => {
             e.preventDefault();
             openModal(row);
@@ -1426,6 +1473,63 @@
 
       // Initialiseer exercise context menu
       setupExerciseContextMenu();
+
+      const setupRowReorder = () => {
+        const grid = document.querySelector(".grid");
+        if (!grid) return;
+
+        let draggingRow = null;
+
+        const getClientY = (event) => {
+          if (event.touches && event.touches[0]) return event.touches[0].clientY;
+          return event.clientY;
+        };
+
+        const onPointerDown = (event) => {
+          const handle = event.target.closest(".drag-handle");
+          if (!handle) return;
+          const row = handle.closest(".row");
+          if (!row) return;
+          event.preventDefault();
+          draggingRow = row;
+          draggingRow.classList.add("is-dragging");
+        };
+
+        const onPointerMove = (event) => {
+          if (!draggingRow) return;
+          if (event.cancelable) event.preventDefault();
+          const y = getClientY(event);
+          const rows = getCurrentRows().filter((row) => row !== draggingRow);
+          let inserted = false;
+          for (const row of rows) {
+            const rect = row.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            if (y < midpoint) {
+              row.before(draggingRow);
+              inserted = true;
+              break;
+            }
+          }
+          if (!inserted && rows.length) {
+            rows[rows.length - 1].after(draggingRow);
+          }
+          updateDynamicLayout();
+        };
+
+        const onPointerUp = async () => {
+          if (!draggingRow) return;
+          draggingRow.classList.remove("is-dragging");
+          draggingRow = null;
+          await reindexAndSaveAllRows();
+        };
+
+        grid.addEventListener("pointerdown", onPointerDown);
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", onPointerUp);
+        window.addEventListener("pointercancel", onPointerUp);
+      };
+
+      setupRowReorder();
 
       (async () => {
         console.log("Loading data for day:", day);
