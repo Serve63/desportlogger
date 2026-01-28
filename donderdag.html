@@ -921,26 +921,6 @@
       const incrementSessionCount = () => updateSessionCount(true);
       const decrementSessionCount = () => updateSessionCount(false);
 
-      // Functie om sessie count te resetten naar 20
-      const resetSessionCountTo20 = async () => {
-        try {
-          const currentYear = new Date().getFullYear();
-          const { error } = await supabase
-            .from("session_counts")
-            .upsert({ year: currentYear, count: 20 }, { onConflict: 'year' });
-          
-          if (error) {
-            console.error("Error resetting session count:", error);
-            return;
-          }
-          
-          console.log("Session count reset to 20");
-          updateSessionCountDisplay(20);
-        } catch (error) {
-          console.error("Error in resetSessionCountTo20:", error);
-        }
-      };
-
       const updateSessionCountDisplay = (count) => {
         const trainingCountEl = document.querySelector(".training-count");
         if (trainingCountEl) {
