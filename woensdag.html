@@ -564,7 +564,7 @@
   
   <script>
     (() => {
-      const APP_VERSION = "2026-01-28-8";
+      const APP_VERSION = "2026-01-28-9";
       const withVersion = (url) => {
         const separator = url.includes("?") ? "&" : "?";
         return `${url}${separator}v=${APP_VERSION}`;
@@ -584,14 +584,15 @@
       
       const todayPage = dayPages[today];
       const currentPage = window.location.pathname.split("/").pop() || "index.html";
+      const currentUrl = new URL(window.location.href);
+      const manualView = currentUrl.searchParams.get("manual") === "1";
       
-      // Als de huidige pagina niet de pagina van vandaag is, redirect
-      if (currentPage !== todayPage) {
+      // Als de huidige pagina niet de pagina van vandaag is, redirect (behalve bij handmatige keuze)
+      if (currentPage !== todayPage && !manualView) {
         window.location.replace(withVersion(todayPage));
         return; // Stop verdere uitvoering
       }
 
-      const currentUrl = new URL(window.location.href);
       if (currentUrl.searchParams.get("v") !== APP_VERSION) {
         currentUrl.searchParams.set("v", APP_VERSION);
         window.location.replace(currentUrl.toString());
@@ -723,7 +724,8 @@
           const dayNumber = dayMapping[baseHref];
 
           if (baseHref) {
-            link.setAttribute("href", withVersion(baseHref));
+            const manualHref = `${baseHref}?manual=1`;
+            link.setAttribute("href", withVersion(manualHref));
           }
           
           if (dayNumber !== undefined && dayNumber === today) {
