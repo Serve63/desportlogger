@@ -366,6 +366,7 @@
     }
 
     .footer-toggle {
+      touch-action: none;
       position: fixed;
       bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
       left: 0;
@@ -1044,6 +1045,13 @@
 
       window.addEventListener("DOMContentLoaded", () => {
         const footerCheck = document.querySelector(".footer-check");
+        const footerToggle = document.querySelector(".footer-toggle");
+        if (footerToggle) {
+          const preventScroll = (event) => {
+            if (event.cancelable) event.preventDefault();
+          };
+          footerToggle.addEventListener("touchmove", preventScroll, { passive: false });
+        }
         if (!footerCheck) return;
         
         footerCheck.addEventListener("click", (e) => {
@@ -1078,8 +1086,10 @@
       };
       
       const day = getDayName();
-      const rows = Array.from(document.querySelectorAll(".row"));
-      if (!day || rows.length === 0) return;
+      const getCurrentRows = () => Array.from(document.querySelectorAll(".row"));
+      if (!day || getCurrentRows().length === 0) return;
+
+      const getRowIndex = (row) => getCurrentRows().indexOf(row);
 
       const getRowData = (row, index) => {
         const nameInput = row.querySelector(".exercise-name");
@@ -1106,6 +1116,7 @@
       };
 
       const upsertRow = async (row, index) => {
+        if (index == null || index < 0) return;
         const payload = getRowData(row, index);
         console.log("Saving data:", payload);
         const { data, error } = await supabase
@@ -1130,9 +1141,11 @@
         return null;
       };
 
-      const clearField = async (row, index, input) => {
+      const clearField = async (row, input) => {
         const column = getColumnForInput(input);
         if (!column) return;
+        const index = getRowIndex(row);
+        if (index < 0) return;
         const { error } = await supabase
           .from("workout_entries")
           .update({ [column]: null })
@@ -1140,47 +1153,125 @@
         if (error) console.warn("Supabase clear failed", error);
       };
 
-      const timers = new Map();
-      const scheduleSave = (row, index, immediate = false) => {
-        if (timers.has(index)) clearTimeout(timers.get(index));
+      const timers = new WeakMap();
+      const scheduleSave = (row, immediate = false) => {
+        if (!row) return;
+        const existingTimer = timers.get(row);
+        if (existingTimer) clearTimeout(existingTimer);
         const delay = immediate ? 0 : 500;
-        timers.set(index, setTimeout(() => upsertRow(row, index), delay));
+        const timer = setTimeout(() => {
+          const index = getRowIndex(row);
+          if (index < 0) return;
+          upsertRow(row, index);
+        }, delay);
+        timers.set(row, timer);
       };
 
       // Functie om alle rows opnieuw te indexeren en op te slaan
       const reindexAndSaveAllRows = async () => {
+        console.log("reindexAndSaveAllRows aangeroepen voor dag:", day);
         const allRows = Array.from(document.querySelectorAll(".row"));
+        console.log("Aantal rows:", allRows.length);
         // Verwijder eerst alle oude entries voor deze dag
-        await supabase.from("workout_entries").delete().eq("day", day);
+        const { error: deleteError } = await supabase.from("workout_entries").delete().eq("day", day);
+        if (deleteError) {
+          console.error("Fout bij verwijderen oude entries:", deleteError);
+        } else {
+          console.log("Oude entries verwijderd");
+        }
         // Sla alle rows opnieuw op met nieuwe indices
         for (let i = 0; i < allRows.length; i++) {
           await upsertRow(allRows[i], i);
         }
+        console.log("Alle rows opnieuw opgeslagen");
       };
 
       // Functie om event listeners toe te voegen aan een row
-      const attachRowEventListeners = (row, index) => {
+      const attachRowEventListeners = (row) => {
         row.querySelectorAll("input").forEach((input) => {
           input.addEventListener("input", () => {
             const value = input.value ?? "";
             if (value === "") {
-              clearField(row, index, input);
-              scheduleSave(row, index, true);
+              clearField(row, input);
+              scheduleSave(row, true);
               return;
             }
-            scheduleSave(row, index, false);
+            scheduleSave(row, false);
           });
           input.addEventListener("blur", () => {
-            scheduleSave(row, index, true);
+            scheduleSave(row, true);
           });
         });
       };
 
-      rows.forEach((row, index) => {
-        attachRowEventListeners(row, index);
+      getCurrentRows().forEach((row) => {
+        attachRowEventListeners(row);
       });
 
+      const buildRow = (displayIndex) => {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `
+            <div class="exercise-cell">
+              <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-${displayIndex}" placeholder="Geef je oefening een naam" />
+              <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-${displayIndex}" />
+            </div>
+            <div class="mini-wrap" data-label="Sets">
+              <input type="text" class="mini-field" name="sets-${displayIndex}" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" />
+            </div>
+            <div class="mini-wrap" data-label="Reps">
+              <input type="text" class="mini-field" name="reps-${displayIndex}" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" />
+            </div>
+            <div class="mini-wrap" data-label="Gewicht">
+              <input type="text" class="mini-field" name="gewicht-${displayIndex}" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" />
+            </div>
+          `;
+        return row;
+      };
+
+      const insertRowAtEnd = (row) => {
+        const grid = document.querySelector(".grid");
+        if (!grid || !row) return;
+        const rows = getCurrentRows();
+        if (rows.length > 0) {
+          rows[rows.length - 1].after(row);
+          return;
+        }
+        const headerRow = document.querySelector(".header-row");
+        if (headerRow) {
+          headerRow.after(row);
+        } else {
+          grid.appendChild(row);
+        }
+      };
+
+      const insertRowBeforeLast = (row) => {
+        const grid = document.querySelector(".grid");
+        if (!grid || !row) return;
+        const rows = getCurrentRows();
+        if (rows.length === 0) {
+          const headerRow = document.querySelector(".header-row");
+          if (headerRow) {
+            headerRow.after(row);
+          } else {
+            grid.appendChild(row);
+          }
+          return;
+        }
+        rows[rows.length - 1].before(row);
+      };
+
+      const initRow = (row) => {
+        if (!row) return;
+        row.querySelectorAll("input[data-max]").forEach(clampInput);
+        attachRowEventListeners(row);
+        if (typeof attachTouchListeners === "function") {
+          attachTouchListeners(row);
+        }
+      };
+
       // Exercise context menu functionaliteit (nu met toegang tot Supabase functies)
+      let attachTouchListeners = null;
       const setupExerciseContextMenu = () => {
         const exerciseModal = document.getElementById("exerciseModal");
         const addExerciseBtn = document.querySelector(".add-exercise");
@@ -1236,7 +1327,7 @@
         };
 
         // Functie om touch listeners toe te voegen aan een row
-        const attachTouchListeners = (row) => {
+        attachTouchListeners = (row) => {
           row.addEventListener("touchstart", (e) => handleTouchStart(e, row), { passive: false });
           row.addEventListener("touchend", handleTouchEnd);
           row.addEventListener("touchmove", handleTouchMove);
@@ -1252,11 +1343,14 @@
         // Functie om oefening te verwijderen
         deleteExerciseBtn.addEventListener("click", async () => {
           if (selectedRow) {
+            console.log("Verwijderen oefening...");
             // Verwijder de row uit de DOM
             selectedRow.remove();
             closeModal();
             // Herindexeer en sla alle rows opnieuw op
+            console.log("Herindexeren en opslaan...");
             await reindexAndSaveAllRows();
+            console.log("Oefening verwijderd en opgeslagen");
           }
         });
 
@@ -1266,52 +1360,22 @@
           if (!grid) return;
 
           // Bepaal het volgende nummer voor de nieuwe oefening
-          const existingRows = document.querySelectorAll(".row");
-          const nextIndex = existingRows.length + 1;
+          const existingRows = getCurrentRows();
+          const nextIndex = Math.max(1, existingRows.length);
 
           // Maak nieuwe row
-          const newRow = document.createElement("div");
-          newRow.className = "row";
-          newRow.innerHTML = `
-            <div class="exercise-cell">
-              <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-${nextIndex}" placeholder="Geef je oefening een naam" />
-              <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-${nextIndex}" />
-            </div>
-            <div class="mini-wrap" data-label="Sets">
-              <input type="text" class="mini-field" name="sets-${nextIndex}" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" />
-            </div>
-            <div class="mini-wrap" data-label="Reps">
-              <input type="text" class="mini-field" name="reps-${nextIndex}" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" />
-            </div>
-            <div class="mini-wrap" data-label="Gewicht">
-              <input type="text" class="mini-field" name="gewicht-${nextIndex}" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" />
-            </div>
-          `;
+          const newRow = buildRow(nextIndex);
 
-          // Voeg toe aan het einde van de grid (na de laatste row)
-          if (existingRows.length > 0) {
-            existingRows[existingRows.length - 1].after(newRow);
-          } else {
-            // Als er geen rows zijn, voeg toe na de header-row
-            const headerRow = document.querySelector(".header-row");
-            if (headerRow) {
-              headerRow.after(newRow);
-            } else {
-              grid.appendChild(newRow);
-            }
-          }
+          // Voeg toe boven de laatste row
+          insertRowBeforeLast(newRow);
 
-          // Voeg touch event listeners toe aan de nieuwe row
-          attachTouchListeners(newRow);
+          // Initialiseer de nieuwe row
+          initRow(newRow);
 
-          // Voeg clampInput toe aan de nieuwe inputs
-          newRow.querySelectorAll("input[data-max]").forEach(clampInput);
-
-          // Voeg event listeners toe voor input/blur
-          attachRowEventListeners(newRow, existingRows.length);
-
-          // Sla de nieuwe row op in Supabase
-          await upsertRow(newRow, existingRows.length);
+          // Herindexeer en sla alles op zodat indices blijven kloppen
+          console.log("Herindexeren en opslaan...");
+          await reindexAndSaveAllRows();
+          console.log("Nieuwe oefening toegevoegd en opgeslagen");
 
           // Focus op het naam veld
           const nameInput = newRow.querySelector(".exercise-name");
@@ -1338,8 +1402,20 @@
           return;
         }
         console.log("Loaded data:", data);
+        const maxIndex = data.reduce((max, item) => {
+          const value = Number(item.exercise_index) || 0;
+          return Math.max(max, value);
+        }, 0);
+        const currentRows = getCurrentRows();
+        if (maxIndex > currentRows.length) {
+          for (let i = currentRows.length; i < maxIndex; i++) {
+            const newRow = buildRow(i + 1);
+            insertRowAtEnd(newRow);
+            initRow(newRow);
+          }
+        }
         data.forEach((item) => {
-          const row = rows[item.exercise_index - 1];
+          const row = getCurrentRows()[item.exercise_index - 1];
           if (!row) return;
           const nameInput = row.querySelector(".exercise-name");
           const noteInput = row.querySelector(".exercise-note");
