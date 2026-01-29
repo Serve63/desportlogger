@@ -61,6 +61,13 @@
       justify-content: center;
       align-items: flex-start;
       padding: var(--page-top) 12px calc(var(--page-bottom) + env(safe-area-inset-bottom));
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    input {
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     
@@ -178,8 +185,8 @@
 
     .exercise-cell {
       display: grid;
-      grid-template-columns: 16px 1fr;
-      column-gap: 6px;
+      grid-template-columns: 20px 1fr;
+      column-gap: 4px;
       row-gap: 4px;
       align-items: center;
       min-width: 0;
@@ -188,9 +195,10 @@
     .drag-handle {
       grid-column: 1;
       grid-row: 1 / span 2;
-      align-self: start;
-      width: 14px;
-      height: 14px;
+      align-self: center;
+      width: 44px;
+      height: 44px;
+      margin: -12px;
       border: none;
       background: transparent;
       box-shadow: none;
@@ -199,11 +207,10 @@
       align-items: center;
       justify-content: center;
       cursor: grab;
+      -webkit-user-select: none;
       user-select: none;
       touch-action: none;
       padding: 0;
-      margin-top: -1px;
-      margin: 0;
     }
 
     .drag-handle::before {
@@ -217,7 +224,15 @@
     }
 
     .row.is-dragging {
-      opacity: 0.6;
+      opacity: 0.85;
+      background: rgba(47, 51, 56, 0.95);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      position: relative;
+      z-index: 100;
+    }
+
+    body.is-dragging-active {
+      cursor: grabbing;
     }
 
 
@@ -1521,26 +1536,23 @@
 
         let draggingRow = null;
 
-        const getClientY = (event) => {
-          if (event.touches && event.touches[0]) return event.touches[0].clientY;
-          return event.clientY;
-        };
-
         const onPointerDown = (event) => {
           const handle = event.target.closest(".drag-handle");
           if (!handle) return;
           const row = handle.closest(".row");
           if (!row) return;
           event.preventDefault();
+          grid.setPointerCapture(event.pointerId);
           draggingRow = row;
           draggingRow.classList.add("is-dragging");
+          document.body.classList.add("is-dragging-active");
         };
 
         const onPointerMove = (event) => {
           if (!draggingRow) return;
           if (event.cancelable) event.preventDefault();
-          const y = getClientY(event);
-          const rows = getCurrentRows().filter((row) => row !== draggingRow);
+          const y = event.clientY;
+          const rows = getCurrentRows().filter((r) => r !== draggingRow);
           let inserted = false;
           for (const row of rows) {
             const rect = row.getBoundingClientRect();
@@ -1560,14 +1572,15 @@
         const onPointerUp = async () => {
           if (!draggingRow) return;
           draggingRow.classList.remove("is-dragging");
+          document.body.classList.remove("is-dragging-active");
           draggingRow = null;
           await reindexAndSaveAllRows();
         };
 
         grid.addEventListener("pointerdown", onPointerDown);
-        window.addEventListener("pointermove", onPointerMove);
-        window.addEventListener("pointerup", onPointerUp);
-        window.addEventListener("pointercancel", onPointerUp);
+        grid.addEventListener("pointermove", onPointerMove);
+        grid.addEventListener("pointerup", onPointerUp);
+        grid.addEventListener("pointercancel", onPointerUp);
       };
 
       setupRowReorder();
