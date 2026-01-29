@@ -41,7 +41,7 @@
       overflow: hidden;
       position: fixed;
       width: 100%;
-      background: linear-gradient(180deg, #1b2026 0%, #0f1114 100%);
+      background: #1f2126;
       touch-action: pan-y;
       overscroll-behavior: none;
     }
@@ -55,7 +55,7 @@
       margin: 0;
       font-family: "Sora", system-ui, sans-serif;
       color: var(--ink);
-      background: linear-gradient(180deg, #1b2026 0%, #0f1114 100%);
+      background: #1f2126;
       height: 100%;
       display: flex;
       justify-content: center;
@@ -63,41 +63,6 @@
       padding: var(--page-top) 12px calc(var(--page-bottom) + env(safe-area-inset-bottom));
       -webkit-user-select: none;
       user-select: none;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: -10% -10% -10% -10%;
-      background: radial-gradient(600px 320px at 50% -10%, rgba(255, 220, 160, 0.22), transparent 60%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: -20% -20% -20% -20%;
-      background: repeating-linear-gradient(
-        115deg,
-        rgba(255, 255, 255, 0.14) 0,
-        rgba(255, 255, 255, 0.14) 2px,
-        rgba(255, 255, 255, 0) 18px,
-        rgba(255, 255, 255, 0) 34px
-      );
-      opacity: 0.16;
-      mix-blend-mode: screen;
-      filter: blur(0.4px);
-      transform: rotate(-8deg);
-      animation: sunbeams 18s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    @keyframes sunbeams {
-      0% { transform: rotate(-8deg) translateY(0); opacity: 0.12; }
-      50% { transform: rotate(-6deg) translateY(-8px); opacity: 0.2; }
-      100% { transform: rotate(-8deg) translateY(0); opacity: 0.12; }
     }
 
 
@@ -113,7 +78,6 @@
     }
 
     .sheet {
-      z-index: 1;
 
       scrollbar-width: none;
       width: min(980px, 100%);
