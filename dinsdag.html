@@ -1145,6 +1145,7 @@
         let lastToggleAt = 0;
         const toggleSession = (e) => {
           if (e && e.cancelable) e.preventDefault();
+          if (e) e.stopPropagation();
           const now = Date.now();
           if (now - lastToggleAt < 600) return;
           lastToggleAt = now;
@@ -1162,6 +1163,8 @@
             decrementSessionCount();
           }
         };
+        footerCheck.addEventListener("pointerdown", toggleSession);
+        footerCheck.addEventListener("touchstart", toggleSession);
         footerCheck.addEventListener("click", toggleSession);
         footerCheck.addEventListener("touchend", toggleSession);
       });
