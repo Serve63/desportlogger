@@ -194,8 +194,8 @@
 
     .drag-handle {
       grid-column: 1;
-      grid-row: 1 / span 2;
-      align-self: center;
+      grid-row: 1;
+      align-self: start;
       width: 44px;
       height: 44px;
       margin: -12px;
@@ -1119,6 +1119,13 @@
       window.addEventListener("DOMContentLoaded", () => {
         const footerCheck = document.querySelector(".footer-check");
         const footerToggle = document.querySelector(".footer-toggle");
+        const today = new Date().getDay();
+        const pageDay = getPageDayNumber();
+        const isToday = today === pageDay;
+        if (footerToggle && !isToday) {
+          footerToggle.remove();
+          return;
+        }
         if (footerToggle) {
           const preventScroll = (event) => {
             if (event.cancelable) event.preventDefault();
@@ -1126,18 +1133,27 @@
           footerToggle.addEventListener("touchmove", preventScroll, { passive: false });
         }
         if (!footerCheck) return;
-        
+
+        // Gebruik datum als key zodat het per dag reset
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const storageKey = "session-checked-" + todayStr;
+
+        // Herstel afvinkstatus bij laden
+        if (localStorage.getItem(storageKey) === "1") {
+          footerCheck.classList.add("is-on");
+        }
+
         footerCheck.addEventListener("click", (e) => {
           e.preventDefault();
           const wasOn = footerCheck.classList.contains("is-on");
           const isOn = footerCheck.classList.toggle("is-on");
-          
+
           if (isOn && !wasOn) {
-            // Verhogen wanneer het wordt aangezet
+            localStorage.setItem(storageKey, "1");
             incrementSessionCount();
             launchConfetti();
           } else if (!isOn && wasOn) {
-            // Verlagen wanneer het wordt uitgezet
+            localStorage.removeItem(storageKey);
             decrementSessionCount();
           }
         });
