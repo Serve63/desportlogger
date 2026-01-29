@@ -617,6 +617,7 @@
           if (path.includes("dinsdag")) return 2;
           if (path.includes("woensdag")) return 3;
           if (path.includes("donderdag")) return 4;
+        if (path.includes("vrijdag")) return 5;
           if (path.includes("zaterdag")) return 6;
           if (path.includes("zondag")) return 0;
           return 1;
@@ -648,7 +649,7 @@
         <a href="dinsdag.html">Dinsdag</a>
         <a href="woensdag.html">Woensdag</a>
         <a href="donderdag.html">Donderdag</a>
-        <a href="index.html">Vrijdag</a>
+        <a href="vrijdag.html">Vrijdag</a>
         <a href="zaterdag.html">Zaterdag</a>
         <a href="zondag.html">Zondag</a>
       </div>
@@ -683,7 +684,7 @@
         2: "dinsdag.html",   // Dinsdag
         3: "woensdag.html",  // Woensdag
         4: "donderdag.html", // Donderdag
-        5: "index.html",     // Vrijdag (geen aparte pagina, gebruik maandag)
+        5: "vrijdag.html",     // Vrijdag (geen aparte pagina, gebruik maandag)
         6: "zaterdag.html"   // Zaterdag
       };
       
@@ -789,6 +790,7 @@
           if (path.includes("dinsdag")) return 2; // Dinsdag = 2
           if (path.includes("woensdag")) return 3; // Woensdag = 3
           if (path.includes("donderdag")) return 4; // Donderdag = 4
+          if (path.includes("vrijdag")) return 5; // Vrijdag = 5
           if (path.includes("zaterdag")) return 6; // Zaterdag = 6
           if (path.includes("zondag")) return 0; // Zondag = 0
           return 1; // Maandag = 1 (default voor index.html)
@@ -1142,6 +1144,7 @@
         if (path.includes("dinsdag")) return 2;
         if (path.includes("woensdag")) return 3;
         if (path.includes("donderdag")) return 4;
+        if (path.includes("vrijdag")) return 5;
         if (path.includes("zaterdag")) return 6;
         if (path.includes("zondag")) return 0;
         return 1;
@@ -1212,6 +1215,7 @@
         if (path.includes("dinsdag")) return "Dinsdag";
         if (path.includes("woensdag")) return "Woensdag";
         if (path.includes("donderdag")) return "Donderdag";
+        if (path.includes("vrijdag")) return "Vrijdag";
         if (path.includes("zaterdag")) return "Zaterdag";
         if (path.includes("zondag")) return "Zondag";
         return "Maandag"; // default voor index.html
