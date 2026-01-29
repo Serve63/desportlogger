@@ -1160,6 +1160,7 @@
         }
         if (!footerCheck) return;
 
+        const pageDay = getPageDayNumber();
         const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
         const sessionDay = dayNames[pageDay];
         // Herstel status vanuit Supabase (PWA-safe)
