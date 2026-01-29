@@ -605,10 +605,39 @@
       }
     }
 
+
+    .rest-day .row {
+      grid-template-columns: 1fr;
+    }
+
+    .rest-day .exercise-cell {
+      grid-template-columns: 1fr;
+      row-gap: 6px;
+    }
+
+    .rest-day .drag-handle {
+      display: none;
+    }
+
+    .rest-day .exercise-name {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .rest-day .exercise-note {
+      font-style: italic;
+      opacity: 0.8;
+    }
+
+
+    .rest-day .footer-toggle {
+      display: none;
+    }
+
 </style>
 
 </head>
-<body>
+<body class="rest-day">
   <script id="todayGuard">
     (function() {
       try {
@@ -636,11 +665,11 @@
     })();
   </script>
  <main class="sheet"> <header> <div> <div class="training-count"><button class="year-trigger" type="button">2026:</button> Laden...</div> <h1>Servé's Logboek</h1> <div class="day-line"><button class="day-trigger" type="button">Vandaag</button></div></div>
-</header> <section class="grid" aria-label="Oefeningen">
-  <div class="row" style="grid-template-columns: 1fr;">
-    <div class="exercise-cell" style="grid-template-columns: 1fr;">
-      <div class="exercise-name" style="font-size: 0.9rem; font-weight: 600;">Vrije dag</div>
-      <div class="exercise-note" style="font-style: italic;">Herstel & rust</div>
+</header> <section class="grid rest-day" aria-label="Vrije dag">
+  <div class="row">
+    <div class="exercise-cell">
+      <div class="exercise-name">Vrije dag</div>
+      <div class="exercise-note">Herstel & rust</div>
     </div>
   </div>
 </section></main> <div class="year-modal" id="yearModal" aria-hidden="true"> <div class="year-modal__content" role="dialog" aria-modal="true" aria-labelledby="yearModalTitle"> <button class="year-modal__close" type="button" aria-label="Sluiten">&times;</button> <h2 id="yearModalTitle">Voorgaande jaren</h2> <ul class="year-modal__list"> <li><strong>2022:</strong> 10</li> <li><strong>2023:</strong> 5</li> <li><strong>2024:</strong> 22</li> <li><strong>2025:</strong> 301</li> <li id="yearCount2026"><strong>2026 (tot heden):</strong> 23</li> <li class="year-total"><strong>Totaal:</strong> 358 sessies</li></ul></div></div>
@@ -1699,9 +1728,7 @@
 
 
 
-  <div class="footer-toggle">
-    <button class="footer-check" type="button" aria-label="Markeer als afgerond"></button>
-  </div>
+  
 
 </body>
 </html>
