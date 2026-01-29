@@ -1179,9 +1179,8 @@
         const isToday = today === pageDay;
         if (footerToggle && !isToday) {
           footerToggle.remove();
-          return;
         }
-        if (footerToggle) {
+        if (footerToggle && isToday) {
           const preventScroll = (event) => {
             if (event.cancelable) event.preventDefault();
           };
@@ -1189,7 +1188,6 @@
         }
         if (!footerCheck) return;
 
-        const pageDay = getPageDayNumber();
         const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
         const sessionDay = dayNames[pageDay];
         // Herstel status vanuit Supabase (PWA-safe)

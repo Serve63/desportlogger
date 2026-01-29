@@ -1232,9 +1232,8 @@
         const isToday = today === pageDay;
         if (footerToggle && !isToday) {
           footerToggle.remove();
-          return;
         }
-        if (footerToggle) {
+        if (footerToggle && isToday) {
           const preventScroll = (event) => {
             if (event.cancelable) event.preventDefault();
           };
