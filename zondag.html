@@ -1186,13 +1186,20 @@
         }
         let lastToggleAt = 0;
         const toggleSession = (e) => {
-          if (e && e.cancelable) e.preventDefault();
+          console.log("toggleSession called", e.type);
+          if (e && e.cancelable && (e.type === "touchstart" || e.type === "pointerdown")) {
+            e.preventDefault();
+          }
           if (e) e.stopPropagation();
           const now = Date.now();
-          if (now - lastToggleAt < 600) return;
+          if (now - lastToggleAt < 600) {
+            console.log("Toggle too soon, ignoring");
+            return;
+          }
           lastToggleAt = now;
           const wasOn = footerCheck.classList.contains("is-on");
           const isOn = footerCheck.classList.toggle("is-on");
+          console.log("Toggled:", isOn, "was:", wasOn);
 
           if (isOn && !wasOn) {
             localStorage.setItem(sessionCompleteKey, "1");
@@ -1213,10 +1220,14 @@
               .upsert({ day: sessionDay, exercise_index: 0, completed: false }, { onConflict: "day,exercise_index" });
           }
         };
-        footerCheck.addEventListener("pointerdown", toggleSession);
-        footerCheck.addEventListener("touchstart", toggleSession);
-        footerCheck.addEventListener("click", toggleSession);
-        footerCheck.addEventListener("touchend", toggleSession);
+        
+        console.log("Adding event listeners to footer-check", footerCheck);
+        footerCheck.addEventListener("click", toggleSession, { passive: false });
+        footerCheck.addEventListener("pointerdown", toggleSession, { passive: false });
+        footerCheck.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          toggleSession(e);
+        }, { passive: false });
       });
 
       // Bepaal de dag naam op basis van het bestand voor Supabase
