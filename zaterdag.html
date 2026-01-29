@@ -1161,6 +1161,24 @@
         }
         if (!footerCheck) return;
 
+        const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+        const sessionDay = dayNames[pageDay];
+        // Herstel status vanuit Supabase (PWA-safe)
+        (async () => {
+          try {
+            const { data, error } = await supabase
+              .from("workout_entries")
+              .select("completed")
+              .eq("day", sessionDay)
+              .eq("exercise_index", 0)
+              .maybeSingle();
+            if (!error && data?.completed) {
+              footerCheck.classList.add("is-on");
+            }
+          } catch (e) {}
+        })();
+
+
         // Restore state for today
         if (localStorage.getItem(sessionCompleteKey) === "1") {
           footerCheck.classList.add("is-on");
@@ -1181,11 +1199,17 @@
             setCookie(storageKey, "1");
             incrementSessionCount();
             launchConfetti();
+            supabase
+              .from("workout_entries")
+              .upsert({ day: sessionDay, exercise_index: 0, completed: true }, { onConflict: "day,exercise_index" });
           } else if (!isOn && wasOn) {
             localStorage.removeItem(sessionCompleteKey);
             localStorage.removeItem(storageKey);
             clearCookie(storageKey);
             decrementSessionCount();
+            supabase
+              .from("workout_entries")
+              .upsert({ day: sessionDay, exercise_index: 0, completed: false }, { onConflict: "day,exercise_index" });
           }
         };
         footerCheck.addEventListener("pointerdown", toggleSession);
@@ -1683,5 +1707,13 @@
     <button class="footer-check" type="button" aria-label="Markeer als afgerond"></button>
   </div>
 
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js");
+  });
+}
+</script>
 </body>
 </html>
