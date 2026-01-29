@@ -449,6 +449,47 @@
     }
 
 
+    .session-check-button {
+      position: fixed;
+      bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--stroke);
+      background: #2f3338;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .session-check-button:hover {
+      background: #3a3e44;
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    .session-check-button.is-complete {
+      background: #2ea043;
+      border-color: #2ea043;
+    }
+
+    .session-check-button.is-complete::after {
+      content: "✓";
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    html.not-today .session-check-button,
+    body.not-today .session-check-button {
+      display: none;
+    }
+
     @media (max-width: 720px) {
       body {
         padding: var(--page-top) 16px calc(var(--page-bottom) + env(safe-area-inset-bottom));
@@ -1115,6 +1156,95 @@
         document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
       };
 
+      // Setup session check button
+      window.addEventListener("DOMContentLoaded", () => {
+        const sessionCheckButton = document.getElementById("sessionCheckButton");
+        if (!sessionCheckButton) return;
+
+        // Verberg knop als het niet vandaag is
+        if (!isToday) {
+          sessionCheckButton.style.display = "none";
+          return;
+        }
+
+        const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+        const sessionDay = dayNames[pageDayNumber];
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const storageKey = "session-checked-" + todayStr;
+
+        // Herstel status bij laden
+        const restoreStatus = async () => {
+          // Check localStorage
+          if (localStorage.getItem(storageKey) === "1" || getCookie(storageKey) === "1") {
+            sessionCheckButton.classList.add("is-complete");
+          }
+
+          // Check Supabase
+          try {
+            const { data, error } = await supabase
+              .from("workout_entries")
+              .select("completed")
+              .eq("day", sessionDay)
+              .eq("exercise_index", 0)
+              .maybeSingle();
+            if (!error && data?.completed) {
+              sessionCheckButton.classList.add("is-complete");
+            }
+          } catch (e) {
+            console.error("Error checking session status:", e);
+          }
+        };
+
+        restoreStatus();
+
+        // Toggle functie
+        let lastToggleAt = 0;
+        const toggleSession = async (e) => {
+          if (e && e.cancelable) e.preventDefault();
+          if (e) e.stopPropagation();
+
+          const now = Date.now();
+          if (now - lastToggleAt < 600) return;
+          lastToggleAt = now;
+
+          const wasComplete = sessionCheckButton.classList.contains("is-complete");
+          const isComplete = sessionCheckButton.classList.toggle("is-complete");
+
+          if (isComplete && !wasComplete) {
+            // Markeren als compleet
+            localStorage.setItem(sessionCompleteKey, "1");
+            localStorage.setItem(storageKey, "1");
+            setCookie(storageKey, "1");
+            incrementSessionCount();
+            launchConfetti();
+            try {
+              await supabase
+                .from("workout_entries")
+                .upsert({ day: sessionDay, exercise_index: 0, completed: true }, { onConflict: "day,exercise_index" });
+            } catch (e) {
+              console.error("Error saving session status:", e);
+            }
+          } else if (!isComplete && wasComplete) {
+            // Unmarkeren
+            localStorage.removeItem(sessionCompleteKey);
+            localStorage.removeItem(storageKey);
+            clearCookie(storageKey);
+            decrementSessionCount();
+            try {
+              await supabase
+                .from("workout_entries")
+                .upsert({ day: sessionDay, exercise_index: 0, completed: false }, { onConflict: "day,exercise_index" });
+            } catch (e) {
+              console.error("Error saving session status:", e);
+            }
+          }
+        };
+
+        // Event listeners
+        sessionCheckButton.addEventListener("click", toggleSession);
+        sessionCheckButton.addEventListener("touchstart", toggleSession, { passive: false });
+      });
+
 
       // Bepaal de dag naam op basis van het bestand voor Supabase
       const getDayName = () => {
@@ -1586,6 +1716,8 @@
 
 
 
+
+  <div class="session-check-button" id="sessionCheckButton" aria-label="Markeer sessie als afgerond"></div>
 
 <script>
 if ("serviceWorker" in navigator) {
