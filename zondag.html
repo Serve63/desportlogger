@@ -1126,17 +1126,24 @@
           footerToggle.addEventListener("touchmove", preventScroll, { passive: false });
         }
         if (!footerCheck) return;
-        
+
+        // Restore state for today
+        if (localStorage.getItem(sessionCompleteKey) === "1") {
+          footerCheck.classList.add("is-on");
+        }
+
         footerCheck.addEventListener("click", (e) => {
           e.preventDefault();
           const wasOn = footerCheck.classList.contains("is-on");
           const isOn = footerCheck.classList.toggle("is-on");
           
           if (isOn && !wasOn) {
+            localStorage.setItem(sessionCompleteKey, "1");
             // Verhogen wanneer het wordt aangezet
             incrementSessionCount();
             launchConfetti();
           } else if (!isOn && wasOn) {
+            localStorage.removeItem(sessionCompleteKey);
             // Verlagen wanneer het wordt uitgezet
             decrementSessionCount();
           }

@@ -1149,10 +1149,12 @@
           const isOn = footerCheck.classList.toggle("is-on");
 
           if (isOn && !wasOn) {
+            localStorage.setItem(sessionCompleteKey, "1");
             localStorage.setItem(storageKey, "1");
             incrementSessionCount();
             launchConfetti();
           } else if (!isOn && wasOn) {
+            localStorage.removeItem(sessionCompleteKey);
             localStorage.removeItem(storageKey);
             decrementSessionCount();
           }

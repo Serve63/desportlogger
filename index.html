@@ -1138,6 +1138,7 @@
       const todayNumber = new Date().getDay();
       const pageDayNumber = getPageDayNumber();
       const isToday = todayNumber === pageDayNumber;
+      const sessionCompleteKey = `session_complete_${new Date().toISOString().slice(0, 10)}`;
       document.body.classList.toggle("not-today", !isToday);
 
       window.addEventListener("DOMContentLoaded", () => {
@@ -1173,10 +1174,12 @@
           const isOn = footerCheck.classList.toggle("is-on");
 
           if (isOn && !wasOn) {
+            localStorage.setItem(sessionCompleteKey, "1");
             localStorage.setItem(storageKey, "1");
             incrementSessionCount();
             launchConfetti();
           } else if (!isOn && wasOn) {
+            localStorage.removeItem(sessionCompleteKey);
             localStorage.removeItem(storageKey);
             decrementSessionCount();
           }
