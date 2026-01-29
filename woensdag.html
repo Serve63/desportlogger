@@ -1116,6 +1116,10 @@
         updateSessionCountDisplay(finalCount);
       })();
 
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const sessionCompleteKey = `session_complete_${todayStr}`;
+      const storageKey = "session-checked-" + todayStr;
+
       window.addEventListener("DOMContentLoaded", () => {
         const footerCheck = document.querySelector(".footer-check");
         const footerToggle = document.querySelector(".footer-toggle");
