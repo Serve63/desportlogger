@@ -467,6 +467,8 @@
 
     .footer-check {
       pointer-events: auto;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       width: 36px;
       height: 36px;
       border-radius: 999px;
@@ -477,6 +479,8 @@
       justify-content: center;
       cursor: pointer;
       position: relative;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     .footer-check.is-on {
@@ -497,9 +501,6 @@
     }
 
     @media (max-width: 720px) {
-      .footer-toggle {
-        transform: translateY(44px);
-      }
       body {
         padding: var(--page-top) 16px calc(var(--page-bottom) + env(safe-area-inset-bottom));
       }
@@ -1149,7 +1150,7 @@
         document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
       };
 
-      window.addEventListener("DOMContentLoaded", () => {
+      document.addEventListener("DOMContentLoaded", () => {
         const footerCheck = document.querySelector(".footer-check");
         const footerToggle = document.querySelector(".footer-toggle");
         const today = new Date().getDay();
