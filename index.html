@@ -454,7 +454,7 @@
       display: none;
     }
     .footer-toggle {
-      touch-action: none;
+      touch-action: manipulation;
       position: fixed;
       bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
       left: 0;
@@ -1180,17 +1180,21 @@
         if (footerToggle && !isToday) {
           footerToggle.remove();
         }
-        if (footerToggle && isToday) {
-          const preventScroll = (event) => {
-            if (event.cancelable) event.preventDefault();
-          };
-          footerToggle.addEventListener("touchmove", preventScroll, { passive: false });
-        }
         if (!footerCheck) return;
 
         const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
         const sessionDay = dayNames[pageDay];
-        // Herstel status vanuit Supabase (PWA-safe)
+
+        // Gebruik datum als key zodat het per dag reset
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const storageKey = "session-checked-" + todayStr;
+
+        // Herstel afvinkstatus bij laden (localStorage + cookie)
+        if (localStorage.getItem(storageKey) === "1" || getCookie(storageKey) === "1") {
+          footerCheck.classList.add("is-on");
+        }
+
+        // Herstel ook vanuit Supabase (PWA-safe, async)
         (async () => {
           try {
             const { data, error } = await supabase
@@ -1205,31 +1209,9 @@
           } catch (e) {}
         })();
 
-
-        // Gebruik datum als key zodat het per dag reset
-        const todayStr = new Date().toLocaleDateString('en-CA');
-        const storageKey = "session-checked-" + todayStr;
-
-        // Herstel afvinkstatus bij laden
-        if (localStorage.getItem(storageKey) === "1" || getCookie(storageKey) === "1") {
-          footerCheck.classList.add("is-on");
-        }
-        let lastToggleAt = 0;
-        const toggleSession = (e) => {
-          console.log("toggleSession called", e.type);
-          if (e && e.cancelable && (e.type === "touchstart" || e.type === "pointerdown")) {
-            e.preventDefault();
-          }
-          if (e) e.stopPropagation();
-          const now = Date.now();
-          if (now - lastToggleAt < 600) {
-            console.log("Toggle too soon, ignoring");
-            return;
-          }
-          lastToggleAt = now;
+        footerCheck.addEventListener("click", () => {
           const wasOn = footerCheck.classList.contains("is-on");
           const isOn = footerCheck.classList.toggle("is-on");
-          console.log("Toggled:", isOn, "was:", wasOn);
 
           if (isOn && !wasOn) {
             localStorage.setItem(sessionCompleteKey, "1");
@@ -1249,15 +1231,7 @@
               .from("workout_entries")
               .upsert({ day: sessionDay, exercise_index: 0, completed: false }, { onConflict: "day,exercise_index" });
           }
-        };
-        
-        console.log("Adding event listeners to footer-check", footerCheck);
-        footerCheck.addEventListener("click", toggleSession, { passive: false });
-        footerCheck.addEventListener("pointerdown", toggleSession, { passive: false });
-        footerCheck.addEventListener("touchstart", (e) => {
-          e.preventDefault();
-          toggleSession(e);
-        }, { passive: false });
+        });
       });
 
       // Bepaal de dag naam op basis van het bestand voor Supabase
