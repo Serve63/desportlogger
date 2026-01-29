@@ -19,9 +19,6 @@
     @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Sora:wght@400;500;600&display=swap");
 
     :root {
-      --exercise-font: 0.5rem;
-      --note-font: 0.4rem;
-      --mini-font: 0.75rem;
       --ink: #eef0f3;
       --muted: #c2c6cc;
       --line: #6a6f78;
@@ -30,6 +27,10 @@
       --page-top: 113px;
       --page-bottom: 72px;
       --footer-offset: 72px;
+    
+      --exercise-font: 0.5rem;
+      --note-font: 0.4rem;
+      --mini-font: 0.75rem;
     }
 
     * {
@@ -196,7 +197,7 @@
 
     .drag-handle {
       grid-column: 1;
-      grid-row: 1 / span 2;
+      grid-row: 1;
       align-self: start;
       width: 44px;
       height: 44px;
@@ -237,7 +238,6 @@
       cursor: grabbing;
     }
 
-
     .exercise-cell .exercise-name,
     .exercise-cell .exercise-note {
       font-style: italic;
@@ -252,7 +252,8 @@
 
     .exercise-cell .exercise-name {
       grid-column: 2;
-      grid-row: 1;      font-size: 0.5rem;
+      grid-row: 1;
+      font-size: 1rem;
       font-weight: 500;
     }
 
