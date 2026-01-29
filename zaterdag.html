@@ -41,7 +41,7 @@
       overflow: hidden;
       position: fixed;
       width: 100%;
-      background: #1f2126;
+      background: linear-gradient(180deg, #1b2026 0%, #0f1114 100%);
       touch-action: pan-y;
       overscroll-behavior: none;
     }
@@ -55,7 +55,7 @@
       margin: 0;
       font-family: "Sora", system-ui, sans-serif;
       color: var(--ink);
-      background: #1f2126;
+      background: linear-gradient(180deg, #1b2026 0%, #0f1114 100%);
       height: 100%;
       display: flex;
       justify-content: center;
@@ -64,6 +64,42 @@
       -webkit-user-select: none;
       user-select: none;
     }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -10% -10% -10% -10%;
+      background: radial-gradient(600px 320px at 50% -10%, rgba(255, 220, 160, 0.22), transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: -20% -20% -20% -20%;
+      background: repeating-linear-gradient(
+        115deg,
+        rgba(255, 255, 255, 0.14) 0,
+        rgba(255, 255, 255, 0.14) 2px,
+        rgba(255, 255, 255, 0) 18px,
+        rgba(255, 255, 255, 0) 34px
+      );
+      opacity: 0.16;
+      mix-blend-mode: screen;
+      filter: blur(0.4px);
+      transform: rotate(-8deg);
+      animation: sunbeams 18s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes sunbeams {
+      0% { transform: rotate(-8deg) translateY(0); opacity: 0.12; }
+      50% { transform: rotate(-6deg) translateY(-8px); opacity: 0.2; }
+      100% { transform: rotate(-8deg) translateY(0); opacity: 0.12; }
+    }
+
 
     input {
       -webkit-user-select: text;
@@ -77,6 +113,8 @@
     }
 
     .sheet {
+      z-index: 1;
+
       scrollbar-width: none;
       width: min(980px, 100%);
       padding: 8px 2px 18px;
@@ -246,7 +284,7 @@
       padding: 2px 0;
       color: var(--ink);
       font: inherit;
-          }
+    }
 
     .exercise-cell .exercise-name {
       grid-column: 2;
@@ -450,7 +488,7 @@
     body.not-today .footer-toggle {
       display: none;
     }
-.footer-toggle {
+    .footer-toggle {
       touch-action: none;
       position: fixed;
       bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
@@ -645,6 +683,7 @@
         <a href="dinsdag.html">Dinsdag</a>
         <a href="woensdag.html">Woensdag</a>
         <a href="donderdag.html">Donderdag</a>
+        <a href="index.html">Vrijdag</a>
         <a href="zaterdag.html">Zaterdag</a>
         <a href="zondag.html">Zondag</a>
       </div>
@@ -1065,7 +1104,8 @@
       const initializeSessionCounts = async () => {
         const yearCounts = {
           2024: 22,
-          2025: 301
+          2025: 301,
+          2026: 22
         };
 
         for (const [year, count] of Object.entries(yearCounts)) {
@@ -1091,17 +1131,19 @@
             } else {
               console.error(`Error fetching count for ${year}:`, error);
             }
-          } else if (!data) {
-            const { error: insertError } = await supabase
-              .from("session_counts")
-              .insert({ year: parseInt(year), count })
-              .select()
-              .single();
+          } else {
+            // Update de count als deze anders is
+            if (data.count !== count) {
+              const { error: updateError } = await supabase
+                .from("session_counts")
+                .update({ count })
+                .eq("year", parseInt(year));
 
-            if (insertError) {
-              console.error(`Error inserting count for ${year}:`, insertError);
-            } else {
-              console.log(`Inserted count for ${year}: ${count}`);
+              if (updateError) {
+                console.error(`Error updating count for ${year}:`, updateError);
+              } else {
+                console.log(`Updated count for ${year} to ${count}`);
+              }
             }
           }
         }
@@ -1112,7 +1154,13 @@
         await initializeSessionCounts();
 
         const count = await getSessionCount();
-        const finalCount = await reconcileSessionCount(count);
+        let finalCount = await reconcileSessionCount(count);
+        if (new Date().getFullYear() === 2026) {
+          finalCount = 22;
+          await supabase
+            .from("session_counts")
+            .upsert({ year: 2026, count: 22 }, { onConflict: "year" });
+        }
         updateSessionCountDisplay(finalCount);
       })();
 
