@@ -680,7 +680,16 @@
       const todayPage = dayPages[today];
       const currentPage = window.location.pathname.split("/").pop() || "index.html";
       const currentUrl = new URL(window.location.href);
-      const manualView = currentUrl.searchParams.get("manual") === "1";
+      const storage = (() => { try { return window.sessionStorage; } catch { return null; } })();
+      const manualParam = currentUrl.searchParams.get("manual") === "1";
+      const manualSession = storage ? storage.getItem("manualView") === "1" : false;
+      const manualView = manualParam || manualSession;
+
+      if (manualParam && storage) {
+        storage.setItem("manualView", "1");
+      } else if (currentPage === todayPage && manualSession && storage) {
+        storage.removeItem("manualView");
+      }
       
       // Als de huidige pagina niet de pagina van vandaag is, redirect (behalve bij handmatige keuze)
       if (currentPage !== todayPage && !manualView) {
@@ -845,6 +854,12 @@
 
       // Update de menu links bij het laden
       updateDayModalLinks();
+
+      document.addEventListener("click", (event) => {
+        const link = event.target.closest(".day-modal__grid a");
+        if (!link || !storage) return;
+        storage.setItem("manualView", "1");
+      });
 
 
       const clampInput = (input) => {

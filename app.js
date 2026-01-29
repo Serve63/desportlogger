@@ -10,6 +10,7 @@
     dinsdag:   { number: 2, name: "Dinsdag" },
     woensdag:  { number: 3, name: "Woensdag" },
     donderdag: { number: 4, name: "Donderdag" },
+    vrijdag:   { number: 5, name: "Vrijdag" },
     zaterdag:  { number: 6, name: "Zaterdag" },
     zondag:    { number: 0, name: "Zondag" },
   };
@@ -33,14 +34,23 @@
     2: "dinsdag.html",
     3: "woensdag.html",
     4: "donderdag.html",
-    5: "index.html",
+    5: "vrijdag.html",
     6: "zaterdag.html",
   };
 
   const todayPage = dayPages[todayNum];
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
   const currentUrl = new URL(window.location.href);
-  const manualView = currentUrl.searchParams.get("manual") === "1";
+  const storage = (() => { try { return window.sessionStorage; } catch { return null; } })();
+  const manualParam = currentUrl.searchParams.get("manual") === "1";
+  const manualSession = storage ? storage.getItem("manualView") === "1" : false;
+  const manualView = manualParam || manualSession;
+
+  if (manualParam && storage) {
+    storage.setItem("manualView", "1");
+  } else if (currentPage === todayPage && manualSession && storage) {
+    storage.removeItem("manualView");
+  }
 
   if (currentPage !== todayPage && !manualView) {
     window.location.replace(withVersion(todayPage));
@@ -200,6 +210,7 @@
       "dinsdag.html": 2,
       "woensdag.html": 3,
       "donderdag.html": 4,
+      "vrijdag.html": 5,
       "zaterdag.html": 6,
       "zondag.html": 0,
     };
@@ -227,6 +238,12 @@
     });
   };
   updateDayModalLinks();
+
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest(".day-modal__grid a");
+    if (!link || !storage) return;
+    storage.setItem("manualView", "1");
+  });
 
   // ── Input clamping ──
   const clampInput = (input) => {
