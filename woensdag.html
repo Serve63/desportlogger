@@ -459,13 +459,17 @@
       border-radius: 50%;
       border: 2px solid var(--stroke);
       background: #2f3338;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 1000;
       transition: all 0.2s ease;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .session-check-button.is-today {
+      display: flex;
     }
 
     .session-check-button:hover {
@@ -1154,11 +1158,13 @@
         const pageDayNumber = getPageDayNumber();
         const isToday = todayNumber === pageDayNumber;
 
-        // Verberg knop als het niet vandaag is
+        // Toon knop alleen als het vandaag is
         if (!isToday) {
-          sessionCheckButton.style.display = "none";
           return;
         }
+
+        // Toon de knop
+        sessionCheckButton.classList.add("is-today");
 
         const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
         const sessionDay = dayNames[pageDayNumber];
