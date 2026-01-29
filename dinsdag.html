@@ -1142,9 +1142,12 @@
         if (localStorage.getItem(storageKey) === "1") {
           footerCheck.classList.add("is-on");
         }
-
-        footerCheck.addEventListener("click", (e) => {
-          e.preventDefault();
+        let lastToggleAt = 0;
+        const toggleSession = (e) => {
+          if (e && e.cancelable) e.preventDefault();
+          const now = Date.now();
+          if (now - lastToggleAt < 600) return;
+          lastToggleAt = now;
           const wasOn = footerCheck.classList.contains("is-on");
           const isOn = footerCheck.classList.toggle("is-on");
 
@@ -1158,7 +1161,9 @@
             localStorage.removeItem(storageKey);
             decrementSessionCount();
           }
-        });
+        };
+        footerCheck.addEventListener("click", toggleSession);
+        footerCheck.addEventListener("touchend", toggleSession);
       });
 
       // Bepaal de dag naam op basis van het bestand voor Supabase
