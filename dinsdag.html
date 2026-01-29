@@ -20,7 +20,7 @@
 
     :root {
       --exercise-font: 0.5rem;
-      --note-font: 0.8rem;
+      --note-font: 0.4rem;
       --mini-font: 0.75rem;
       --ink: #eef0f3;
       --muted: #c2c6cc;
@@ -332,10 +332,19 @@
       padding: 8px 10px;
       font-weight: 600;
       text-align: center;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s ease, background-color 0.15s ease, opacity 0.1s ease;
+      cursor: pointer;
     }
 
     .day-modal__grid a:hover {
       background: #3b3f45;
+    }
+
+    .day-modal__grid a:active {
+      transform: scale(0.96);
+      opacity: 0.85;
     }
 
     .day-modal__grid a.is-today {
@@ -484,7 +493,7 @@
         --footer-offset: 68px;
       
         --exercise-font: 10px;
-        --note-font: 16px;
+        --note-font: 9px;
         --mini-font: 16px;
       }
 
@@ -842,6 +851,17 @@
 
       document.querySelectorAll("input[data-max]").forEach(clampInput);
 
+      // Cursor altijd achter het laatste cijfer plaatsen bij focus
+      const cursorToEnd = (input) => {
+        input.addEventListener("focus", () => {
+          setTimeout(() => {
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+          }, 0);
+        });
+      };
+      document.querySelectorAll(".mini-field").forEach(cursorToEnd);
+
       const launchConfetti = () => {
         const layer = document.createElement("div");
         layer.className = "confetti-layer";
@@ -849,91 +869,52 @@
 
         const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
 
-        // Feestelijke kleuren
-        const colors = [
-          '#2ea043', // groen (primair)
-          '#58d68d', // licht groen
-          '#f39c12', // goud/oranje
-          '#e74c3c', // rood
-          '#3498db', // blauw
-          '#9b59b6', // paars
-          '#1abc9c', // turquoise
-          '#f1c40f', // geel
-        ];
-
-        const shapes = ['rect', 'square', 'circle'];
-
-        const createConfettiPiece = () => {
+        const createTrophy = () => {
           const piece = document.createElement("span");
           piece.className = "confetti";
+          piece.textContent = "\uD83C\uDFC6";
 
-          // Willekeurige positie over hele breedte
           const x = Math.random() * viewportWidth;
           piece.style.left = x + "px";
 
-          // Willekeurige kleur
-          const color = colors[Math.floor(Math.random() * colors.length)];
-          piece.style.background = color;
+          const size = 16 + Math.random() * 20;
+          piece.style.fontSize = size + "px";
+          piece.style.lineHeight = "1";
 
-          // Willekeurige vorm en grootte
-          const shape = shapes[Math.floor(Math.random() * shapes.length)];
-          const baseSize = 6 + Math.random() * 8;
-
-          if (shape === 'rect') {
-            piece.style.width = baseSize + "px";
-            piece.style.height = (baseSize * 1.5) + "px";
-            piece.style.borderRadius = "2px";
-          } else if (shape === 'square') {
-            piece.style.width = baseSize + "px";
-            piece.style.height = baseSize + "px";
-            piece.style.borderRadius = "2px";
-          } else {
-            piece.style.width = baseSize + "px";
-            piece.style.height = baseSize + "px";
-            piece.style.borderRadius = "50%";
-          }
-
-          // Variabele valsnelheid (2.5s tot 5s)
           const fallDuration = 2.5 + Math.random() * 2.5;
           piece.style.setProperty('--fall-duration', fallDuration + 's');
 
-          // Willekeurige delay voor spreiding
           const delay = Math.random() * 0.8;
           piece.style.setProperty('--fall-delay', delay + 's');
 
-          // Horizontale sway (-80px tot +80px)
           const sway = (Math.random() - 0.5) * 160;
           piece.style.setProperty('--sway', sway + 'px');
 
-          // Willekeurige 3D rotaties
-          piece.style.setProperty('--spin-x', (360 + Math.random() * 720) + 'deg');
-          piece.style.setProperty('--spin-y', (360 + Math.random() * 540) + 'deg');
-          piece.style.setProperty('--spin-z', (180 + Math.random() * 540) + 'deg');
+          piece.style.setProperty('--spin-x', (Math.random() * 40 - 20) + 'deg');
+          piece.style.setProperty('--spin-y', (Math.random() * 40 - 20) + 'deg');
+          piece.style.setProperty('--spin-z', (Math.random() * 60 - 30) + 'deg');
 
           return piece;
         };
 
-        const createConfettiBatch = (count) => {
+        const createTrophyBatch = (count) => {
           for (let i = 0; i < count; i++) {
-            layer.appendChild(createConfettiPiece());
+            layer.appendChild(createTrophy());
           }
         };
 
-        // Initiële burst
-        createConfettiBatch(80);
+        createTrophyBatch(30);
 
-        // Continue stroom voor 4 seconden
         let elapsed = 0;
         const interval = setInterval(() => {
-          elapsed += 200;
-          createConfettiBatch(15);
+          elapsed += 300;
+          createTrophyBatch(6);
 
-          if (elapsed >= 4000) {
+          if (elapsed >= 3000) {
             clearInterval(interval);
-            // Verwijder layer nadat laatste confetti gevallen is
             setTimeout(() => layer.remove(), 6000);
           }
-        }, 200);
+        }, 300);
       };
 
       if (!window.supabase) {
@@ -1360,6 +1341,7 @@
         if (!row) return;
         ensureRowHandle(row);
         row.querySelectorAll("input[data-max]").forEach(clampInput);
+        row.querySelectorAll(".mini-field").forEach(cursorToEnd);
         attachRowEventListeners(row);
         if (typeof attachTouchListeners === "function") {
           attachTouchListeners(row);
@@ -1371,8 +1353,8 @@
         const count = rows.length;
         const isNarrow = window.matchMedia("(max-width: 720px)").matches;
         const baseSizes = isNarrow
-          ? { exercise: 14, note: 16, mini: 16 }
-          : { exercise: 10.5, note: 11.5, mini: 12 };
+          ? { exercise: 14, note: 10, mini: 16 }
+          : { exercise: 10.5, note: 8, mini: 12 };
         const scale = count > 6 ? Math.max(0.9, 1 - (count - 6) * 0.02) : 1;
 
         const setVar = (name, value) => {
