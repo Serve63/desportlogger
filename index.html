@@ -1153,8 +1153,23 @@
       const todayNumber = new Date().getDay();
       const pageDayNumber = getPageDayNumber();
       const isToday = todayNumber === pageDayNumber;
-      const sessionCompleteKey = `session_complete_${new Date().toISOString().slice(0, 10)}`;
+      const sessionCompleteKey = `session_complete_${new Date().toLocaleDateString('en-CA')}`;
       document.body.classList.toggle("not-today", !isToday);
+
+      const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+      };
+
+      const setCookie = (name, value) => {
+        document.cookie = `${name}=${value}; Max-Age=31536000; Path=/; SameSite=Lax`;
+      };
+
+      const clearCookie = (name) => {
+        document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+      };
 
       window.addEventListener("DOMContentLoaded", () => {
         const footerCheck = document.querySelector(".footer-check");
@@ -1175,11 +1190,11 @@
         if (!footerCheck) return;
 
         // Gebruik datum als key zodat het per dag reset
-        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayStr = new Date().toLocaleDateString('en-CA');
         const storageKey = "session-checked-" + todayStr;
 
         // Herstel afvinkstatus bij laden
-        if (localStorage.getItem(storageKey) === "1") {
+        if (localStorage.getItem(storageKey) === "1" || getCookie(storageKey) === "1") {
           footerCheck.classList.add("is-on");
         }
         let lastToggleAt = 0;
@@ -1195,11 +1210,13 @@
           if (isOn && !wasOn) {
             localStorage.setItem(sessionCompleteKey, "1");
             localStorage.setItem(storageKey, "1");
+            setCookie(storageKey, "1");
             incrementSessionCount();
             launchConfetti();
           } else if (!isOn && wasOn) {
             localStorage.removeItem(sessionCompleteKey);
             localStorage.removeItem(storageKey);
+            clearCookie(storageKey);
             decrementSessionCount();
           }
         };
