@@ -1151,25 +1151,20 @@
         document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
       };
 
-      document.addEventListener("DOMContentLoaded", () => {
+      window.__initFooterCheck = () => {
         const footerCheck = document.querySelector(".footer-check");
-        const footerToggle = document.querySelector(".footer-toggle");
         if (!footerCheck) return;
 
         const pageDay = getPageDayNumber();
         const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
         const sessionDay = dayNames[pageDay];
-
-        // Gebruik datum als key zodat het per dag reset
         const todayStr = new Date().toLocaleDateString('en-CA');
         const storageKey = "session-checked-" + todayStr;
 
-        // Herstel afvinkstatus bij laden (localStorage + cookie)
         if (localStorage.getItem(storageKey) === "1" || getCookie(storageKey) === "1") {
           footerCheck.classList.add("is-on");
         }
 
-        // Herstel ook vanuit Supabase (PWA-safe, async)
         (async () => {
           try {
             const { data, error } = await supabase
@@ -1207,7 +1202,7 @@
               .upsert({ day: sessionDay, exercise_index: 0, completed: false }, { onConflict: "day,exercise_index" });
           }
         });
-      });
+      };
 
       // Bepaal de dag naam op basis van het bestand voor Supabase
       const getDayName = () => {
