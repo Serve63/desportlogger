@@ -1373,6 +1373,110 @@
 
       const getRowIndex = (row) => getCurrentRows().indexOf(row);
 
+      const DEFAULTS_STORAGE_KEY = "exercise_defaults_v1";
+      const exerciseDefaultsCache = (() => {
+        try {
+          const raw = localStorage.getItem(DEFAULTS_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return new Map(Object.entries(parsed));
+        } catch (e) {
+          return new Map();
+        }
+      })();
+
+      const fetchedDefaults = new Set();
+
+      const persistDefaultsCache = () => {
+        try {
+          const obj = Object.fromEntries(exerciseDefaultsCache.entries());
+          localStorage.setItem(DEFAULTS_STORAGE_KEY, JSON.stringify(obj));
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      const normalizeExerciseName = (name) => (name || "").trim().toLowerCase();
+      const escapeIlike = (value) => value.replace(/[\\%_]/g, "\\$&");
+
+      const fetchExerciseDefaults = async (rawName) => {
+        const name = (rawName || "").trim();
+        if (!name) return null;
+        const key = normalizeExerciseName(name);
+        const cached = exerciseDefaultsCache.get(key) ?? null;
+        if (cached && fetchedDefaults.has(key)) return cached;
+
+        const pattern = escapeIlike(name);
+        const { data, error } = await supabase
+          .from("workout_entries")
+          .select("sets,reps,weight,updated_at")
+          .ilike("exercise_name", pattern)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Supabase defaults load failed:", error);
+          return cached;
+        }
+        const defaults = data ? { sets: data.sets, reps: data.reps, weight: data.weight } : null;
+        exerciseDefaultsCache.set(key, defaults);
+        fetchedDefaults.add(key);
+        persistDefaultsCache();
+        return defaults;
+      };
+
+      const updateDefaultsCache = (payload) => {
+        if (!payload || !payload.exercise_name) return;
+        const key = normalizeExerciseName(payload.exercise_name);
+        if (!key) return;
+        exerciseDefaultsCache.set(key, { sets: payload.sets, reps: payload.reps, weight: payload.weight });
+        fetchedDefaults.add(key);
+        persistDefaultsCache();
+      };
+
+      const applyExerciseDefaults = async (row) => {
+        if (!row) return;
+        const nameInput = row.querySelector(".exercise-name");
+        if (!nameInput) return;
+        const name = nameInput.value?.trim();
+        if (!name) return;
+
+        const defaults = await fetchExerciseDefaults(name);
+        if (!defaults) return;
+
+        const setsInput = row.querySelector('input[name^="sets-"]');
+        const repsInput = row.querySelector('input[name^="reps-"]');
+        const weightInput = row.querySelector('input[name^="gewicht-"]');
+
+        const maybeApply = (input, value) => {
+          if (!input) return;
+          if (input.dataset.userSet === "1") return;
+          if (value == null || value === "") return;
+          input.value = String(value);
+        };
+
+        maybeApply(setsInput, defaults.sets);
+        maybeApply(repsInput, defaults.reps);
+        maybeApply(weightInput, defaults.weight);
+      };
+
+      const defaultsTimers = new WeakMap();
+      const scheduleDefaults = (row) => {
+        if (!row) return;
+        const existingTimer = defaultsTimers.get(row);
+        if (existingTimer) clearTimeout(existingTimer);
+        const timer = setTimeout(() => {
+          applyExerciseDefaults(row);
+        }, 300);
+        defaultsTimers.set(row, timer);
+      };
+
+      const applyDefaultsForAllRows = () => {
+        getCurrentRows().forEach((row) => {
+          scheduleDefaults(row);
+        });
+      };
+
       const getRowData = (row, index) => {
         const nameInput = row.querySelector(".exercise-name");
         const noteInput = row.querySelector(".exercise-note");
@@ -1394,12 +1498,14 @@
           sets: toInt(setsInput?.value),
           reps: toInt(repsInput?.value),
           weight: toInt(weightInput?.value),
+          updated_at: new Date().toISOString(),
         };
       };
 
       const upsertRow = async (row, index) => {
         if (index == null || index < 0) return;
         const payload = getRowData(row, index);
+        updateDefaultsCache(payload);
         console.log("Saving data:", payload);
         const { data, error } = await supabase
           .from("workout_entries")
@@ -1472,7 +1578,16 @@
       // Functie om event listeners toe te voegen aan een row
       const attachRowEventListeners = (row) => {
         row.querySelectorAll("input").forEach((input) => {
-          input.addEventListener("input", () => {
+          input.addEventListener("input", (event) => {
+            if (event.isTrusted) {
+              const column = getColumnForInput(input);
+              if (column === "sets" || column === "reps" || column === "weight") {
+                input.dataset.userSet = "1";
+              }
+            }
+            if (input.classList.contains("exercise-name")) {
+              scheduleDefaults(row);
+            }
             const value = input.value ?? "";
             if (value === "") {
               clearField(row, input);
@@ -1482,6 +1597,12 @@
             scheduleSave(row, false);
           });
           input.addEventListener("blur", () => {
+            if (input.classList.contains("exercise-name")) {
+              applyExerciseDefaults(row).finally(() => {
+                scheduleSave(row, true);
+              });
+              return;
+            }
             scheduleSave(row, true);
           });
         });
@@ -1788,6 +1909,7 @@
           .order("exercise_index");
         if (error) {
           console.error("Supabase load failed:", error);
+          applyDefaultsForAllRows();
           return;
         }
         console.log("Loaded data:", data);
@@ -1819,6 +1941,7 @@
           if (weightInput && item.weight != null) weightInput.value = item.weight;
         });
         updateDynamicLayout();
+        applyDefaultsForAllRows();
       })();
     })();
   </script>
