@@ -1035,7 +1035,7 @@
       const getSessionCount = async () => {
         try {
           const currentYear = new Date().getFullYear();
-          const baselineCount = currentYear === 2026 ? 21 : 0;
+          const baselineCount = currentYear === 2026 ? 22 : 0;
           const { data, error } = await supabase
             .from("session_counts")
             .select("count")
@@ -1067,7 +1067,7 @@
           return data?.count ?? baselineCount;
         } catch (error) {
           console.error("Error in getSessionCount:", error);
-          return new Date().getFullYear() === 2026 ? 21 : 0;
+          return new Date().getFullYear() === 2026 ? 22 : 0;
         }
       };
 
@@ -1075,8 +1075,8 @@
         const currentYear = new Date().getFullYear();
         let target = count;
 
-        if (currentYear === 2026 && target < 21) {
-          target = 21;
+        if (currentYear === 2026 && target < 22) {
+          target = 22;
         }
 
         if (target !== count) {
@@ -1158,7 +1158,7 @@
         };
 
         for (const [year, count] of Object.entries(yearCounts)) {
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from("session_counts")
             .select("count")
             .eq("year", parseInt(year))
@@ -1180,36 +1180,16 @@
             } else {
               console.error(`Error fetching count for ${year}:`, error);
             }
-          } else {
-            // Update de count als deze anders is
-            if (data.count !== count) {
-              const { error: updateError } = await supabase
-                .from("session_counts")
-                .update({ count })
-                .eq("year", parseInt(year));
-
-              if (updateError) {
-                console.error(`Error updating count for ${year}:`, updateError);
-              } else {
-                console.log(`Updated count for ${year} to ${count}`);
-              }
-            }
           }
         }
       };
 
-            // Laad de huidige sessie count en toon deze
+      // Laad de huidige sessie count en toon deze
       (async () => {
         await initializeSessionCounts();
 
         const count = await getSessionCount();
         let finalCount = await reconcileSessionCount(count);
-        if (new Date().getFullYear() === 2026) {
-          finalCount = 23;
-          await supabase
-            .from("session_counts")
-            .upsert({ year: 2026, count: 23 }, { onConflict: "year" });
-        }
         updateSessionCountDisplay(finalCount);
       })();
 
