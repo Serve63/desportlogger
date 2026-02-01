@@ -1168,61 +1168,93 @@
         const todayStr = new Date().toLocaleDateString('en-CA');
         const storageKey = "session-checked-" + todayStr;
         const sessionCompleteKey = `session_complete_${todayStr}`;
+        const isMissingDateColumn = (error) => {
+          const msg = error?.message || "";
+          return msg.includes("column") && msg.includes("date") && msg.includes("does not exist");
+        };
+
+        const fetchSessionStatus = async () => {
+          let { data, error } = await supabase
+            .from("workout_entries")
+            .select("completed, date, updated_at")
+            .eq("day", sessionDay)
+            .eq("exercise_index", 0)
+            .maybeSingle();
+
+          if (error && isMissingDateColumn(error)) {
+            ({ data, error } = await supabase
+              .from("workout_entries")
+              .select("completed, updated_at")
+              .eq("day", sessionDay)
+              .eq("exercise_index", 0)
+              .maybeSingle());
+          }
+
+          return { data, error };
+        };
+
+        const saveSessionStatus = async (completed) => {
+          const basePayload = {
+            day: sessionDay,
+            exercise_index: 0,
+            completed,
+            updated_at: new Date().toISOString()
+          };
+
+          let { error } = await supabase
+            .from("workout_entries")
+            .upsert({ ...basePayload, date: todayStr }, { onConflict: "day,exercise_index" });
+
+          if (error && isMissingDateColumn(error)) {
+            ({ error } = await supabase
+              .from("workout_entries")
+              .upsert(basePayload, { onConflict: "day,exercise_index" }));
+          }
+
+          return error;
+        };
 
         // Herstel status bij laden
         const restoreStatus = async () => {
           let isComplete = false;
           const countIncrementedKey = `session-count-incremented-${todayStr}`;
 
-          // Check Supabase voor definitieve status (meest betrouwbaar)
           try {
-            const { data, error } = await supabase
-              .from("workout_entries")
-              .select("completed, date")
-              .eq("day", sessionDay)
-              .eq("exercise_index", 0)
-              .maybeSingle();
-            
+            const { data, error } = await fetchSessionStatus();
+
             if (!error && data) {
-              // Check of de datum van vandaag is (anders is het een oude entry)
               const entryDate = data.date ? new Date(data.date).toLocaleDateString('en-CA') : null;
-              if (entryDate === todayStr && data.completed) {
+              const updatedDate = data.updated_at ? new Date(data.updated_at).toLocaleDateString('en-CA') : null;
+              const matchesToday = entryDate
+                ? entryDate === todayStr
+                : (updatedDate ? updatedDate === todayStr : false);
+
+              if (matchesToday && data.completed) {
                 isComplete = true;
-                // Zorg dat localStorage en cookie ook gesynchroniseerd zijn
                 localStorage.setItem(storageKey, "1");
                 localStorage.setItem(sessionCompleteKey, "1");
                 setCookie(storageKey, "1");
-              } else if (entryDate && entryDate !== todayStr) {
-                // Oude entry van een andere dag, verwijder deze
-                await supabase
-                  .from("workout_entries")
-                  .delete()
-                  .eq("day", sessionDay)
-                  .eq("exercise_index", 0);
+              } else if ((entryDate && entryDate !== todayStr) || (!entryDate && updatedDate && updatedDate !== todayStr)) {
+                await saveSessionStatus(false);
                 isComplete = false;
-                // Verwijder ook de count increment flag als die bestaat
                 localStorage.removeItem(countIncrementedKey);
               }
-            } else {
-              // Geen entry in Supabase, check localStorage als fallback
+            } else if (!error) {
               const localValue = localStorage.getItem(storageKey);
               const cookieValue = getCookie(storageKey);
               if (localValue === "1" || cookieValue === "1") {
                 isComplete = true;
-                // Sla op in Supabase voor consistentie
-                await supabase
-                  .from("workout_entries")
-                  .upsert({ 
-                    day: sessionDay, 
-                    exercise_index: 0, 
-                    completed: true,
-                    date: todayStr
-                  }, { onConflict: "day,exercise_index" });
+                await saveSessionStatus(true);
+              }
+            } else {
+              const localValue = localStorage.getItem(storageKey);
+              const cookieValue = getCookie(storageKey);
+              if (localValue === "1" || cookieValue === "1") {
+                isComplete = true;
               }
             }
           } catch (e) {
             console.error("Error checking session status:", e);
-            // Fallback naar localStorage
             const localValue = localStorage.getItem(storageKey);
             const cookieValue = getCookie(storageKey);
             if (localValue === "1" || cookieValue === "1") {
@@ -1275,30 +1307,16 @@
             localStorage.setItem(sessionCompleteKey, "1");
             localStorage.setItem(storageKey, "1");
             setCookie(storageKey, "1");
-            
-            // Update Supabase met datum
-            try {
-              const { error: supabaseError } = await supabase
-                .from("workout_entries")
-                .upsert({ 
-                  day: sessionDay, 
-                  exercise_index: 0, 
-                  completed: true,
-                  date: todayStr
-                }, { onConflict: "day,exercise_index" });
-              
-              if (supabaseError) {
-                console.error("Error saving session status to Supabase:", supabaseError);
-              } else {
-                // Alleen increment als Supabase save succesvol was EN we dit nog niet hebben gedaan vandaag
-                if (!localStorage.getItem(countIncrementedKey)) {
-                  await incrementSessionCount();
-                  localStorage.setItem(countIncrementedKey, "1");
-                  launchConfetti();
-                }
-              }
-            } catch (e) {
-              console.error("Error saving session status:", e);
+
+            const saveError = await saveSessionStatus(true);
+            if (saveError) {
+              console.error("Error saving session status to Supabase:", saveError);
+            }
+
+            if (!localStorage.getItem(countIncrementedKey)) {
+              launchConfetti();
+              await incrementSessionCount();
+              localStorage.setItem(countIncrementedKey, "1");
             }
           } else if (!isComplete && wasComplete) {
             // Unmarkeren
@@ -1306,29 +1324,15 @@
             localStorage.removeItem(storageKey);
             localStorage.removeItem(countIncrementedKey);
             clearCookie(storageKey);
-            
-            // Update Supabase
-            try {
-              const { error: supabaseError } = await supabase
-                .from("workout_entries")
-                .upsert({ 
-                  day: sessionDay, 
-                  exercise_index: 0, 
-                  completed: false,
-                  date: todayStr
-                }, { onConflict: "day,exercise_index" });
-              
-              if (supabaseError) {
-                console.error("Error saving session status to Supabase:", supabaseError);
-              } else {
-                // Alleen decrement als Supabase save succesvol was
-                await decrementSessionCount();
-              }
-            } catch (e) {
-              console.error("Error saving session status:", e);
+
+            const saveError = await saveSessionStatus(false);
+            if (saveError) {
+              console.error("Error saving session status to Supabase:", saveError);
             }
+
+            await decrementSessionCount();
           }
-        };
+      };
 
         // Event listeners
         sessionCheckButton.addEventListener("click", toggleSession);

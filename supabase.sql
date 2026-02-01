@@ -29,6 +29,7 @@ create policy "public delete" on workout_entries
   for delete using (true);
 
 alter table workout_entries add column if not exists completed boolean default false;
+alter table workout_entries add column if not exists date date;
 
 create table if not exists session_counts (
   year integer primary key,
