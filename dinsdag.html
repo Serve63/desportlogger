@@ -1387,11 +1387,25 @@
           .limit(1)
           .maybeSingle();
 
+        const { data: noteData, error: noteError } = await supabase
+          .from("workout_entries")
+          .select("note,updated_at")
+          .ilike("exercise_name", pattern)
+          .not("note", "is", null)
+          .neq("note", "")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
         if (error) {
           console.error("Supabase defaults load failed:", error);
           return cached;
         }
-        const defaults = data ? { sets: data.sets, reps: data.reps, weight: data.weight, note: data.note } : null;
+        if (noteError) {
+          console.error("Supabase note defaults load failed:", noteError);
+        }
+        const resolvedNote = noteData?.note ?? data?.note ?? null;
+        const defaults = data ? { sets: data.sets, reps: data.reps, weight: data.weight, note: resolvedNote } : (resolvedNote != null ? { sets: null, reps: null, weight: null, note: resolvedNote } : null);
         exerciseDefaultsCache.set(key, defaults);
         fetchedDefaults.add(key);
         persistDefaultsCache();
@@ -1402,7 +1416,9 @@
         if (!payload || !payload.exercise_name) return;
         const key = normalizeExerciseName(payload.exercise_name);
         if (!key) return;
-        exerciseDefaultsCache.set(key, { sets: payload.sets, reps: payload.reps, weight: payload.weight, note: payload.note });
+        const existing = exerciseDefaultsCache.get(key) || {};
+        const nextNote = payload.note != null && String(payload.note).trim() !== "" ? payload.note : existing.note ?? null;
+        exerciseDefaultsCache.set(key, { sets: payload.sets, reps: payload.reps, weight: payload.weight, note: nextNote });
         fetchedDefaults.add(key);
         persistDefaultsCache();
       };
