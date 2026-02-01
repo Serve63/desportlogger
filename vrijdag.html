@@ -1488,7 +1488,7 @@
         const pattern = escapeIlike(name);
         const { data, error } = await supabase
           .from("workout_entries")
-          .select("sets,reps,weight,updated_at")
+          .select("sets,reps,weight,note,updated_at")
           .ilike("exercise_name", pattern)
           .order("updated_at", { ascending: false })
           .limit(1)
@@ -1498,7 +1498,7 @@
           console.error("Supabase defaults load failed:", error);
           return cached;
         }
-        const defaults = data ? { sets: data.sets, reps: data.reps, weight: data.weight } : null;
+        const defaults = data ? { sets: data.sets, reps: data.reps, weight: data.weight, note: data.note } : null;
         exerciseDefaultsCache.set(key, defaults);
         fetchedDefaults.add(key);
         persistDefaultsCache();
@@ -1509,7 +1509,7 @@
         if (!payload || !payload.exercise_name) return;
         const key = normalizeExerciseName(payload.exercise_name);
         if (!key) return;
-        exerciseDefaultsCache.set(key, { sets: payload.sets, reps: payload.reps, weight: payload.weight });
+        exerciseDefaultsCache.set(key, { sets: payload.sets, reps: payload.reps, weight: payload.weight, note: payload.note });
         fetchedDefaults.add(key);
         persistDefaultsCache();
       };
@@ -1517,6 +1517,7 @@
       const applyExerciseDefaults = async (row) => {
         if (!row) return;
         const nameInput = row.querySelector(".exercise-name");
+        const noteInput = row.querySelector(".exercise-note");
         if (!nameInput) return;
         const name = nameInput.value?.trim();
         if (!name) return;
@@ -1538,6 +1539,12 @@
         maybeApply(setsInput, defaults.sets);
         maybeApply(repsInput, defaults.reps);
         maybeApply(weightInput, defaults.weight);
+        if (noteInput) {
+          const hasValue = noteInput.value != null && String(noteInput.value).trim() !== "";
+          if (!hasValue) {
+            maybeApply(noteInput, defaults.note);
+          }
+        }
       };
 
       const defaultsTimers = new WeakMap();
@@ -1661,7 +1668,7 @@
           input.addEventListener("input", (event) => {
             if (event.isTrusted) {
               const column = getColumnForInput(input);
-              if (column === "sets" || column === "reps" || column === "weight") {
+              if (column === "sets" || column === "reps" || column === "weight" || column === "note") {
                 input.dataset.userSet = "1";
               }
             }
