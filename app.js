@@ -483,6 +483,22 @@
   if (!day || getCurrentRows().length === 0) return;
 
   const cacheKey = `workout_cache_${day}`;
+  const cacheDirtyKey = `workout_cache_dirty_${day}`;
+  const isCacheDirty = () => {
+    try {
+      return localStorage.getItem(cacheDirtyKey) === "1";
+    } catch (error) {
+      return false;
+    }
+  };
+  const setCacheDirty = (dirty) => {
+    try {
+      if (dirty) localStorage.setItem(cacheDirtyKey, "1");
+      else localStorage.removeItem(cacheDirtyKey);
+    } catch (error) {
+      // Ignore storage errors
+    }
+  };
   const getRowIndex = (row) => getCurrentRows().indexOf(row);
 
   const getRowData = (row, index) => {
@@ -544,6 +560,7 @@
     if (index == null || index < 0) return;
     if (!navigator.onLine) {
       updateCacheFromDOM();
+      setCacheDirty(true);
       saveStatus.offline();
       return;
     }
@@ -556,6 +573,7 @@
     if (error) {
       console.error("Supabase save failed:", error);
       saveStatus.error();
+      setCacheDirty(true);
     } else {
       saveStatus.saved();
     }
@@ -579,6 +597,7 @@
     if (index < 0) return;
     if (!navigator.onLine) {
       updateCacheFromDOM();
+      setCacheDirty(true);
       saveStatus.offline();
       return;
     }
@@ -586,7 +605,10 @@
       .from("workout_entries")
       .update({ [column]: null })
       .match({ day, exercise_index: index + 1 });
-    if (error) console.warn("Supabase clear failed", error);
+    if (error) {
+      console.warn("Supabase clear failed", error);
+      setCacheDirty(true);
+    }
     updateCacheFromDOM();
   };
 
@@ -611,6 +633,7 @@
     try {
       if (!navigator.onLine) {
         updateCacheFromDOM();
+        setCacheDirty(true);
         saveStatus.offline();
         updateDynamicLayout();
         return;
@@ -627,6 +650,9 @@
       if (upsertError) {
         console.error("Batch upsert failed:", upsertError);
         saveStatus.error();
+        setCacheDirty(true);
+        updateCacheFromDOM();
+        updateDynamicLayout();
         return;
       }
 
@@ -638,8 +664,14 @@
 
       if (deleteError) {
         console.error("Cleanup delete failed:", deleteError);
+        saveStatus.error();
+        setCacheDirty(true);
+        updateCacheFromDOM();
+        updateDynamicLayout();
+        return;
       }
 
+      setCacheDirty(false);
       saveStatus.saved();
       updateDynamicLayout();
       updateCacheFromDOM();
@@ -702,6 +734,11 @@
   const applyDataToRows = (data) => {
     if (!Array.isArray(data) || data.length === 0) return;
     ensureRowsForData(data);
+    const maxIndex = data.reduce((max, item) => Math.max(max, Number(item.exercise_index) || 0), 0);
+    const currentRows = getCurrentRows();
+    if (maxIndex < currentRows.length) {
+      currentRows.slice(maxIndex).forEach((row) => row.remove());
+    }
     data.forEach((item) => {
       const row = getCurrentRows()[item.exercise_index - 1];
       if (!row) return;
@@ -994,31 +1031,65 @@
   setupRowReorder();
 
   const syncCacheToSupabase = async () => {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine) return false;
+    if (!isCacheDirty()) return true;
     const cached = readCache();
-    if (!cached || cached.length === 0) return;
-    const { error } = await supabase
-      .from("workout_entries")
-      .upsert(cached, { onConflict: "day,exercise_index" });
-    if (error) {
-      console.error("Cache sync failed:", error);
-      return;
+    if (cached == null) return false;
+
+    if (cached.length > 0) {
+      const { error: upsertError } = await supabase
+        .from("workout_entries")
+        .upsert(cached, { onConflict: "day,exercise_index" });
+      if (upsertError) {
+        console.error("Cache sync failed:", upsertError);
+        saveStatus.error();
+        setCacheDirty(true);
+        return false;
+      }
     }
+
+    const { error: deleteError } = await supabase
+      .from("workout_entries")
+      .delete()
+      .eq("day", day)
+      .gt("exercise_index", cached.length);
+    if (deleteError) {
+      console.error("Cache cleanup failed:", deleteError);
+      saveStatus.error();
+      setCacheDirty(true);
+      return false;
+    }
+
+    setCacheDirty(false);
     saveStatus.saved();
+    return true;
   };
 
   window.addEventListener("online", () => {
-    syncCacheToSupabase();
+    if (isCacheDirty()) syncCacheToSupabase();
   });
 
   // ── Load data from Supabase ──
   (async () => {
     const cached = readCache();
-    if (cached && cached.length) {
+    const hasCachedPayload = Array.isArray(cached);
+    const hasCachedData = hasCachedPayload && cached.length > 0;
+    const wasCacheDirty = isCacheDirty();
+
+    if (wasCacheDirty && !hasCachedPayload) {
+      setCacheDirty(false);
+    }
+
+    if (hasCachedData) {
       applyDataToRows(cached);
       updateDynamicLayout();
       const grid = document.querySelector(".grid");
       if (grid) grid.classList.add("is-loaded");
+    }
+
+    let syncOk = true;
+    if (wasCacheDirty && hasCachedPayload) {
+      syncOk = await syncCacheToSupabase();
     }
 
     const { data, error } = await supabase
@@ -1034,7 +1105,7 @@
       return;
     }
 
-    if (data && data.length) {
+    if ((!wasCacheDirty || syncOk || !hasCachedPayload) && data && data.length) {
       applyDataToRows(data);
       writeCache(data);
     }
@@ -1044,6 +1115,8 @@
     const grid = document.querySelector(".grid");
     if (grid) grid.classList.add("is-loaded");
 
-    syncCacheToSupabase();
+    if (isCacheDirty()) {
+      syncCacheToSupabase();
+    }
   })();
 })();

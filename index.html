@@ -1939,6 +1939,9 @@
             initRow(newRow);
           }
         }
+        if (data.length && maxIndex < currentRows.length) {
+          getCurrentRows().slice(maxIndex).forEach((row) => row.remove());
+        }
         data.forEach((item) => {
           const row = getCurrentRows()[item.exercise_index - 1];
           if (!row) return;
