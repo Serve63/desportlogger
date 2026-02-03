@@ -25,17 +25,15 @@
   // ── Redirect logic ──
   const todayNum = new Date().getDay();
   const dayPages = {
-    0: "zondag.html",
-    1: "index.html",
-    2: "dinsdag.html",
-    3: "woensdag.html",
-    4: "donderdag.html",
-    5: "vrijdag.html",
-    6: "zaterdag.html",
+    0: "/zondag/",
+    1: "/maandag/",
+    2: "/dinsdag/",
+    3: "/woensdag/",
+    4: "/donderdag/",
+    5: "/vrijdag/",
+    6: "/zaterdag/",
   };
 
-  const todayPage = dayPages[todayNum];
-  const currentPage = window.location.pathname.split("/").pop() || "index.html";
   const currentUrl = new URL(window.location.href);
   const storage = (() => { try { return window.sessionStorage; } catch { return null; } })();
   const manualParam = currentUrl.searchParams.get("manual") === "1";
@@ -44,7 +42,45 @@
 
   if (manualParam && storage) {
     storage.setItem("manualView", "1");
-  } else if (currentPage === todayPage && manualSession && storage) {
+  }
+
+  const legacyMap = {
+    "/index.html": "/maandag/",
+    "/dinsdag.html": "/dinsdag/",
+    "/woensdag.html": "/woensdag/",
+    "/donderdag.html": "/donderdag/",
+    "/vrijdag.html": "/vrijdag/",
+    "/zaterdag.html": "/zaterdag/",
+    "/zondag.html": "/zondag/",
+  };
+
+  const path = window.location.pathname;
+
+  if (legacyMap[path]) {
+    window.location.replace(`${legacyMap[path]}${currentUrl.search}${currentUrl.hash}`);
+    return;
+  }
+
+  if (path !== "/index.html" && path.endsWith("/index.html")) {
+    const cleanPath = path.slice(0, -10);
+    window.location.replace(`${cleanPath}${currentUrl.search}${currentUrl.hash}`);
+    return;
+  }
+
+  if (path === "/" || path === "") {
+    window.location.replace(dayPages[todayNum]);
+    return;
+  }
+
+  if (!path.endsWith("/") && !path.includes(".")) {
+    window.location.replace(`${path}/${currentUrl.search}${currentUrl.hash}`);
+    return;
+  }
+
+  const todayPage = dayPages[todayNum];
+  const currentPage = path.endsWith("/") ? path : `${path}/`;
+
+  if (currentPage === todayPage && manualSession && storage) {
     storage.removeItem("manualView");
   }
 
@@ -196,13 +232,13 @@
     if (!links.length) return;
 
     const dayMapping = {
-      "index.html": 1,
-      "dinsdag.html": 2,
-      "woensdag.html": 3,
-      "donderdag.html": 4,
-      "vrijdag.html": 5,
-      "zaterdag.html": 6,
-      "zondag.html": 0,
+      "/maandag/": 1,
+      "/dinsdag/": 2,
+      "/woensdag/": 3,
+      "/donderdag/": 4,
+      "/vrijdag/": 5,
+      "/zaterdag/": 6,
+      "/zondag/": 0,
     };
 
     links.forEach((link) => {
