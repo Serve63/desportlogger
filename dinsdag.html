@@ -784,8 +784,10 @@
 
       
       const loadingOverlay = document.getElementById("loadingOverlay");
-      const hideLoadingOverlay = () => {
+      let hasDataLoaded = false;
+      const hideLoadingOverlay = (force = false) => {
         if (!loadingOverlay || loadingOverlay.classList.contains("is-hidden")) return;
+        if (!force && !hasDataLoaded) return;
         loadingOverlay.classList.add("is-hidden");
         setTimeout(() => {
           if (loadingOverlay && loadingOverlay.parentNode) {
@@ -794,8 +796,12 @@
         }, 400);
       };
 
+      const scheduleForceHide = () => {
+        setTimeout(() => hideLoadingOverlay(true), 3500);
+      };
+
       window.addEventListener("load", () => {
-        setTimeout(hideLoadingOverlay, 300);
+        scheduleForceHide();
       });
 
       const dayTrigger = document.querySelector(".day-trigger");
@@ -2008,6 +2014,7 @@
         if (error) {
           console.error("Supabase load failed:", error);
           applyDefaultsForAllRows();
+          hasDataLoaded = true;
           hideLoadingOverlay();
           return;
         }
@@ -2044,6 +2051,7 @@
         });
         updateDynamicLayout();
         applyDefaultsForAllRows();
+        hasDataLoaded = true;
         hideLoadingOverlay();
       })();
     })();
