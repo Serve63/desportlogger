@@ -728,13 +728,7 @@
   
   <script>
     (() => {
-      const APP_VERSION = "2026-01-28-9";
-      const withVersion = (url) => {
-        const separator = url.includes("?") ? "&" : "?";
-        return `${url}${separator}v=${APP_VERSION}`;
-      };
-
-      // Redirect naar de juiste dag pagina als het niet vandaag is
+// Redirect naar de juiste dag pagina als het niet vandaag is
       const today = new Date().getDay(); // 0 = zondag, 1 = maandag, etc.
       const dayPages = {
         0: "zondag.html",   // Zondag
@@ -762,14 +756,8 @@
       
       // Als de huidige pagina niet de pagina van vandaag is, redirect (behalve bij handmatige keuze)
       if (currentPage !== todayPage && !manualView) {
-        window.location.replace(withVersion(todayPage));
+        window.location.replace(todayPage);
         return; // Stop verdere uitvoering
-      }
-
-      if (currentUrl.searchParams.get("v") !== APP_VERSION) {
-        currentUrl.searchParams.set("v", APP_VERSION);
-        window.location.replace(currentUrl.toString());
-        return;
       }
 
       const dayTrigger = document.querySelector(".day-trigger");
@@ -897,10 +885,8 @@
           const rawHref = link.getAttribute("href") || "";
           const baseHref = rawHref.split("?")[0];
           const dayNumber = dayMapping[baseHref];
-
           if (baseHref) {
-            const manualHref = `${baseHref}?manual=1`;
-            link.setAttribute("href", withVersion(manualHref));
+            link.setAttribute("href", baseHref);
           }
           
           if (dayNumber !== undefined && dayNumber === today) {

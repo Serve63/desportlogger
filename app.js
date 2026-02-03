@@ -1,9 +1,5 @@
 (() => {
   const APP_VERSION = "2026-01-29-3";
-  const withVersion = (url) => {
-    const separator = url.includes("?") ? "&" : "?";
-    return `${url}${separator}v=${APP_VERSION}`;
-  };
 
   // ── Shared day mapping (single source of truth) ──
   const PAGE_DAY_MAP = {
@@ -53,13 +49,7 @@
   }
 
   if (currentPage !== todayPage && !manualView) {
-    window.location.replace(withVersion(todayPage));
-    return;
-  }
-
-  if (currentUrl.searchParams.get("v") !== APP_VERSION) {
-    currentUrl.searchParams.set("v", APP_VERSION);
-    window.location.replace(currentUrl.toString());
+    window.location.replace(todayPage);
     return;
   }
 
@@ -221,7 +211,7 @@
       const dayNumber = dayMapping[baseHref];
 
       if (baseHref) {
-        link.setAttribute("href", withVersion(`${baseHref}?manual=1`));
+        link.setAttribute("href", baseHref);
       }
 
       if (dayNumber !== undefined && dayNumber === todayNum) {
