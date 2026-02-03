@@ -600,6 +600,49 @@
       }
     }
 
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: #1f2126;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.35s ease;
+      pointer-events: all;
+    }
+
+    .loading-overlay.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid rgba(238, 240, 243, 0.22);
+      border-top-color: #eef0f3;
+      animation: loading-spin 0.9s linear infinite;
+    }
+
+    .loading-text {
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #c2c6cc;
+    }
+
+    @keyframes loading-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
 </style>
 
 </head>
@@ -625,6 +668,11 @@
       }
     })();
   </script>
+  <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-atomic="true">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <div class="loading-text">Laden...</div>
+  </div>
+
  <main class="sheet"> <header> <div> <div class="training-count"><button class="year-trigger" type="button">2026:</button> Laden...</div> <h1>Servé's Logboek</h1> <div class="day-line"><button class="day-trigger" type="button">Vandaag</button></div></div>
 </header> <section class="grid" aria-label="Oefeningen">
       <div class="header-row">
@@ -733,6 +781,22 @@
         window.location.replace(todayPage);
         return; // Stop verdere uitvoering
       }
+
+      
+      const loadingOverlay = document.getElementById("loadingOverlay");
+      const hideLoadingOverlay = () => {
+        if (!loadingOverlay || loadingOverlay.classList.contains("is-hidden")) return;
+        loadingOverlay.classList.add("is-hidden");
+        setTimeout(() => {
+          if (loadingOverlay && loadingOverlay.parentNode) {
+            loadingOverlay.parentNode.removeChild(loadingOverlay);
+          }
+        }, 400);
+      };
+
+      window.addEventListener("load", () => {
+        setTimeout(hideLoadingOverlay, 300);
+      });
 
       const dayTrigger = document.querySelector(".day-trigger");
       const dayModal = document.getElementById("dayModal");
@@ -1959,6 +2023,7 @@
         if (error) {
           console.error("Supabase load failed:", error);
           applyDefaultsForAllRows();
+          hideLoadingOverlay();
           return;
         }
         console.log("Loaded data:", data);
@@ -1994,6 +2059,7 @@
         });
         updateDynamicLayout();
         applyDefaultsForAllRows();
+        hideLoadingOverlay();
       })();
     })();
   </script>
