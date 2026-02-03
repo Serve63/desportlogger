@@ -3,6 +3,7 @@
 
   // ── Shared day mapping (single source of truth) ──
   const PAGE_DAY_MAP = {
+    maandag:   { number: 1, name: "Maandag" },
     dinsdag:   { number: 2, name: "Dinsdag" },
     woensdag:  { number: 3, name: "Woensdag" },
     donderdag: { number: 4, name: "Donderdag" },
@@ -222,7 +223,9 @@
   const updateDayTriggerText = () => {
     const dt = document.querySelector(".day-trigger");
     if (!dt) return;
-    dt.textContent = todayNum === PAGE_DAY.number ? "Vandaag" : PAGE_DAY.name;
+    const isTodayPage = todayNum === PAGE_DAY.number;
+    dt.textContent = isTodayPage ? "Vandaag" : PAGE_DAY.name;
+    document.title = `Logboek - ${isTodayPage ? "Vandaag" : PAGE_DAY.name}`;
   };
   updateDayTriggerText();
 

@@ -884,6 +884,7 @@
           if (path.includes("vrijdag")) return 5; // Vrijdag = 5
           if (path.includes("zaterdag")) return 6; // Zaterdag = 6
           if (path.includes("zondag")) return 0; // Zondag = 0
+          if (path.includes("maandag")) return 1; // Maandag = 1
           return 1; // Maandag = 1 (default voor maandag)
         };
 
@@ -895,7 +896,9 @@
         const pageDayName = dayNames[pageDay];
 
         // Als het vandaag dezelfde dag is als de pagina, toon "Vandaag", anders de dag naam
-        dayTrigger.textContent = today === pageDay ? "Vandaag" : pageDayName;
+        const isToday = today === pageDay;
+        dayTrigger.textContent = isToday ? "Vandaag" : pageDayName;
+        document.title = `Logboek - ${isToday ? "Vandaag" : pageDayName}`;
       };
 
       // Update de button tekst bij het laden
