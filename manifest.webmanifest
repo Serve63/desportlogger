@@ -1,7 +1,7 @@
 {
   "name": "Servé's Logboek",
   "short_name": "Logboek",
-  "start_url": "/",
+  "start_url": "/vandaag/",
   "display": "standalone",
   "background_color": "#1f2126",
   "theme_color": "#1f2126",

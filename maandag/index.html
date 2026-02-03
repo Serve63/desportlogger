@@ -609,6 +609,7 @@
       try {
         const path = window.location.pathname;
         const getPageDayNumber = () => {
+          if (path.includes("vandaag")) return new Date().getDay();
           if (path.includes("dinsdag")) return 2;
           if (path.includes("woensdag")) return 3;
           if (path.includes("donderdag")) return 4;
@@ -659,7 +660,7 @@
   
   <script>
     (() => {
-      // Redirect naar de juiste dag pagina als het niet vandaag is
+            // Redirect naar de juiste dag pagina als het niet vandaag is
       const today = new Date().getDay(); // 0 = zondag, 1 = maandag, etc.
       const dayPages = {
         0: "/zondag/",
@@ -670,6 +671,7 @@
         5: "/vrijdag/",
         6: "/zaterdag/"
       };
+      const todayPage = "/vandaag/";
 
       const currentUrl = new URL(window.location.href);
       const storage = (() => { try { return window.sessionStorage; } catch { return null; } })();
@@ -705,7 +707,7 @@
       }
 
       if (path === "/" || path === "") {
-        window.location.replace(dayPages[today]);
+        window.location.replace(todayPage);
         return;
       }
 
@@ -714,11 +716,16 @@
         return;
       }
 
-      const todayPage = dayPages[today];
+      const todayDayPage = dayPages[today];
       const currentPage = path.endsWith("/") ? path : `${path}/`;
 
       if (currentPage === todayPage && manualSession && storage) {
         storage.removeItem("manualView");
+      }
+
+      if (currentPage === todayDayPage && currentPage !== todayPage) {
+        window.location.replace(todayPage);
+        return;
       }
 
       // Als de huidige pagina niet de pagina van vandaag is, redirect (behalve bij handmatige keuze)
@@ -809,6 +816,7 @@
         // Bepaal welke dag deze pagina representeert
         const getPageDay = () => {
           const path = window.location.pathname;
+          if (path.includes("vandaag")) return new Date().getDay();
           if (path.includes("dinsdag")) return 2; // Dinsdag = 2
           if (path.includes("woensdag")) return 3; // Woensdag = 3
           if (path.includes("donderdag")) return 4; // Donderdag = 4
@@ -855,11 +863,12 @@
           const rawHref = link.getAttribute("href") || "";
           const baseHref = rawHref.split("?")[0];
           const dayNumber = dayMapping[baseHref];
+          const isTodayLink = dayNumber !== undefined && dayNumber === today;
           if (baseHref) {
-            link.setAttribute("href", baseHref);
+            link.setAttribute("href", isTodayLink ? "/vandaag/" : baseHref);
           }
           
-          if (dayNumber !== undefined && dayNumber === today) {
+          if (isTodayLink) {
             // Bewaar de originele tekst in een data attribuut
             if (!link.dataset.originalText) {
               link.dataset.originalText = link.textContent;
@@ -1151,6 +1160,7 @@
 
       const getPageDayNumber = () => {
         const path = window.location.pathname;
+        if (path.includes("vandaag")) return new Date().getDay();
         if (path.includes("dinsdag")) return 2;
         if (path.includes("woensdag")) return 3;
         if (path.includes("donderdag")) return 4;
@@ -1374,6 +1384,10 @@
       // Bepaal de dag naam op basis van het bestand voor Supabase
       const getDayName = () => {
         const path = window.location.pathname;
+        if (path.includes("vandaag")) {
+          const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+          return dayNames[new Date().getDay()];
+        }
         if (path.includes("dinsdag")) return "Dinsdag";
         if (path.includes("woensdag")) return "Woensdag";
         if (path.includes("donderdag")) return "Donderdag";

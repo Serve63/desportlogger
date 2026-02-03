@@ -15,6 +15,10 @@
 
   const getPageDayInfo = () => {
     const path = window.location.pathname;
+    if (path.includes("vandaag")) {
+      const todayNumber = new Date().getDay();
+      return { number: todayNumber, name: DAY_NAMES[todayNumber] };
+    }
     for (const [key, info] of Object.entries(PAGE_DAY_MAP)) {
       if (path.includes(key)) return info;
     }
@@ -34,6 +38,7 @@
     5: "/vrijdag/",
     6: "/zaterdag/",
   };
+  const todayPage = "/vandaag/";
 
   const currentUrl = new URL(window.location.href);
   const storage = (() => { try { return window.sessionStorage; } catch { return null; } })();
@@ -69,7 +74,7 @@
   }
 
   if (path === "/" || path === "") {
-    window.location.replace(dayPages[todayNum]);
+    window.location.replace(todayPage);
     return;
   }
 
@@ -78,11 +83,16 @@
     return;
   }
 
-  const todayPage = dayPages[todayNum];
+  const todayDayPage = dayPages[todayNum];
   const currentPage = path.endsWith("/") ? path : `${path}/`;
 
   if (currentPage === todayPage && manualSession && storage) {
     storage.removeItem("manualView");
+  }
+
+  if (currentPage === todayDayPage && currentPage !== todayPage) {
+    window.location.replace(todayPage);
+    return;
   }
 
   if (currentPage !== todayPage && !manualView) {
@@ -249,11 +259,13 @@
       const baseHref = rawHref.split("?")[0];
       const dayNumber = dayMapping[baseHref];
 
+      const isTodayLink = dayNumber !== undefined && dayNumber === todayNum;
+
       if (baseHref) {
-        link.setAttribute("href", baseHref);
+        link.setAttribute("href", isTodayLink ? "/vandaag/" : baseHref);
       }
 
-      if (dayNumber !== undefined && dayNumber === todayNum) {
+      if (isTodayLink) {
         if (!link.dataset.originalText) link.dataset.originalText = link.textContent;
         link.textContent = "Vandaag";
         link.classList.add("is-today");
