@@ -1,4 +1,4 @@
-const CACHE_NAME = "desportlogger-v2";
+const CACHE_NAME = "desportlogger-v3";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
