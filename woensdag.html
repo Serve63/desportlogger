@@ -734,13 +734,13 @@
       <button class="day-modal__close" type="button" aria-label="Sluiten">&times;</button>
       <h2 id="dayModalTitle">Kies een dag</h2>
       <div class="day-modal__grid">
-        <a href="/maandag/">Maandag</a>
-        <a href="/dinsdag/">Dinsdag</a>
-        <a href="/woensdag/">Woensdag</a>
-        <a href="/donderdag/">Donderdag</a>
-        <a href="/vrijdag/">Vrijdag</a>
-        <a href="/zaterdag/">Zaterdag</a>
-        <a href="/zondag/">Zondag</a>
+        <a href="/maandag/" data-day="maandag">Maandag</a>
+        <a href="/dinsdag/" data-day="dinsdag">Dinsdag</a>
+        <a href="/woensdag/" data-day="woensdag">Woensdag</a>
+        <a href="/donderdag/" data-day="donderdag">Donderdag</a>
+        <a href="/vrijdag/" data-day="vrijdag">Vrijdag</a>
+        <a href="/zaterdag/" data-day="zaterdag">Zaterdag</a>
+        <a href="/zondag/" data-day="zondag">Zondag</a>
       </div>
     </div>
   </div>
@@ -759,18 +759,45 @@
   
   <script>
     (() => {
+
+      const getBasePath = () => {
+        const path = window.location.pathname;
+        const daySegments = ["vandaag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"];
+        for (const day of daySegments) {
+          const token = `/${day}/`;
+          const idx = path.indexOf(token);
+          if (idx != -1) {
+            return path.slice(0, idx + 1);
+          }
+        }
+        const htmlSegments = ["index", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"];
+        for (const name of htmlSegments) {
+          const token = `/${name}.html`;
+          const idx = path.indexOf(token);
+          if (idx != -1) {
+            return path.slice(0, idx + 1);
+          }
+        }
+        if (!path.endsWith("/") && !path.includes(".")) {
+          return `${path}/`;
+        }
+        return path;
+      };
+      const basePath = getBasePath();
+      const withBase = (p) => `${basePath}${p.replace(/^\//, "")}`;
+
             // Redirect naar de juiste dag pagina als het niet vandaag is
       const today = new Date().getDay(); // 0 = zondag, 1 = maandag, etc.
       const dayPages = {
-        0: "/zondag/",
-        1: "/maandag/",
-        2: "/dinsdag/",
-        3: "/woensdag/",
-        4: "/donderdag/",
-        5: "/vrijdag/",
-        6: "/zaterdag/"
+        0: withBase("zondag/"),
+        1: withBase("maandag/"),
+        2: withBase("dinsdag/"),
+        3: withBase("woensdag/"),
+        4: withBase("donderdag/"),
+        5: withBase("vrijdag/"),
+        6: withBase("zaterdag/")
       };
-      const todayPage = "/vandaag/";
+      const todayPage = withBase("vandaag/");
 
       const currentUrl = new URL(window.location.href);
       const storage = (() => { try { return window.sessionStorage; } catch { return null; } })();
@@ -783,14 +810,15 @@
       }
 
       const legacyMap = {
-        "/index.html": "/maandag/",
-        "/dinsdag.html": "/dinsdag/",
-        "/woensdag.html": "/woensdag/",
-        "/donderdag.html": "/donderdag/",
-        "/vrijdag.html": "/vrijdag/",
-        "/zaterdag.html": "/zaterdag/",
-        "/zondag.html": "/zondag/"
+        [`${basePath}index.html`]: withBase("maandag/"),
+        [`${basePath}dinsdag.html`]: withBase("dinsdag/"),
+        [`${basePath}woensdag.html`]: withBase("woensdag/"),
+        [`${basePath}donderdag.html`]: withBase("donderdag/"),
+        [`${basePath}vrijdag.html`]: withBase("vrijdag/"),
+        [`${basePath}zaterdag.html`]: withBase("zaterdag/"),
+        [`${basePath}zondag.html`]: withBase("zondag/")
       };
+
 
       const path = window.location.pathname;
 
@@ -805,7 +833,7 @@
         return;
       }
 
-      if (path === "/" || path === "") {
+      if (path === basePath || path === basePath.slice(0, -1)) {
         window.location.replace(todayPage);
         return;
       }
@@ -965,30 +993,35 @@
       updateDayTriggerText();
 
       // Update dag-menu links: toon "Vandaag" voor de huidige dag
+
+      
       const updateDayModalLinks = () => {
         const dayModalLinks = document.querySelectorAll(".day-modal__grid a");
         if (!dayModalLinks.length) return;
 
         const today = new Date().getDay(); // 0 = zondag, 1 = maandag, etc.
         const dayMapping = {
-          "/maandag/": 1,      // Maandag
-          "/dinsdag/": 2,    // Dinsdag
-          "/woensdag/": 3,   // Woensdag
-          "/donderdag/": 4,   // Donderdag
-          "/vrijdag/": 5,     // Vrijdag
-          "/zaterdag/": 6,    // Zaterdag
-          "/zondag/": 0       // Zondag
+          maandag: 1,
+          dinsdag: 2,
+          woensdag: 3,
+          donderdag: 4,
+          vrijdag: 5,
+          zaterdag: 6,
+          zondag: 0
         };
 
         dayModalLinks.forEach((link) => {
           const rawHref = link.getAttribute("href") || "";
-          const baseHref = rawHref.split("?")[0];
-          const dayNumber = dayMapping[baseHref];
+          const match = rawHref.match(/(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag|vandaag)/);
+          const dayKey = link.dataset.day || (match ? match[1] : "");
+          const dayNumber = dayMapping[dayKey];
           const isTodayLink = dayNumber !== undefined && dayNumber === today;
-          if (baseHref) {
-            link.setAttribute("href", isTodayLink ? "/vandaag/" : baseHref);
+
+          const targetSlug = isTodayLink ? "vandaag" : dayKey;
+          if (targetSlug) {
+            link.setAttribute("href", withBase(`${targetSlug}/`));
           }
-          
+
           if (isTodayLink) {
             // Bewaar de originele tekst in een data attribuut
             if (!link.dataset.originalText) {
