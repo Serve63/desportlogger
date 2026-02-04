@@ -1,4 +1,4 @@
-const CACHE_NAME = "desportlogger-v1";
+const CACHE_NAME = "desportlogger-v2";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -9,5 +9,12 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+  const request = event.request;
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request, { cache: "reload" }).catch(() => caches.match(request))
+    );
+    return;
+  }
+  event.respondWith(fetch(request).catch(() => caches.match(request)));
 });
