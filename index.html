@@ -787,6 +787,21 @@
       const basePath = getBasePath();
       const withBase = (p) => `${basePath}${p.replace(/^\//, "")}`;
 
+      window.__appBasePath = basePath;
+
+      const updateAppLinks = () => {
+        const manifestLink = document.querySelector('link[rel="manifest"]');
+        if (manifestLink) {
+          manifestLink.setAttribute("href", withBase("manifest.webmanifest"));
+        }
+        const appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+        if (appleIcon) {
+          appleIcon.setAttribute("href", withBase("apple-touch-icon.png"));
+        }
+      };
+      updateAppLinks();
+
+
             // Redirect naar de juiste dag pagina als het niet vandaag is
       const today = new Date().getDay(); // 0 = zondag, 1 = maandag, etc.
       const dayPages = {
@@ -2191,7 +2206,8 @@
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js");
+    const basePath = window.__appBasePath || "/";
+    navigator.serviceWorker.register(`${basePath}sw.js`);
   });
 }
 </script>
