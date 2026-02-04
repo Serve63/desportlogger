@@ -4,8 +4,8 @@
   "start_url": "./vandaag/",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#1f2126",
-  "theme_color": "#1f2126",
+  "background_color": "#15181d",
+  "theme_color": "#15181d",
   "orientation": "portrait",
   "icons": [
     {
