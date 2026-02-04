@@ -65,6 +65,19 @@
       user-select: none;
     }
 
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("/icon-512.png");
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: 60vmin;
+      opacity: 0.08;
+      pointer-events: none;
+    }
+
+
 
     input {
       -webkit-user-select: text;
