@@ -38,10 +38,9 @@
     }
 
     html, body {
-      height: 100%;
       overflow: hidden;
       position: fixed;
-      width: 100%;
+      inset: 0;
       background:
         linear-gradient(180deg, #1a2634, transparent 120px),
         radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
@@ -335,22 +334,10 @@ transform: translateY(-2px);
       transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
     }
 
-    .mini-field:hover {
-      box-shadow: none;
-      transform: translateY(-2px);
-    }
-
     .mini-field:focus {
       outline: none;
       border-color: rgba(74, 163, 255, 0.7);
       background: linear-gradient(180deg, rgba(74, 163, 255, 0.18), rgba(255, 255, 255, 0.04));
-      box-shadow: none;
-      transform: translateY(-2px);
-    }
-
-    .mini-field:active {
-      transform: translateY(0);
-      box-shadow: none;
     }
 
 
@@ -523,39 +510,52 @@ transform: translateY(-2px);
       bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: 2px solid rgba(74, 163, 255, 0.6);
-      background: #2f3338;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15), transparent 50%), rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px) saturate(120%);
+      -webkit-backdrop-filter: blur(12px) saturate(120%);
       display: none;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 1000;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1),
+                  background-color 0.25s ease,
+                  border-color 0.25s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .session-check-button.is-today {
       display: flex;
     }
 
-    .session-check-button:hover {
-      background: #3a3e44;
-      transform: translateX(-50%) scale(1.05);
+    .session-check-button:active {
+      transform: translateX(-50%) scale(0.92);
     }
 
     .session-check-button.is-complete {
-      background: rgba(74, 163, 255, 0.6);
-      border-color: #4aa3ff;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), transparent 50%), #4aa3ff;
+      border-color: rgba(74, 163, 255, 0.8);
+      animation: checkPop 0.35s cubic-bezier(0.17, 0.67, 0.21, 1.2);
+    }
+
+    @keyframes checkPop {
+      0% { transform: translateX(-50%) scale(1); }
+      40% { transform: translateX(-50%) scale(1.2); }
+      100% { transform: translateX(-50%) scale(1); }
     }
 
     .session-check-button.is-complete::after {
-      content: "✓";
-      color: #fff;
-      font-size: 24px;
+      content: "\2713";
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
       font-weight: 700;
+      color: #eaffef;
     }
 
     .rest-day .session-check-button {
@@ -646,15 +646,11 @@ transform: translateY(-2px);
 
     .confetti {
       position: absolute;
-      top: -20px;
+      top: -30px;
       opacity: 0;
       display: block;
-      width: 24px;
-      height: 24px;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M20 12h24v12c0 10-8 18-12 18s-12-8-12-18V12z' fill='%234aa3ff'/><path d='M12 14h8v6c0 6-4 10-8 10v-4c2 0 4-2 4-6v-2h-4v-4z' fill='%234aa3ff'/><path d='M44 14h8v4h-4v2c0 4 2 6 4 6v4c-4 0-8-4-8-10v-6z' fill='%234aa3ff'/><rect x='28' y='42' width='8' height='8' rx='2' fill='%234aa3ff'/><rect x='20' y='50' width='24' height='6' rx='2' fill='%234aa3ff'/></svg>");
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
+      font-size: 24px;
+      line-height: 1;
       animation: confettiFall var(--fall-duration, 4s) var(--fall-delay, 0s) ease-out forwards;
     }
 
@@ -1278,16 +1274,15 @@ transform: translateY(-2px);
         const createTrophy = () => {
           const piece = document.createElement("span");
           piece.className = "confetti";
-          piece.textContent = "";
+          piece.textContent = "\uD83C\uDFC6";
 
           // Willekeurige positie over hele breedte
           const x = Math.random() * viewportWidth;
           piece.style.left = x + "px";
 
           // Willekeurige grootte
-          const size = 16 + Math.random() * 20;
-          piece.style.width = size + "px";
-          piece.style.height = size + "px";
+          const size = 18 + Math.random() * 16;
+          piece.style.fontSize = size + "px";
 
           // Variabele valsnelheid (2.5s tot 5s)
           const fallDuration = 2.5 + Math.random() * 2.5;
