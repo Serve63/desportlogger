@@ -2,7 +2,7 @@
 <html lang="nl">
 <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 
-  <meta name="theme-color" content="#1f2126" />
+  <meta name="theme-color" content="#15181d" />
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -41,7 +41,11 @@
       overflow: hidden;
       position: fixed;
       width: 100%;
-      background: #15181d;
+      background:
+        radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 85% 5%, rgba(74, 163, 255, 0.08), transparent 55%),
+        radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
+        #15181d;
       touch-action: pan-y;
       overscroll-behavior: none;
     }
@@ -719,18 +723,31 @@ transform: translateY(-2px);
   <script id="todayGuard">
     (function() {
       try {
+        const hashDay = (window.location.hash || "").replace("#", "");
         const path = window.location.pathname;
+        const hashMap = {
+          maandag: 1,
+          dinsdag: 2,
+          woensdag: 3,
+          donderdag: 4,
+          vrijdag: 5,
+          zaterdag: 6,
+          zondag: 0
+        };
         const getPageDayNumber = () => {
-        const path = window.location.pathname;
-        if (path.includes("vandaag")) return new Date().getDay();
-        if (path.includes("dinsdag")) return 2;
-        if (path.includes("woensdag")) return 3;
-        if (path.includes("donderdag")) return 4;
-        if (path.includes("vrijdag")) return 5;
-        if (path.includes("zaterdag")) return 6;
-        if (path.includes("zondag")) return 0;
-        return 1;
-      };
+          if (hashDay) {
+            if (hashDay === "vandaag") return new Date().getDay();
+            return hashMap[hashDay] ?? 1;
+          }
+          if (path.includes("vandaag")) return new Date().getDay();
+          if (path.includes("dinsdag")) return 2;
+          if (path.includes("woensdag")) return 3;
+          if (path.includes("donderdag")) return 4;
+          if (path.includes("vrijdag")) return 5;
+          if (path.includes("zaterdag")) return 6;
+          if (path.includes("zondag")) return 0;
+          return 1;
+        };
         const isToday = new Date().getDay() === getPageDayNumber();
         document.documentElement.classList.toggle("not-today", !isToday);
       } catch (e) {
@@ -753,13 +770,13 @@ transform: translateY(-2px);
       <button class="day-modal__close" type="button" aria-label="Sluiten">&times;</button>
       <h2 id="dayModalTitle">Kies een dag</h2>
       <div class="day-modal__grid">
-        <a href="/maandag/" data-day="maandag">Maandag</a>
-        <a href="/dinsdag/" data-day="dinsdag">Dinsdag</a>
-        <a href="/woensdag/" data-day="woensdag">Woensdag</a>
-        <a href="/donderdag/" data-day="donderdag">Donderdag</a>
-        <a href="/vrijdag/" data-day="vrijdag">Vrijdag</a>
-        <a href="/zaterdag/" data-day="zaterdag">Zaterdag</a>
-        <a href="/zondag/" data-day="zondag">Zondag</a>
+        <a href="#maandag" data-day="maandag">Maandag</a>
+        <a href="#dinsdag" data-day="dinsdag">Dinsdag</a>
+        <a href="#woensdag" data-day="woensdag">Woensdag</a>
+        <a href="#donderdag" data-day="donderdag">Donderdag</a>
+        <a href="#vrijdag" data-day="vrijdag">Vrijdag</a>
+        <a href="#zaterdag" data-day="zaterdag">Zaterdag</a>
+        <a href="#zondag" data-day="zondag">Zondag</a>
       </div>
     </div>
   </div>
@@ -991,6 +1008,30 @@ transform: translateY(-2px);
       // Initialiseer year trigger bij het laden
       setupYearTrigger();
 
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      const daySlugToNumber = {
+        maandag: 1,
+        dinsdag: 2,
+        woensdag: 3,
+        donderdag: 4,
+        vrijdag: 5,
+        zaterdag: 6,
+        zondag: 0
+      };
+      const daySlugToName = {
+        maandag: "Maandag",
+        dinsdag: "Dinsdag",
+        woensdag: "Woensdag",
+        donderdag: "Donderdag",
+        vrijdag: "Vrijdag",
+        zaterdag: "Zaterdag",
+        zondag: "Zondag"
+      };
+      const getHashDay = () => {
+        const slug = (window.location.hash || "").replace("#", "");
+        return slug in daySlugToNumber || slug === "vandaag" ? slug : "";
+      };
+
       // Update day-trigger button tekst: "Vandaag" als het vandaag is, anders de dag naam
       const updateDayTriggerText = () => {
         const dayTrigger = document.querySelector(".day-trigger");
@@ -998,6 +1039,11 @@ transform: translateY(-2px);
 
         // Bepaal welke dag deze pagina representeert
         const getPageDay = () => {
+          const hashDay = getHashDay();
+          if (hashDay) {
+            if (hashDay === "vandaag") return new Date().getDay();
+            return daySlugToNumber[hashDay] ?? 1;
+          }
           const path = window.location.pathname;
           if (path.includes("vandaag")) return new Date().getDay();
           if (path.includes("dinsdag")) return 2; // Dinsdag = 2
@@ -1053,7 +1099,7 @@ transform: translateY(-2px);
 
           const targetSlug = isTodayLink ? "vandaag" : dayKey;
           if (targetSlug) {
-            link.setAttribute("href", withBase(`${targetSlug}/`));
+            link.setAttribute("href", `#${targetSlug}`);
           }
 
           if (isTodayLink) {
@@ -1077,8 +1123,6 @@ transform: translateY(-2px);
       // Update de menu links bij het laden
       updateDayModalLinks();
 
-      const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-
       const updateTodayState = () => {
         const todayNumber = new Date().getDay();
         const pageDayNumber = getPageDayNumber();
@@ -1087,12 +1131,12 @@ transform: translateY(-2px);
         document.documentElement.classList.toggle("not-today", !isTodayNow);
       };
 
-      const navigateTo = (href) => {
-        if (!href) return;
-        const url = new URL(href, window.location.origin);
-        if (url.pathname === window.location.pathname) return;
-        window.history.pushState({}, "", url.pathname + url.search + url.hash);
-        handleRouteChange();
+      const navigateTo = (slug) => {
+        if (!slug) return;
+        const target = slug.replace("#", "");
+        if (!target) return;
+        if (getHashDay() === target) return;
+        window.location.hash = target;
       };
 
       const handleRouteChange = () => {
@@ -1103,22 +1147,22 @@ transform: translateY(-2px);
         loadDayData();
       };
 
-      window.addEventListener("popstate", () => {
-        if (isStandalone) handleRouteChange();
+      window.addEventListener("hashchange", () => {
+        handleRouteChange();
       });
 
       document.addEventListener("click", (event) => {
         const link = event.target.closest(".day-modal__grid a");
         if (!link) return;
         if (storage) storage.setItem("manualView", "1");
-        if (isStandalone) {
-          event.preventDefault();
-          if (dayModal) {
-            dayModal.classList.remove("is-open");
-            dayModal.setAttribute("aria-hidden", "true");
-          }
-          navigateTo(link.getAttribute("href"));
+        event.preventDefault();
+        if (dayModal) {
+          dayModal.classList.remove("is-open");
+          dayModal.setAttribute("aria-hidden", "true");
         }
+        const rawHref = link.getAttribute("href") || "";
+        const targetSlug = rawHref.replace("#", "");
+        navigateTo(targetSlug);
       });
 
 
@@ -1408,46 +1452,51 @@ transform: translateY(-2px);
       })();
 
       const getPageDayNumber = () => {
-                const path = window.location.pathname;
-                if (path.includes("vandaag")) return new Date().getDay();
-                if (path.includes("dinsdag")) return 2;
-                if (path.includes("woensdag")) return 3;
-                if (path.includes("donderdag")) return 4;
-                if (path.includes("vrijdag")) return 5;
-                if (path.includes("zaterdag")) return 6;
-                if (path.includes("zondag")) return 0;
-                return 1;
-              };
-              const todayNumber = new Date().getDay();
-              const pageDayNumber = getPageDayNumber();
-              const isToday = todayNumber === pageDayNumber;
-              const sessionCompleteKey = `session_complete_${new Date().toLocaleDateString('en-CA')}`;
-              document.body.classList.toggle("not-today", !isToday);
-              const getCookie = (name) => {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(';').shift();
-                return null;
-              };
-              const setCookie = (name, value) => {
-                document.cookie = `${name}=${value}; Max-Age=31536000; Path=/; SameSite=Lax`;
-              };
-              const clearCookie = (name) => {
-                document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
-              };
-              // Setup session check button
-              window.addEventListener("DOMContentLoaded", () => {
-                const sessionCheckButton = document.getElementById("sessionCheckButton");
-                if (!sessionCheckButton) return;
-                // Toon knop alleen als het vandaag is
-                if (!isToday) {
-                  return;
-                }
-                // Toon de knop
-                sessionCheckButton.classList.add("is-today");
-                const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
-                const sessionDay = dayNames[pageDayNumber];
-                const todayStr = new Date().toLocaleDateString('en-CA');
+        const hashDay = getHashDay();
+        if (hashDay) {
+          if (hashDay === "vandaag") return new Date().getDay();
+          return daySlugToNumber[hashDay] ?? 1;
+        }
+        const path = window.location.pathname;
+        if (path.includes("vandaag")) return new Date().getDay();
+        if (path.includes("dinsdag")) return 2;
+        if (path.includes("woensdag")) return 3;
+        if (path.includes("donderdag")) return 4;
+        if (path.includes("vrijdag")) return 5;
+        if (path.includes("zaterdag")) return 6;
+        if (path.includes("zondag")) return 0;
+        return 1;
+      };
+      const todayNumber = new Date().getDay();
+      const pageDayNumber = getPageDayNumber();
+      const isToday = todayNumber === pageDayNumber;
+      const sessionCompleteKey = `session_complete_${new Date().toLocaleDateString('en-CA')}`;
+      document.body.classList.toggle("not-today", !isToday);
+      const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+      };
+      const setCookie = (name, value) => {
+        document.cookie = `${name}=${value}; Max-Age=31536000; Path=/; SameSite=Lax`;
+      };
+      const clearCookie = (name) => {
+        document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+      };
+      // Setup session check button
+      window.addEventListener("DOMContentLoaded", () => {
+        const sessionCheckButton = document.getElementById("sessionCheckButton");
+        if (!sessionCheckButton) return;
+        // Toon knop alleen als het vandaag is
+        if (!isToday) {
+          return;
+        }
+        // Toon de knop
+        sessionCheckButton.classList.add("is-today");
+        const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+        const sessionDay = dayNames[pageDayNumber];
+        const todayStr = new Date().toLocaleDateString('en-CA');
                 const storageKey = "session-checked-" + todayStr;
                 const sessionCompleteKey = `session_complete_${todayStr}`;
                 const isMissingDateColumn = (error) => {
@@ -1597,13 +1646,21 @@ transform: translateY(-2px);
                 sessionCheckButton.addEventListener("click", toggleSession);
                 sessionCheckButton.addEventListener("touchstart", toggleSession, { passive: false });
               });
-              // Bepaal de dag naam op basis van het bestand voor Supabase
-              const getDayName = () => {
-                const path = window.location.pathname;
-                if (path.includes("vandaag")) {
-                  const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
-                  return dayNames[new Date().getDay()];
-                }
+      // Bepaal de dag naam op basis van het bestand voor Supabase
+      const getDayName = () => {
+        const hashDay = getHashDay();
+        if (hashDay) {
+          if (hashDay === "vandaag") {
+            const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+            return dayNames[new Date().getDay()];
+          }
+          return daySlugToName[hashDay] || "Maandag";
+        }
+        const path = window.location.pathname;
+        if (path.includes("vandaag")) {
+          const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+          return dayNames[new Date().getDay()];
+        }
                 if (path.includes("dinsdag")) return "Dinsdag";
                 if (path.includes("woensdag")) return "Woensdag";
                 if (path.includes("donderdag")) return "Donderdag";
