@@ -631,8 +631,14 @@
       position: absolute;
       top: -20px;
       opacity: 0;
+      display: block;
+      width: 24px;
+      height: 24px;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M20 12h24v12c0 10-8 18-12 18s-12-8-12-18V12z' fill='%234aa3ff'/><path d='M12 14h8v6c0 6-4 10-8 10v-4c2 0 4-2 4-6v-2h-4v-4z' fill='%234aa3ff'/><path d='M44 14h8v4h-4v2c0 4 2 6 4 6v4c-4 0-8-4-8-10v-6z' fill='%234aa3ff'/><rect x='28' y='42' width='8' height='8' rx='2' fill='%234aa3ff'/><rect x='20' y='50' width='24' height='6' rx='2' fill='%234aa3ff'/></svg>");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
       animation: confettiFall var(--fall-duration, 4s) var(--fall-delay, 0s) ease-out forwards;
-      filter: hue-rotate(200deg) saturate(220%) brightness(1.1);
     }
 
     @keyframes confettiFall {
@@ -1059,14 +1065,14 @@
         const createTrophy = () => {
           const piece = document.createElement("span");
           piece.className = "confetti";
-          piece.textContent = "\uD83C\uDFC6";
+          piece.textContent = "";
 
           const x = Math.random() * viewportWidth;
           piece.style.left = x + "px";
 
           const size = 16 + Math.random() * 20;
-          piece.style.fontSize = size + "px";
-          piece.style.lineHeight = "1";
+          piece.style.width = size + "px";
+          piece.style.height = size + "px";
 
           const fallDuration = 2.5 + Math.random() * 2.5;
           piece.style.setProperty('--fall-duration', fallDuration + 's');
