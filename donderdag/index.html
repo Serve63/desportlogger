@@ -283,9 +283,9 @@
     }
 
     .mini-field {
-      border: none;
-      background: var(--field);
-      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+      border-radius: 8px;
       width: 42px;
       height: 42px;
       padding: 0;
@@ -296,7 +296,28 @@
       align-items: center;
       justify-content: center;
       color: var(--ink);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
     }
+
+    .mini-field:hover {
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .mini-field:focus {
+      outline: none;
+      border-color: rgba(74, 163, 255, 0.7);
+      background: linear-gradient(180deg, rgba(74, 163, 255, 0.18), rgba(255, 255, 255, 0.04));
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(74, 163, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .mini-field:active {
+      transform: translateY(0);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
 
     .year-modal,
     .day-modal {
