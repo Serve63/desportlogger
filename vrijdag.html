@@ -1286,6 +1286,25 @@
       const incrementSessionCount = () => updateSessionCount(true);
       const decrementSessionCount = () => updateSessionCount(false);
 
+      const updateYearTotalFromList = () => {
+        const list = document.querySelector(".year-modal__list");
+        if (!list) return;
+        const totalItem = list.querySelector(".year-total");
+        if (!totalItem) return;
+
+        let total = 0;
+        list.querySelectorAll("li").forEach((item) => {
+          if (item.classList.contains("year-total")) return;
+          const text = item.textContent || "";
+          const match = text.match(/(\d+)\s*$/);
+          if (match) {
+            total += Number.parseInt(match[1], 10);
+          }
+        });
+
+        totalItem.innerHTML = `<strong>Totaal:</strong> ${total} sessies`;
+      };
+
 
       const updateSessionCountDisplay = (count) => {
         const trainingCountEl = document.querySelector(".training-count");
@@ -1304,6 +1323,7 @@
             }
           }
         }
+        updateYearTotalFromList();
       };
       // Initialiseer sessie counts voor alle jaren (alleen als record nog niet bestaat)
       const initializeSessionCounts = async () => {
