@@ -85,6 +85,24 @@
       z-index: 0;
     }
 
+    .pwa-bottom-fade {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 120px;
+      background: linear-gradient(180deg, rgba(21, 24, 29, 0) 0%, #15181d 100%);
+      pointer-events: none;
+      z-index: 1;
+      display: none;
+    }
+
+    @media (display-mode: standalone) {
+      .pwa-bottom-fade {
+        display: block;
+      }
+    }
+
     body {
       margin: 0;
       font-family: "DM Sans", sans-serif;
@@ -755,6 +773,7 @@ transform: translateY(-2px);
 
 </head>
 <body>
+  <div class="pwa-bottom-fade" aria-hidden="true"></div>
   <script id="todayGuard">
     (function() {
       try {
