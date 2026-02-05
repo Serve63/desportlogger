@@ -124,7 +124,8 @@
 
 
 
-    input {
+    input,
+    textarea {
       -webkit-user-select: text;
       user-select: text;
     }
@@ -359,6 +360,10 @@ transform: translateY(-2px);
       grid-row: 2;
       color: #c6c8cc;
       font-size: var(--note-font);
+      resize: none;
+      overflow: hidden;
+      line-height: 1.35;
+      margin: 0;
     }
 
     .mini-wrap {
@@ -1251,6 +1256,12 @@ transform: translateY(-2px);
       };
       document.querySelectorAll(".mini-field").forEach(cursorToEnd);
 
+      const autoResizeNote = (note) => {
+        if (!note || note.tagName !== "TEXTAREA") return;
+        note.style.height = "auto";
+        note.style.height = `${note.scrollHeight}px`;
+      };
+
       const launchConfetti = () => {
         const layer = document.createElement("div");
         layer.className = "confetti-layer";
@@ -1783,9 +1794,12 @@ transform: translateY(-2px);
               };
               const resetRowsForLoad = () => {
                 getCurrentRows().forEach((row) => {
-                  row.querySelectorAll("input").forEach((input) => {
+                  row.querySelectorAll("input, textarea").forEach((input) => {
                     input.value = "";
                     delete input.dataset.userSet;
+                    if (input.classList.contains("exercise-note")) {
+                      autoResizeNote(input);
+                    }
                   });
                 });
               };
@@ -1898,6 +1912,7 @@ transform: translateY(-2px);
           if (!hasValue) {
             maybeApply(noteInput, defaults.note);
           }
+          autoResizeNote(noteInput);
         }
       };
 
@@ -2106,13 +2121,16 @@ transform: translateY(-2px);
 
       // Functie om event listeners toe te voegen aan een row
       const attachRowEventListeners = (row) => {
-        row.querySelectorAll("input").forEach((input) => {
+        row.querySelectorAll("input, textarea").forEach((input) => {
           input.addEventListener("input", (event) => {
             if (event.isTrusted) {
               const column = getColumnForInput(input);
               if (column === "sets" || column === "reps" || column === "weight" || column === "note") {
                 input.dataset.userSet = "1";
               }
+            }
+            if (input.classList.contains("exercise-note")) {
+              autoResizeNote(input);
             }
             if (input.classList.contains("exercise-name")) {
               scheduleDefaults(row);
@@ -2144,7 +2162,7 @@ transform: translateY(-2px);
             <div class="exercise-cell">
               <button class="drag-handle" type="button" aria-label="Verplaats oefening"></button>
               <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-${displayIndex}" placeholder="Geef je oefening een naam" />
-              <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" class="exercise-note" name="note-${displayIndex}" />
+              <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" rows="2"></textarea>
             </div>
             <div class="mini-wrap" data-label="Sets">
               <input type="text" class="mini-field" name="sets-${displayIndex}" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" />
@@ -2216,6 +2234,7 @@ transform: translateY(-2px);
         ensureRowHandle(row);
         row.querySelectorAll("input[data-max]").forEach(clampInput);
         row.querySelectorAll(".mini-field").forEach(cursorToEnd);
+        row.querySelectorAll(".exercise-note").forEach(autoResizeNote);
         attachRowEventListeners(row);
         if (typeof attachTouchListeners === "function") {
           attachTouchListeners(row);
@@ -2244,6 +2263,7 @@ transform: translateY(-2px);
         attachRowEventListeners(row);
         ensureRowHandle(row);
       });
+      document.querySelectorAll(".exercise-note").forEach(autoResizeNote);
       updateDynamicLayout();
 
       window.addEventListener("resize", () => {
@@ -2551,7 +2571,10 @@ transform: translateY(-2px);
           const weightInput = row.querySelector('input[name^="gewicht-"]');
 
           if (nameInput && item.exercise_name != null) nameInput.value = item.exercise_name;
-          if (noteInput && item.note != null) noteInput.value = item.note;
+          if (noteInput && item.note != null) {
+            noteInput.value = item.note;
+            autoResizeNote(noteInput);
+          }
           if (setsInput && item.sets != null) setsInput.value = item.sets;
           if (repsInput && item.reps != null) repsInput.value = item.reps;
           if (weightInput && item.weight != null) weightInput.value = item.weight;
@@ -2564,7 +2587,7 @@ transform: translateY(-2px);
       loadDayData();
 
     })();
-  </script>
+  </script>>>
 
 
 
