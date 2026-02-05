@@ -1892,20 +1892,49 @@ transform: translateY(-2px);
       // Functie om alle rows opnieuw te indexeren en op te slaan
       const reindexAndSaveAllRows = async () => {
         console.log("reindexAndSaveAllRows aangeroepen voor dag:", day);
+        if (!day) {
+          console.warn("Geen dag gevonden, overslaan");
+          return;
+        }
         const allRows = Array.from(document.querySelectorAll(".row"));
         console.log("Aantal rows:", allRows.length);
-        // Verwijder eerst alle oude entries voor deze dag
-        const { error: deleteError } = await supabase.from("workout_entries").delete().eq("day", day);
-        if (deleteError) {
-          console.error("Fout bij verwijderen oude entries:", deleteError);
+
+        const payload = allRows.map((row, index) => getRowData(row, index));
+        payload.forEach(updateDefaultsCache);
+
+        if (!payload.length) {
+          const { error: deleteError } = await supabase
+            .from("workout_entries")
+            .delete()
+            .eq("day", day);
+          if (deleteError) {
+            console.error("Fout bij verwijderen oude entries:", deleteError);
+          } else {
+            console.log("Alle entries verwijderd (geen rows meer)");
+          }
+          updateDynamicLayout();
+          return;
+        }
+
+        const { error: upsertError } = await supabase
+          .from("workout_entries")
+          .upsert(payload, { onConflict: "day,exercise_index" });
+        if (upsertError) {
+          console.error("Fout bij opslaan geherindexeerde rows:", upsertError);
+          return;
+        }
+
+        const { error: cleanupError } = await supabase
+          .from("workout_entries")
+          .delete()
+          .eq("day", day)
+          .gt("exercise_index", payload.length);
+        if (cleanupError) {
+          console.error("Fout bij opruimen oude rows:", cleanupError);
         } else {
-          console.log("Oude entries verwijderd");
+          console.log("Alle rows opnieuw opgeslagen");
         }
-        // Sla alle rows opnieuw op met nieuwe indices
-        for (let i = 0; i < allRows.length; i++) {
-          await upsertRow(allRows[i], i);
-        }
-        console.log("Alle rows opnieuw opgeslagen");
+
         updateDynamicLayout();
       };
 
