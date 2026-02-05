@@ -44,7 +44,10 @@
     html, body {
       overflow: hidden;
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
       background:
         linear-gradient(180deg, #1a2634, transparent 120px),
         radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
