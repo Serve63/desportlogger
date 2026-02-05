@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl" style="background:#15181d">
+<html lang="nl">
 <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 
   <meta name="theme-color" content="#1a2634" />
@@ -37,87 +37,76 @@
       box-sizing: border-box;
     }
 
-    html {
-      background-color: #15181d;
-      height: 100%;
-    }
-
-    /* iOS PWA safe area background - uses transform to escape viewport clipping */
-    html::after {
-      content: "";
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 150px;
+    html, body {
+      margin: 0;
+      padding: 0;
       background: #15181d;
-      transform: translateY(100%);
-      z-index: 99999;
-      pointer-events: none;
+      min-height: 100%;
     }
 
     body {
-      margin: 0;
       font-family: "DM Sans", sans-serif;
       color: var(--ink);
-      min-height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: var(--page-top) 12px calc(var(--page-bottom) + env(safe-area-inset-bottom, 0px));
+      -webkit-user-select: none;
+      user-select: none;
+      min-height: 100vh;
       min-height: 100dvh;
-      min-height: -webkit-fill-available;
-      overflow-x: hidden;
-      overflow-y: auto;
+    }
+
+    /* Full-screen background layer */
+    .bg-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      /* Extend past viewport into safe area */
+      margin-bottom: calc(-1 * env(safe-area-inset-bottom, 34px));
+      padding-bottom: env(safe-area-inset-bottom, 34px);
       background:
         linear-gradient(180deg, #1a2634, transparent 120px),
         radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
         radial-gradient(ellipse 700px 500px at 85% 5%, rgba(74, 163, 255, 0.08), transparent 55%),
         radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
         #15181d;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: var(--page-top) 12px calc(var(--page-bottom) + env(safe-area-inset-bottom, 0px));
-      padding-bottom: calc(var(--page-bottom) + env(safe-area-inset-bottom, 0px) + 50px);
-      -webkit-user-select: none;
-      user-select: none;
-      touch-action: pan-y;
-      overscroll-behavior: none;
+      z-index: -3;
+      pointer-events: none;
+    }
+
+    /* Dot pattern overlay */
+    .bg-layer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: calc(-1 * env(safe-area-inset-bottom, 34px));
+      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    /* Extra gradient overlay */
+    .bg-layer::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: calc(-1 * env(safe-area-inset-bottom, 34px));
+      background:
+        radial-gradient(ellipse 500px 300px at 70% 65%, rgba(74, 163, 255, 0.04), transparent 60%),
+        radial-gradient(ellipse 400px 250px at 25% 80%, rgba(255, 255, 255, 0.015), transparent 50%);
+      pointer-events: none;
     }
 
     body::-webkit-scrollbar {
       width: 0;
       height: 0;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
-      background-size: 24px 24px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 500px 300px at 70% 65%, rgba(74, 163, 255, 0.04), transparent 60%),
-        radial-gradient(ellipse 400px 250px at 25% 80%, rgba(255, 255, 255, 0.015), transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Backup element that extends into safe area */
-    .safe-area-extend {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: -100px;
-      height: 200px;
-      background: #15181d;
-      z-index: -1;
-      pointer-events: none;
     }
 
     input {
@@ -745,6 +734,7 @@ transform: translateY(-2px);
 
 </head>
 <body>
+  <div class="bg-layer"></div>
   <script id="todayGuard">
     (function() {
       try {
@@ -2487,6 +2477,5 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
-<div class="safe-area-extend"></div>
 </body>
 </html>
