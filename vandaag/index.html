@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl">
+<html lang="nl" style="background:#15181d">
 <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 
   <meta name="theme-color" content="#1a2634" />
@@ -39,21 +39,45 @@
 
     html {
       background-color: #15181d;
+      height: 100%;
     }
 
-    html, body {
-      overflow: hidden;
+    /* iOS PWA safe area background - uses transform to escape viewport clipping */
+    html::after {
+      content: "";
       position: fixed;
-      top: 0;
       left: 0;
       right: 0;
-      height: calc(100% + env(safe-area-inset-bottom, 0px));
+      bottom: 0;
+      height: 150px;
+      background: #15181d;
+      transform: translateY(100%);
+      z-index: 99999;
+      pointer-events: none;
+    }
+
+    body {
+      margin: 0;
+      font-family: "DM Sans", sans-serif;
+      color: var(--ink);
+      min-height: 100%;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      overflow-x: hidden;
+      overflow-y: auto;
       background:
         linear-gradient(180deg, #1a2634, transparent 120px),
         radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
         radial-gradient(ellipse 700px 500px at 85% 5%, rgba(74, 163, 255, 0.08), transparent 55%),
         radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
         #15181d;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: var(--page-top) 12px calc(var(--page-bottom) + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(var(--page-bottom) + env(safe-area-inset-bottom, 0px) + 50px);
+      -webkit-user-select: none;
+      user-select: none;
       touch-action: pan-y;
       overscroll-behavior: none;
     }
@@ -84,26 +108,17 @@
       z-index: 0;
     }
 
-    body {
-      margin: 0;
-      font-family: "DM Sans", sans-serif;
-      color: var(--ink);
-      background:
-        linear-gradient(180deg, #1a2634, transparent 120px),
-        radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
-        radial-gradient(ellipse 700px 500px at 85% 5%, rgba(74, 163, 255, 0.08), transparent 55%),
-        radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
-        #15181d;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: var(--page-top) 12px calc(var(--page-bottom) + env(safe-area-inset-bottom));
-      -webkit-user-select: none;
-      user-select: none;
+    /* Backup element that extends into safe area */
+    .safe-area-extend {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: -100px;
+      height: 200px;
+      background: #15181d;
+      z-index: -1;
+      pointer-events: none;
     }
-
-
 
     input {
       -webkit-user-select: text;
@@ -2472,5 +2487,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+<div class="safe-area-extend"></div>
 </body>
 </html>
