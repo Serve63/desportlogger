@@ -37,7 +37,7 @@
       box-sizing: border-box;
     }
 
-    html, body {
+    html {
       margin: 0;
       padding: 0;
       background: #15181d;
@@ -45,8 +45,11 @@
     }
 
     body {
+      margin: 0;
+      padding: 0;
       font-family: "DM Sans", sans-serif;
       color: var(--ink);
+      background: transparent;
       display: flex;
       justify-content: center;
       align-items: flex-start;
@@ -63,17 +66,14 @@
       top: 0;
       left: 0;
       right: 0;
-      bottom: 0;
-      /* Extend past viewport into safe area */
-      margin-bottom: calc(-1 * env(safe-area-inset-bottom, 34px));
-      padding-bottom: env(safe-area-inset-bottom, 34px);
+      bottom: calc(-1 * env(safe-area-inset-bottom, 34px));
       background:
         linear-gradient(180deg, #1a2634, transparent 120px),
         radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
         radial-gradient(ellipse 700px 500px at 85% 5%, rgba(74, 163, 255, 0.08), transparent 55%),
         radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
         #15181d;
-      z-index: -3;
+      z-index: 0;
       pointer-events: none;
     }
 
@@ -84,7 +84,7 @@
       top: 0;
       left: 0;
       right: 0;
-      bottom: calc(-1 * env(safe-area-inset-bottom, 34px));
+      bottom: 0;
       background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
       background-size: 24px 24px;
       pointer-events: none;
@@ -97,7 +97,7 @@
       top: 0;
       left: 0;
       right: 0;
-      bottom: calc(-1 * env(safe-area-inset-bottom, 34px));
+      bottom: 0;
       background:
         radial-gradient(ellipse 500px 300px at 70% 65%, rgba(74, 163, 255, 0.04), transparent 60%),
         radial-gradient(ellipse 400px 250px at 25% 80%, rgba(255, 255, 255, 0.015), transparent 50%);
@@ -114,18 +114,18 @@
       user-select: text;
     }
 
-    
+
     .sheet::-webkit-scrollbar {
       width: 0;
       height: 0;
     }
 
     .sheet {
-
+      position: relative;
+      z-index: 1;
       scrollbar-width: none;
       width: min(980px, 100%);
       padding: 8px 2px 18px;
-      position: relative;
       max-height: calc(100vh - var(--page-top) - var(--page-bottom) - env(safe-area-inset-bottom));
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
