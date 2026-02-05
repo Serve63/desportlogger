@@ -1811,6 +1811,12 @@ transform: translateY(-2px);
         });
       };
 
+      const toNumber = (value) => {
+        if (value === "" || value == null) return null;
+        const num = Number(value);
+        return Number.isNaN(num) ? null : num;
+      };
+
       const getRowData = (row, index) => {
         const nameInput = row.querySelector(".exercise-name");
         const noteInput = row.querySelector(".exercise-note");
@@ -1818,23 +1824,70 @@ transform: translateY(-2px);
         const repsInput = row.querySelector('input[name^="reps-"]');
         const weightInput = row.querySelector('input[name^="gewicht-"]');
 
-        const toInt = (value) => {
-          if (value === "" || value == null) return null;
-          const num = Number(value);
-          return Number.isNaN(num) ? null : num;
-        };
-
         return {
           day,
           exercise_index: index + 1,
           exercise_name: nameInput?.value?.trim() || null,
           note: noteInput?.value?.trim() || null,
-          sets: toInt(setsInput?.value),
-          reps: toInt(repsInput?.value),
-          weight: toInt(weightInput?.value),
+          sets: toNumber(setsInput?.value),
+          reps: toNumber(repsInput?.value),
+          weight: toNumber(weightInput?.value),
           updated_at: new Date().toISOString(),
         };
       };
+
+      const WORKOUT_CACHE_PREFIX = "workout_cache_v1:";
+      const getCachedWorkoutData = (dayName) => {
+        if (!dayName) return null;
+        try {
+          const raw = localStorage.getItem(`${WORKOUT_CACHE_PREFIX}${dayName}`);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+          if (parsed && Array.isArray(parsed.data)) return parsed.data;
+          return null;
+        } catch (e) {
+          return null;
+        }
+      };
+      const setCachedWorkoutData = (dayName, data) => {
+        if (!dayName || !Array.isArray(data) || data.length === 0) return;
+        try {
+          localStorage.setItem(
+            `${WORKOUT_CACHE_PREFIX}${dayName}`,
+            JSON.stringify({ ts: Date.now(), data })
+          );
+        } catch (e) {
+          // ignore
+        }
+      };
+      const normalizeEntry = (item, index, dayName) => ({
+        day: dayName,
+        exercise_index: Number(item?.exercise_index) || index + 1,
+        exercise_name: item?.exercise_name ?? null,
+        note: item?.note ?? null,
+        sets: toNumber(item?.sets),
+        reps: toNumber(item?.reps),
+        weight: toNumber(item?.weight),
+        updated_at: item?.updated_at || new Date().toISOString(),
+      });
+
+      const templateRows = (() => {
+        try {
+          return getCurrentRows().map((row, idx) => {
+            const data = getRowData(row, idx);
+            return {
+              exercise_name: data.exercise_name,
+              note: data.note,
+              sets: data.sets,
+              reps: data.reps,
+              weight: data.weight,
+            };
+          });
+        } catch (e) {
+          return [];
+        }
+      })();
 
       const upsertRow = async (row, index) => {
         if (index == null || index < 0) return;
@@ -1923,6 +1976,7 @@ transform: translateY(-2px);
           console.error("Fout bij opslaan geherindexeerde rows:", upsertError);
           return;
         }
+        setCachedWorkoutData(day, payload);
 
         const { error: cleanupError } = await supabase
           .from("workout_entries")
@@ -2282,7 +2336,33 @@ transform: translateY(-2px);
           return;
         }
         console.log("Loaded data:", data);
-        const maxIndex = data.reduce((max, item) => {
+
+        let resolvedData = Array.isArray(data) ? data : [];
+        let usedCache = false;
+        if (resolvedData.length === 0) {
+          const cached = getCachedWorkoutData(dayName);
+          if (cached && cached.length) {
+            resolvedData = cached.map((item, idx) => normalizeEntry(item, idx, dayName));
+            usedCache = true;
+          } else if (templateRows.length) {
+            resolvedData = templateRows.map((item, idx) => normalizeEntry(item, idx, dayName));
+          }
+        } else {
+          setCachedWorkoutData(dayName, resolvedData);
+        }
+
+        if (usedCache) {
+          supabase
+            .from("workout_entries")
+            .upsert(resolvedData, { onConflict: "day,exercise_index" })
+            .then(({ error: restoreError }) => {
+              if (restoreError) {
+                console.error("Fout bij herstellen vanuit cache:", restoreError);
+              }
+            });
+        }
+
+        const maxIndex = resolvedData.reduce((max, item) => {
           const value = Number(item.exercise_index) || 0;
           return Math.max(max, value);
         }, 0);
@@ -2294,10 +2374,10 @@ transform: translateY(-2px);
             initRow(newRow);
           }
         }
-        if (data.length && maxIndex < currentRows.length) {
+        if (resolvedData.length && maxIndex < currentRows.length) {
           getCurrentRows().slice(maxIndex).forEach((row) => row.remove());
         }
-        data.forEach((item) => {
+        resolvedData.forEach((item) => {
           const row = getCurrentRows()[item.exercise_index - 1];
           if (!row) return;
           const nameInput = row.querySelector(".exercise-name");
