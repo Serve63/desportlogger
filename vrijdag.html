@@ -221,6 +221,36 @@
       align-items: start;
     }
 
+    /* Rest day styling */
+    .rest-day .grid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      text-align: center;
+    }
+
+    .rest-day .grid .row {
+      display: block;
+    }
+
+    .rest-day .grid .exercise-cell {
+      display: block;
+    }
+
+    .rest-day .grid .exercise-name {
+      font-family: "DM Serif Display", serif;
+      font-size: 1.8rem;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .rest-day .grid .exercise-note {
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
     .exercise-cell {
       display: grid;
       grid-template-columns: 20px 1fr;
@@ -2333,6 +2363,12 @@ transform: translateY(-2px);
       setupRowReorder();
 
       const loadDayData = async () => {
+        // Skip loading for rest days
+        if (document.body.classList.contains("rest-day")) {
+          hasDataLoaded = true;
+          hideLoadingOverlay();
+          return;
+        }
         const loadId = ++dayToken;
         const dayName = day;
         hasDataLoaded = false;
