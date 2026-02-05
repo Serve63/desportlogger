@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Servé's Logboek" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="manifest" href="/manifest.webmanifest?v=20260205" />
  <title>Logboek - Donderdag</title> 
   
   <style>
@@ -833,7 +833,7 @@ transform: translateY(-2px);
       const updateAppLinks = () => {
         const manifestLink = document.querySelector('link[rel="manifest"]');
         if (manifestLink) {
-          manifestLink.setAttribute("href", withBase("manifest.webmanifest"));
+          manifestLink.setAttribute("href", withBase("manifest.webmanifest?v=20260205"));
         }
         const appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
         if (appleIcon) {
