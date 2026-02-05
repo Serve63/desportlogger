@@ -94,6 +94,17 @@
       pointer-events: none;
     }
 
+    .safe-area-fill {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: max(env(safe-area-inset-bottom), 34px);
+      background: #15181d;
+      z-index: 0;
+      pointer-events: none;
+    }
+
     body {
       margin: 0;
       font-family: "DM Sans", sans-serif;
@@ -743,6 +754,7 @@ transform: translateY(-2px);
 </head>
 <body>
   <div class="app-bg" aria-hidden="true"></div>
+  <div class="safe-area-fill" aria-hidden="true"></div>
   <script id="todayGuard">
     (function() {
       try {
