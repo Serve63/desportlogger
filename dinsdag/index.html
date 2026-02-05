@@ -2321,7 +2321,7 @@ transform: translateY(-2px);
         const dayName = day;
         resetRowsForLoad();
         console.log("Loading data for day:", dayName);
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from("workout_entries")
           .select("*")
           .eq("day", dayName)
@@ -2333,6 +2333,32 @@ transform: translateY(-2px);
           hasDataLoaded = true;
           hideLoadingOverlay();
           return;
+        }
+        const hashDay = getHashDay();
+        const isTodayView = hashDay === "vandaag" || window.location.pathname.includes("vandaag");
+        if (isTodayView && (!data || data.length === 0)) {
+          const legacyKeys = ["Vandaag", "vandaag"];
+          const { data: legacyData, error: legacyError } = await supabase
+            .from("workout_entries")
+            .select("*")
+            .in("day", legacyKeys)
+            .order("exercise_index");
+          if (!legacyError && legacyData && legacyData.length) {
+            const migrated = legacyData.map((item, index) => ({
+              ...item,
+              day: dayName,
+              exercise_index: Number(item.exercise_index) || index + 1,
+            }));
+            const { error: migrateError } = await supabase
+              .from("workout_entries")
+              .upsert(migrated, { onConflict: "day,exercise_index" });
+            if (!migrateError) {
+              await supabase.from("workout_entries").delete().in("day", legacyKeys);
+              data = migrated;
+            } else {
+              console.error("Fout bij migreren Vandaag-data:", migrateError);
+            }
+          }
         }
         console.log("Loaded data:", data);
 
