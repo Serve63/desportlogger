@@ -366,6 +366,7 @@ transform: translateY(-2px);
       margin: 0;
       -webkit-appearance: none;
       appearance: none;
+      min-height: 1.4em;
     }
 
     .exercise-cell .exercise-note::-webkit-resizer {
@@ -1260,7 +1261,12 @@ transform: translateY(-2px);
       const autoResizeNote = (note) => {
         if (!note || note.tagName !== "TEXTAREA") return;
         note.style.height = "auto";
-        note.style.height = `${note.scrollHeight}px`;
+        const style = window.getComputedStyle(note);
+        const lineHeight = parseFloat(style.lineHeight) || 14;
+        const rows = Number(note.getAttribute("rows")) || 2;
+        const minHeight = lineHeight * rows;
+        const nextHeight = Math.max(note.scrollHeight, minHeight);
+        note.style.height = `${nextHeight}px`;
       };
 
       const launchConfetti = () => {
@@ -2257,6 +2263,7 @@ transform: translateY(-2px);
         setVar("--exercise-font", baseSizes.exercise * scale);
         setVar("--note-font", baseSizes.note * scale);
         setVar("--mini-font", baseSizes.mini * scale);
+        document.querySelectorAll(".exercise-note").forEach(autoResizeNote);
 
       };
 
