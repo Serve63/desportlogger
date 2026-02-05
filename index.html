@@ -1679,8 +1679,59 @@ transform: translateY(-2px);
                 return "Maandag"; // default voor maandag
               };
               let day = getDayName();
+              const REST_DAY_NAME = "Vrijdag";
               let dayToken = 0;
               const getCurrentRows = () => Array.from(document.querySelectorAll(".row"));
+              const ensureHeaderRow = () => {
+                const grid = document.querySelector(".grid");
+                if (!grid) return null;
+                let headerRow = grid.querySelector(".header-row");
+                if (headerRow) return headerRow;
+                headerRow = document.createElement("div");
+                headerRow.className = "header-row";
+                headerRow.innerHTML = `
+                  <div class="header exercise-header"></div>
+                  <div class="header">SETS</div>
+                  <div class="header">REPS</div>
+                  <div class="header">KG</div>
+                `;
+                grid.prepend(headerRow);
+                return headerRow;
+              };
+              const setHeaderRowVisible = (visible) => {
+                const headerRow = document.querySelector(".header-row");
+                if (!headerRow) return;
+                headerRow.style.display = visible ? "" : "none";
+              };
+              const renderRestDay = () => {
+                const grid = document.querySelector(".grid");
+                if (!grid) return;
+                grid.classList.add("rest-day");
+                grid.setAttribute("aria-label", "Vrije dag");
+                setHeaderRowVisible(false);
+                grid.querySelectorAll(".row").forEach((row) => row.remove());
+                const restRow = document.createElement("div");
+                restRow.className = "row";
+                restRow.innerHTML = `
+                  <div class="exercise-cell">
+                    <div class="exercise-name">Vrije dag</div>
+                    <div class="exercise-note">Herstel &amp; rust</div>
+                  </div>
+                `;
+                grid.appendChild(restRow);
+              };
+              const clearRestDay = () => {
+                const grid = document.querySelector(".grid");
+                if (!grid) return;
+                grid.classList.remove("rest-day");
+                grid.setAttribute("aria-label", "Oefeningen");
+                setHeaderRowVisible(true);
+                // verwijder eventuele rest-day rows zonder inputs
+                grid.querySelectorAll(".row").forEach((row) => {
+                  if (!row.querySelector("input")) row.remove();
+                });
+                ensureHeaderRow();
+              };
               const resetRowsForLoad = () => {
                 getCurrentRows().forEach((row) => {
                   row.querySelectorAll("input").forEach((input) => {
@@ -2333,6 +2384,13 @@ transform: translateY(-2px);
       const loadDayData = async () => {
         const loadId = ++dayToken;
         const dayName = day;
+        if (dayName === REST_DAY_NAME) {
+          renderRestDay();
+          hasDataLoaded = true;
+          hideLoadingOverlay();
+          return;
+        }
+        clearRestDay();
         hasDataLoaded = false;
         resetRowsForLoad();
         console.log("Loading data for day:", dayName);
