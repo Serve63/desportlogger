@@ -19,9 +19,6 @@
     @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap");
 
     :root {
-      --exercise-font: 0.5rem;
-      --note-font: 0.4rem;
-      --mini-font: 0.75rem;
       --ink: #eef0f3;
       --muted: #c2c6cc;
       --line: #6a6f78;
@@ -30,6 +27,10 @@
       --page-top: 113px;
       --page-bottom: 72px;
       --footer-offset: 72px;
+    
+      --exercise-font: 0.5rem;
+      --note-font: 0.4rem;
+      --mini-font: 0.75rem;
     }
 
     * {
@@ -66,7 +67,7 @@
       background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
       background-size: 24px 24px;
       pointer-events: none;
-      z-index: 0;
+      z-index: 1;
     }
 
     body::after {
@@ -77,7 +78,20 @@
         radial-gradient(ellipse 500px 300px at 70% 65%, rgba(74, 163, 255, 0.04), transparent 60%),
         radial-gradient(ellipse 400px 250px at 25% 80%, rgba(255, 255, 255, 0.015), transparent 50%);
       pointer-events: none;
+      z-index: 1;
+    }
+
+    .app-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(180deg, #1a2634, transparent 120px),
+        radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 85% 5%, rgba(74, 163, 255, 0.08), transparent 55%),
+        radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
+        #15181d;
       z-index: 0;
+      pointer-events: none;
     }
 
     body {
@@ -91,6 +105,7 @@
         radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
         #15181d;
       height: 100%;
+      position: relative;
       display: flex;
       justify-content: center;
       align-items: flex-start;
@@ -118,6 +133,7 @@
       width: min(980px, 100%);
       padding: 8px 2px 18px;
       position: relative;
+      z-index: 2;
       max-height: calc(100vh - var(--page-top) - var(--page-bottom) - env(safe-area-inset-bottom));
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -726,6 +742,7 @@ transform: translateY(-2px);
 
 </head>
 <body>
+  <div class="app-bg" aria-hidden="true"></div>
   <script id="todayGuard">
     (function() {
       try {

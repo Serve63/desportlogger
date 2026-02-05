@@ -67,7 +67,7 @@
       background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
       background-size: 24px 24px;
       pointer-events: none;
-      z-index: 0;
+      z-index: 1;
     }
 
     body::after {
@@ -78,7 +78,20 @@
         radial-gradient(ellipse 500px 300px at 70% 65%, rgba(74, 163, 255, 0.04), transparent 60%),
         radial-gradient(ellipse 400px 250px at 25% 80%, rgba(255, 255, 255, 0.015), transparent 50%);
       pointer-events: none;
+      z-index: 1;
+    }
+
+    .app-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(180deg, #1a2634, transparent 120px),
+        radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 85% 5%, rgba(74, 163, 255, 0.08), transparent 55%),
+        radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
+        #15181d;
       z-index: 0;
+      pointer-events: none;
     }
 
     body {
@@ -92,6 +105,7 @@
         radial-gradient(ellipse 600px 400px at 50% 105%, rgba(74, 163, 255, 0.06), transparent 50%),
         #15181d;
       height: 100%;
+      position: relative;
       display: flex;
       justify-content: center;
       align-items: flex-start;
@@ -119,6 +133,7 @@
       width: min(980px, 100%);
       padding: 8px 2px 18px;
       position: relative;
+      z-index: 2;
       max-height: calc(100vh - var(--page-top) - var(--page-bottom) - env(safe-area-inset-bottom));
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -508,7 +523,7 @@ transform: translateY(-2px);
       color: #f1f2f4;
     }
 
-    
+
     .session-check-button {
       position: fixed;
       bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
@@ -560,10 +575,6 @@ transform: translateY(-2px);
       font-size: 20px;
       font-weight: 700;
       color: #eaffef;
-    }
-
-    .rest-day .session-check-button {
-      display: none;
     }
 
     html.not-today .session-check-button,
@@ -678,66 +689,6 @@ transform: translateY(-2px);
           rotateY(var(--spin-y, 540deg))
           rotateZ(var(--spin-z, 360deg));
       }
-    }
-
-
-    .rest-day .row {
-      grid-template-columns: 1fr;
-    }
-
-    .rest-day .exercise-cell {
-      grid-template-columns: 1fr;
-      row-gap: 6px;
-    }
-
-    .rest-day .drag-handle {
-      display: none;
-    }
-
-    .rest-day .exercise-name {
-      font-size: 1rem;
-      font-weight: 600;
-    }
-
-    .rest-day .exercise-note {
-      font-style: italic;
-      opacity: 0.8;
-    }
-
-
-
-
-    .rest-day .grid {
-      min-height: 45vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .rest-day .row {
-      border: none;
-      background: transparent;
-      box-shadow: none;
-      padding: 0;
-      justify-items: center;
-      text-align: center;
-    }
-
-    .rest-day .exercise-cell {
-      grid-template-columns: 1fr;
-      row-gap: 10px;
-      justify-items: center;
-    }
-
-    .rest-day .exercise-name {
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-    }
-
-    .rest-day .exercise-note {
-      font-style: italic;
-      opacity: 0.8;
     }
 
 
