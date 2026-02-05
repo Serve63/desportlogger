@@ -41,9 +41,11 @@
       overflow: hidden;
       min-height: 100vh;
       min-height: 100svh;
+      min-height: 100lvh;
       min-height: 100dvh;
       height: 100vh;
       height: 100svh;
+      height: 100lvh;
       height: 100dvh;
       background:
         linear-gradient(180deg, #1a2634, transparent 120px),
@@ -92,6 +94,13 @@
         #15181d;
       z-index: 0;
       pointer-events: none;
+    }
+
+    @supports (-webkit-touch-callout: none) {
+      html, body, .app-bg {
+        height: -webkit-fill-available;
+        min-height: -webkit-fill-available;
+      }
     }
 
     body {
@@ -743,7 +752,6 @@ transform: translateY(-2px);
 </head>
 <body>
   <div class="app-bg" aria-hidden="true"></div>
-  <div class="safe-area-fill" aria-hidden="true"></div>
   <script id="todayGuard">
     (function() {
       try {
