@@ -88,16 +88,16 @@
       pointer-events: none;
     }
 
-    /* Extra gradient overlay */
+    /* Extra gradient overlay - only top half */
     .bg-layer::after {
       content: "";
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      bottom: 0;
+      height: 60%;
       background:
-        radial-gradient(ellipse 150% 100% at 50% 30%, rgba(74, 163, 255, 0.025), transparent);
+        radial-gradient(ellipse 150% 80% at 50% 20%, rgba(74, 163, 255, 0.025), transparent);
       pointer-events: none;
     }
 
