@@ -44,7 +44,10 @@
     html, body {
       overflow: hidden;
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
       background:
         linear-gradient(180deg, #1a2634, transparent 120px),
         radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
@@ -192,6 +195,30 @@
       gap: 18px;
     }
 
+    .grid.rest-day {
+      min-height: 55vh;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .grid.rest-day .row {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .grid.rest-day .exercise-cell {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .grid.rest-day .exercise-name,
+    .grid.rest-day .exercise-note {
+      text-align: center;
+    }
+
     .header-row {
       display: grid;
       grid-template-columns: minmax(0, 2fr) 42px 42px 42px;
@@ -219,36 +246,6 @@
       column-gap: 8px;
       row-gap: 10px;
       align-items: start;
-    }
-
-    /* Rest day styling */
-    .rest-day .grid {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 200px;
-      text-align: center;
-    }
-
-    .rest-day .grid .row {
-      display: block;
-    }
-
-    .rest-day .grid .exercise-cell {
-      display: block;
-    }
-
-    .rest-day .grid .exercise-name {
-      font-family: "DM Serif Display", serif;
-      font-size: 1.8rem;
-      color: var(--ink);
-      margin-bottom: 8px;
-    }
-
-    .rest-day .grid .exercise-note {
-      font-size: 1rem;
-      color: var(--muted);
     }
 
     .exercise-cell {
