@@ -47,7 +47,7 @@
       top: 0;
       left: 0;
       right: 0;
-      bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+      height: calc(100% + env(safe-area-inset-bottom, 0px));
       background:
         linear-gradient(180deg, #1a2634, transparent 120px),
         radial-gradient(ellipse 900px 600px at 15% -8%, rgba(74, 163, 255, 0.13), transparent 60%),
@@ -82,18 +82,6 @@
         radial-gradient(ellipse 400px 250px at 25% 80%, rgba(255, 255, 255, 0.015), transparent 50%);
       pointer-events: none;
       z-index: 0;
-    }
-
-    /* iOS safe area cover for home indicator */
-    .safe-area-cover {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: env(safe-area-inset-bottom, 0px);
-      background: #15181d;
-      z-index: 9999;
-      pointer-events: none;
     }
 
     body {
@@ -742,7 +730,6 @@ transform: translateY(-2px);
 
 </head>
 <body>
-  <div class="safe-area-cover"></div>
   <script id="todayGuard">
     (function() {
       try {
