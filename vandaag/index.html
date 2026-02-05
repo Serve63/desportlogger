@@ -2,7 +2,7 @@
 <html lang="nl">
 <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 
-  <meta name="theme-color" content="#15181d" />
+  <meta name="theme-color" content="#1a2634" />
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -82,6 +82,18 @@
         radial-gradient(ellipse 400px 250px at 25% 80%, rgba(255, 255, 255, 0.015), transparent 50%);
       pointer-events: none;
       z-index: 0;
+    }
+
+    /* iOS safe area cover for home indicator */
+    .safe-area-cover {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: env(safe-area-inset-bottom, 0px);
+      background: #15181d;
+      z-index: 9999;
+      pointer-events: none;
     }
 
     body {
@@ -730,6 +742,7 @@ transform: translateY(-2px);
 
 </head>
 <body>
+  <div class="safe-area-cover"></div>
   <script id="todayGuard">
     (function() {
       try {
