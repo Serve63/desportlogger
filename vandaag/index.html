@@ -1565,14 +1565,14 @@ transform: translateY(-2px);
       window.addEventListener("DOMContentLoaded", () => {
         const sessionCheckButton = document.getElementById("sessionCheckButton");
         if (!sessionCheckButton) return;
-        // Toon knop alleen als het vandaag is
-        if (!isToday) {
+        const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+        const sessionDay = dayNames[pageDayNumber];
+        // Toon knop alleen als het vandaag is en geen rustdag
+        if (!isToday || sessionDay === "Vrijdag") {
           return;
         }
         // Toon de knop
         sessionCheckButton.classList.add("is-today");
-        const dayNames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
-        const sessionDay = dayNames[pageDayNumber];
         const todayStr = new Date().toLocaleDateString('en-CA');
                 const storageKey = "session-checked-" + todayStr;
                 const sessionCompleteKey = `session_complete_${todayStr}`;
