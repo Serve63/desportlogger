@@ -1576,6 +1576,31 @@ transform: translateY(-2px);
         const todayStr = new Date().toLocaleDateString('en-CA');
                 const storageKey = "session-checked-" + todayStr;
                 const sessionCompleteKey = `session_complete_${todayStr}`;
+                const ensureSessionLockOverlay = () => {
+                  let overlay = document.getElementById("sessionLockOverlay");
+                  if (overlay) return overlay;
+                  overlay = document.createElement("div");
+                  overlay.id = "sessionLockOverlay";
+                  overlay.setAttribute("aria-live", "polite");
+                  overlay.setAttribute("aria-atomic", "true");
+                  overlay.style.cssText = "position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(8, 10, 14, 0.94); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 12000;";
+                  overlay.innerHTML = `
+                    <div style="max-width: 360px; width: 100%; border: 1px solid rgba(74, 163, 255, 0.35); background: rgba(21, 24, 29, 0.94); border-radius: 16px; padding: 22px 20px; text-align: center; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);">
+                      <div style="font-size: 1.02rem; font-weight: 700; color: #f3f6fb; margin-bottom: 8px;">Sessie afgerond</div>
+                      <div style="font-size: 0.9rem; line-height: 1.45; color: #c7ced8;">Dit logboek is vergrendeld tot morgen.</div>
+                    </div>
+                  `;
+                  document.body.appendChild(overlay);
+                  return overlay;
+                };
+                const setSessionLocked = (locked) => {
+                  const overlay = ensureSessionLockOverlay();
+                  overlay.style.display = locked ? "flex" : "none";
+                  document.body.style.overflow = locked ? "hidden" : "";
+                  if (locked && document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                };
                 const isMissingDateColumn = (error) => {
                   const msg = error?.message || "";
                   return msg.includes("column") && msg.includes("date") && msg.includes("does not exist");
@@ -1676,6 +1701,7 @@ transform: translateY(-2px);
                     }
                     keysToRemove.forEach(key => localStorage.removeItem(key));
                   }
+                  setSessionLocked(isComplete);
                 };
                 // Wacht even zodat Supabase is geïnitialiseerd
                 setTimeout(() => {
@@ -1697,6 +1723,7 @@ transform: translateY(-2px);
                     localStorage.setItem(sessionCompleteKey, "1");
                     localStorage.setItem(storageKey, "1");
                     setCookie(storageKey, "1");
+                    setSessionLocked(true);
                     const saveError = await saveSessionStatus(true);
                     if (saveError) {
                       console.error("Error saving session status to Supabase:", saveError);
@@ -1717,6 +1744,7 @@ transform: translateY(-2px);
                       console.error("Error saving session status to Supabase:", saveError);
                     }
                     await decrementSessionCount();
+                    setSessionLocked(false);
                   }
               };
                 // Event listeners
