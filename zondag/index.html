@@ -1582,13 +1582,8 @@ transform: translateY(-2px);
                   overlay.id = "sessionLockOverlay";
                   overlay.setAttribute("aria-live", "polite");
                   overlay.setAttribute("aria-atomic", "true");
-                  overlay.style.cssText = "position: fixed; inset: 0; display: none; align-items: flex-start; justify-content: center; padding: calc(14px + env(safe-area-inset-top)) 16px 16px; background: rgba(8, 10, 14, 0.24); z-index: 12000; pointer-events: all;";
-                  overlay.innerHTML = `
-                    <div style="max-width: 460px; width: 100%; border: 1px solid rgba(74, 163, 255, 0.38); background: rgba(21, 24, 29, 0.78); border-radius: 14px; padding: 12px 14px; text-align: center; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-                      <div style="font-size: 0.96rem; font-weight: 700; color: #f3f6fb; margin-bottom: 4px;">Sessie afgerond</div>
-                      <div style="font-size: 0.83rem; line-height: 1.35; color: #d0d8e2;">Je sessie is vergrendeld. Je kunt alles nog zien, maar niet meer aanpassen.</div>
-                    </div>
-                  `;
+                  overlay.style.cssText = "position: fixed; inset: 0; display: none; background: rgba(34, 122, 255, 0.32); z-index: 12000; pointer-events: all;";
+                  overlay.innerHTML = "";
                   document.body.appendChild(overlay);
                   return overlay;
                 };
