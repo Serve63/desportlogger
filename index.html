@@ -351,12 +351,6 @@
       pointer-events: none;
     }
 
-    .row.reorder-drop-target {
-      box-shadow: 0 0 0 1px rgba(74, 163, 255, 0.22);
-      border-radius: 12px;
-      transition: box-shadow 0.1s ease;
-    }
-
     body.is-dragging-active {
       cursor: grabbing;
       -webkit-user-select: none;
@@ -3106,18 +3100,6 @@
         let rafId = null;
         let autoScrollRafId = null;
         let latestClientY = 0;
-        let activeDropTarget = null;
-
-        const setDropTarget = (row) => {
-          if (activeDropTarget === row) return;
-          if (activeDropTarget) {
-            activeDropTarget.classList.remove("reorder-drop-target");
-          }
-          activeDropTarget = row || null;
-          if (activeDropTarget) {
-            activeDropTarget.classList.add("reorder-drop-target");
-          }
-        };
 
         const cleanupFloatingStyles = (row) => {
           row.classList.remove("is-dragging-floating");
@@ -3197,7 +3179,6 @@
             const rect = row.getBoundingClientRect();
             if (probeY < rect.top + rect.height * 0.5) {
               row.before(dragState.placeholder);
-              setDropTarget(row);
               inserted = true;
               break;
             }
@@ -3207,7 +3188,6 @@
             if (rows.length) {
               const lastRow = rows[rows.length - 1];
               lastRow.after(dragState.placeholder);
-              setDropTarget(lastRow);
             } else {
               const header = grid.querySelector(".header-row");
               if (header) {
@@ -3215,7 +3195,6 @@
               } else {
                 grid.appendChild(dragState.placeholder);
               }
-              setDropTarget(null);
             }
           }
         };
@@ -3240,7 +3219,6 @@
           const { row, placeholder, pointerId, startIndex } = dragState;
           dragState = null;
 
-          setDropTarget(null);
           document.body.classList.remove("is-dragging-active");
 
           const activeHandle = row.querySelector(".drag-handle");
