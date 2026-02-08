@@ -2005,6 +2005,15 @@ transform: translateY(-2px);
                     }
                   }, 9000);
                 };
+                const triggerCompletionHaptic = () => {
+                  try {
+                    if (typeof navigator.vibrate === "function") {
+                      navigator.vibrate([14, 22, 24]);
+                    }
+                  } catch (error) {
+                    // no-op
+                  }
+                };
                 const toggleSession = async (e) => {
                   if (e && e.cancelable) e.preventDefault();
                   if (e) e.stopPropagation();
@@ -2019,6 +2028,7 @@ transform: translateY(-2px);
                     localStorage.setItem(sessionCompleteKey, "1");
                     localStorage.setItem(storageKey, "1");
                     setCookie(storageKey, "1");
+                    triggerCompletionHaptic();
                     const saveError = await saveSessionStatus(true);
                     if (saveError) {
                       console.error("Error saving session status to Supabase:", saveError);
