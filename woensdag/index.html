@@ -128,8 +128,8 @@
 
     input,
     textarea {
-      -webkit-user-select: none;
-      user-select: none;
+      -webkit-user-select: text;
+      user-select: text;
       -webkit-touch-callout: none;
     }
 
@@ -1348,6 +1348,11 @@
           event.preventDefault();
         };
 
+        const isEditableTarget = (target) => {
+          if (!target || typeof target.closest !== "function") return false;
+          return Boolean(target.closest("input, textarea, [contenteditable='true']"));
+        };
+
         const clearSelection = () => {
           const selection = window.getSelection && window.getSelection();
           if (selection && selection.rangeCount) {
@@ -1358,24 +1363,27 @@
         const collapseInputSelection = (target) => {
           if (!target || (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA")) return;
           try {
-            const valueLength = typeof target.value === "string" ? target.value.length : 0;
-            const caret = typeof target.selectionEnd === "number" ? target.selectionEnd : valueLength;
-            target.setSelectionRange(caret, caret);
+            const start = target.selectionStart;
+            const end = target.selectionEnd;
+            if (typeof start !== "number" || typeof end !== "number") return;
+            if (start === end) return;
+            target.setSelectionRange(end, end);
           } catch (error) {
             // ignore
           }
         };
 
-        const findEditableTarget = (target) => {
-          if (!target || typeof target.closest !== "function") return null;
-          return target.closest("input, textarea, [contenteditable='true']");
+        const preventWhenNotEditable = (event) => {
+          if (isEditableTarget(event.target)) return;
+          event.preventDefault();
         };
 
-        document.addEventListener("selectstart", prevent, true);
+        document.addEventListener("selectstart", preventWhenNotEditable, true);
+        document.addEventListener("contextmenu", preventWhenNotEditable, true);
+        document.addEventListener("dragstart", preventWhenNotEditable, true);
+
         document.addEventListener("copy", prevent, true);
         document.addEventListener("cut", prevent, true);
-        document.addEventListener("contextmenu", prevent, true);
-        document.addEventListener("dragstart", prevent, true);
 
         document.addEventListener(
           "beforeinput",
@@ -1408,48 +1416,15 @@
         document.addEventListener(
           "selectionchange",
           () => {
+            const active = document.activeElement;
+            if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+              collapseInputSelection(active);
+              return;
+            }
             clearSelection();
-            collapseInputSelection(document.activeElement);
           },
           true
         );
-
-        document.addEventListener(
-          "focusin",
-          (event) => {
-            collapseInputSelection(event.target);
-          },
-          true
-        );
-
-        let longPressBlockTimer = null;
-        const clearLongPressBlockTimer = () => {
-          if (!longPressBlockTimer) return;
-          clearTimeout(longPressBlockTimer);
-          longPressBlockTimer = null;
-        };
-
-        document.addEventListener(
-          "touchstart",
-          (event) => {
-            clearLongPressBlockTimer();
-            const editableTarget = findEditableTarget(event.target);
-            if (!editableTarget) return;
-
-            longPressBlockTimer = setTimeout(() => {
-              clearSelection();
-              collapseInputSelection(editableTarget);
-              if (typeof editableTarget.blur === "function") {
-                editableTarget.blur();
-              }
-            }, 240);
-          },
-          { capture: true, passive: true }
-        );
-
-        document.addEventListener("touchmove", clearLongPressBlockTimer, { capture: true, passive: true });
-        document.addEventListener("touchend", clearLongPressBlockTimer, { capture: true, passive: true });
-        document.addEventListener("touchcancel", clearLongPressBlockTimer, { capture: true, passive: true });
       };
 
       blockSelectionAndClipboard();
