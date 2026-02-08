@@ -592,6 +592,12 @@
       background: rgba(255, 107, 107, 0.1);
     }
 
+    .exercise-modal__actions button:disabled {
+      opacity: 0.45;
+      cursor: default;
+      pointer-events: none;
+    }
+
     .year-modal__close,
     .day-modal__close,
     .exercise-modal__close {
@@ -2797,19 +2803,80 @@
         const addExerciseBtn = document.querySelector(".add-exercise");
         const deleteExerciseBtn = document.querySelector(".delete-exercise");
         let selectedRow = null;
+        let modalActionUnlockTimer = null;
+        let modalAwaitingRelease = false;
+        let modalActionsLockedUntil = 0;
 
         if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
 
-        const openModal = (row) => {
+        const setModalActionsEnabled = (enabled) => {
+          addExerciseBtn.disabled = !enabled;
+          deleteExerciseBtn.disabled = !enabled;
+          addExerciseBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
+          deleteExerciseBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
+        };
+
+        const lockModalActionsForLongPress = () => {
+          modalAwaitingRelease = true;
+          modalActionsLockedUntil = Date.now() + 650;
+          setModalActionsEnabled(false);
+          if (modalActionUnlockTimer) {
+            clearTimeout(modalActionUnlockTimer);
+          }
+          // Failsafe: nooit permanent locken als release-events niet doorkomen.
+          modalActionUnlockTimer = setTimeout(() => {
+            modalAwaitingRelease = false;
+            modalActionsLockedUntil = 0;
+            setModalActionsEnabled(true);
+            modalActionUnlockTimer = null;
+          }, 1100);
+        };
+
+        const maybeUnlockModalActionsOnRelease = () => {
+          if (!exerciseModal.classList.contains("is-open")) return;
+          if (!modalAwaitingRelease) return;
+
+          modalAwaitingRelease = false;
+          modalActionsLockedUntil = Date.now() + 120;
+          if (modalActionUnlockTimer) {
+            clearTimeout(modalActionUnlockTimer);
+          }
+          modalActionUnlockTimer = setTimeout(() => {
+            modalActionsLockedUntil = 0;
+            setModalActionsEnabled(true);
+            modalActionUnlockTimer = null;
+          }, 120);
+        };
+
+        const areModalActionsBlocked = () => {
+          if (modalAwaitingRelease) return true;
+          return Date.now() < modalActionsLockedUntil;
+        };
+
+        const openModal = (row, { fromLongPress = false } = {}) => {
           selectedRow = row;
           exerciseModal.classList.add("is-open");
           exerciseModal.setAttribute("aria-hidden", "false");
+          if (fromLongPress) {
+            lockModalActionsForLongPress();
+          } else {
+            modalAwaitingRelease = false;
+            modalActionsLockedUntil = 0;
+            setModalActionsEnabled(true);
+          }
         };
 
         const closeModal = () => {
           exerciseModal.classList.remove("is-open");
           exerciseModal.setAttribute("aria-hidden", "true");
           selectedRow = null;
+          modalAwaitingRelease = false;
+          modalActionsLockedUntil = 0;
+          if (modalActionUnlockTimer) {
+            clearTimeout(modalActionUnlockTimer);
+            modalActionUnlockTimer = null;
+          }
+          setModalActionsEnabled(true);
         };
 
         exerciseModal.addEventListener("click", (event) => {
@@ -2820,6 +2887,10 @@
             closeModal();
           }
         });
+        window.addEventListener("touchend", maybeUnlockModalActionsOnRelease, { capture: true, passive: true });
+        window.addEventListener("touchcancel", maybeUnlockModalActionsOnRelease, { capture: true, passive: true });
+        window.addEventListener("pointerup", maybeUnlockModalActionsOnRelease, { capture: true, passive: true });
+        window.addEventListener("pointercancel", maybeUnlockModalActionsOnRelease, { capture: true, passive: true });
 
         // Touch long press detection
         let touchTimer = null;
@@ -2859,7 +2930,7 @@
             suppressRowTapUntil = Date.now() + 700;
             clearNativeSelection();
             if (e.cancelable) e.preventDefault();
-            openModal(row);
+            openModal(row, { fromLongPress: true });
           }, LONG_PRESS_DURATION);
         };
 
@@ -2913,7 +2984,12 @@
         });
 
         // Functie om oefening te verwijderen
-        deleteExerciseBtn.addEventListener("click", async () => {
+        deleteExerciseBtn.addEventListener("click", async (event) => {
+          if (areModalActionsBlocked()) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
           if (selectedRow) {
             console.log("Verwijderen oefening...");
             // Verwijder de row uit de DOM
@@ -2927,7 +3003,12 @@
         });
 
         // Functie om nieuwe oefening toe te voegen
-        addExerciseBtn.addEventListener("click", async () => {
+        addExerciseBtn.addEventListener("click", async (event) => {
+          if (areModalActionsBlocked()) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
           const grid = document.querySelector(".grid");
           if (!grid) return;
 
