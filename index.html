@@ -585,6 +585,13 @@
       font-size: 1.05rem;
     }
 
+    .delete-confirm-text {
+      margin: -4px 0 16px;
+      color: #d7dbe1;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
     .exercise-modal__actions {
       display: grid;
       gap: 10px;
@@ -2956,6 +2963,34 @@
 
         if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
 
+        const ensureDeleteConfirmModal = () => {
+          const existing = document.getElementById("deleteConfirmModal");
+          if (existing) return existing;
+
+          const modal = document.createElement("div");
+          modal.className = "exercise-modal";
+          modal.id = "deleteConfirmModal";
+          modal.setAttribute("aria-hidden", "true");
+          modal.innerHTML = `
+            <div class="exercise-modal__content" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+              <h2 id="deleteConfirmTitle">Weet je het zeker?</h2>
+              <p class="delete-confirm-text">Deze oefening wordt direct verwijderd.</p>
+              <div class="exercise-modal__actions">
+                <button type="button" class="delete-confirm-cancel">Annuleren</button>
+                <button type="button" class="delete-confirm-confirm delete">Verwijderen</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+          return modal;
+        };
+
+        const deleteConfirmModal = ensureDeleteConfirmModal();
+        const deleteConfirmCancelBtn = deleteConfirmModal.querySelector(".delete-confirm-cancel");
+        const deleteConfirmConfirmBtn = deleteConfirmModal.querySelector(".delete-confirm-confirm");
+        let deleteConfirmResolver = null;
+        let deleteConfirmJustOpenedUntil = 0;
+
         const setActionButtonsEnabled = (enabled) => {
           addExerciseBtn.disabled = !enabled;
           deleteExerciseBtn.disabled = !enabled;
@@ -3000,6 +3035,27 @@
           }
         };
 
+        const closeDeleteConfirm = (confirmed = false) => {
+          if (!deleteConfirmModal.classList.contains("is-open")) return;
+          deleteConfirmModal.classList.remove("is-open");
+          deleteConfirmModal.setAttribute("aria-hidden", "true");
+          if (!deleteConfirmResolver) return;
+          const resolve = deleteConfirmResolver;
+          deleteConfirmResolver = null;
+          resolve(Boolean(confirmed));
+        };
+
+        const openDeleteConfirm = () =>
+          new Promise((resolve) => {
+            if (deleteConfirmResolver) {
+              deleteConfirmResolver(false);
+            }
+            deleteConfirmResolver = resolve;
+            deleteConfirmJustOpenedUntil = performance.now() + 240;
+            deleteConfirmModal.classList.add("is-open");
+            deleteConfirmModal.setAttribute("aria-hidden", "false");
+          });
+
         const openModal = (row, { fromLongPress = false } = {}) => {
           if (!row || !row.parentNode) return;
           selectedRow = row;
@@ -3018,6 +3074,7 @@
         };
 
         const closeModal = () => {
+          closeDeleteConfirm(false);
           exerciseModal.classList.remove("is-open");
           exerciseModal.setAttribute("aria-hidden", "true");
           selectedRow = null;
@@ -3042,6 +3099,26 @@
         addExerciseBtn.addEventListener("click", preventGuardedAction, true);
         deleteExerciseBtn.addEventListener("click", preventGuardedAction, true);
 
+        deleteConfirmModal.addEventListener("click", (event) => {
+          if (event.target !== deleteConfirmModal) return;
+          if (performance.now() < deleteConfirmJustOpenedUntil) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+          closeDeleteConfirm(false);
+        });
+        if (deleteConfirmCancelBtn) {
+          deleteConfirmCancelBtn.addEventListener("click", () => {
+            closeDeleteConfirm(false);
+          });
+        }
+        if (deleteConfirmConfirmBtn) {
+          deleteConfirmConfirmBtn.addEventListener("click", () => {
+            closeDeleteConfirm(true);
+          });
+        }
+
         exerciseModal.addEventListener("click", (event) => {
           if (event.target !== exerciseModal) return;
           if (performance.now() < modalJustOpenedUntil) {
@@ -3053,7 +3130,12 @@
         });
 
         document.addEventListener("keydown", (event) => {
-          if (event.key === "Escape" && exerciseModal.classList.contains("is-open")) {
+          if (event.key !== "Escape") return;
+          if (deleteConfirmModal.classList.contains("is-open")) {
+            closeDeleteConfirm(false);
+            return;
+          }
+          if (exerciseModal.classList.contains("is-open")) {
             closeModal();
           }
         });
@@ -3176,7 +3258,7 @@
             return;
           }
 
-          const confirmed = window.confirm("Weet je zeker dat je deze oefening wilt verwijderen?");
+          const confirmed = await openDeleteConfirm();
           if (!confirmed) return;
 
           selectedRow.remove();
