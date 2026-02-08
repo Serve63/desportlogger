@@ -218,94 +218,6 @@
       position: relative;
     }
 
-    .exercise-actions-trigger {
-      position: fixed;
-      top: calc(env(safe-area-inset-top) + 12px);
-      right: calc(env(safe-area-inset-right) + 12px);
-      width: 44px;
-      height: 44px;
-      border: 1px solid rgba(144, 198, 255, 0.45);
-      border-radius: 14px;
-      background:
-        radial-gradient(circle at 30% 25%, rgba(173, 220, 255, 0.28), transparent 52%),
-        linear-gradient(155deg, rgba(40, 52, 66, 0.96), rgba(27, 33, 42, 0.96));
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(74, 163, 255, 0.18);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      color: transparent;
-      font-size: 0;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.14s ease, border-color 0.16s ease, box-shadow 0.16s ease;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-      z-index: 1500;
-    }
-
-    .exercise-actions-trigger::before,
-    .exercise-actions-trigger::after {
-      content: "";
-      position: absolute;
-      width: 16px;
-      height: 2px;
-      border-radius: 2px;
-      background: rgba(236, 244, 252, 0.98);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    }
-
-    .exercise-actions-trigger::after {
-      transform: rotate(90deg);
-    }
-
-    .exercise-actions-trigger:hover,
-    .exercise-actions-trigger:focus-visible {
-      border-color: rgba(120, 197, 255, 0.82);
-      box-shadow: 0 14px 26px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(74, 163, 255, 0.34);
-      outline: none;
-    }
-
-    .exercise-actions-trigger:active {
-      transform: scale(0.94);
-    }
-
-    .delete-selection-hint {
-      position: fixed;
-      top: calc(env(safe-area-inset-top) + 64px);
-      right: calc(env(safe-area-inset-right) + 12px);
-      left: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(130, 198, 255, 0.45);
-      background: rgba(24, 30, 38, 0.94);
-      color: #e8eef5;
-      font-size: 0.76rem;
-      letter-spacing: 0.01em;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.32);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      opacity: 0;
-      transform: translateY(-6px);
-      pointer-events: none;
-      transition: opacity 0.14s ease, transform 0.14s ease;
-      z-index: 1490;
-    }
-
-    .delete-selection-hint.is-visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    body.is-delete-selection-armed .row {
-      cursor: pointer;
-    }
-
-    body.is-delete-selection-armed .row:not(.is-dragging-floating):hover {
-      box-shadow: 0 0 0 1px rgba(74, 163, 255, 0.45);
-      border-radius: 12px;
-    }
 
 
     .grid {
@@ -966,7 +878,7 @@
     <div class="loading-text">Laden...</div>
   </div>
 
- <main class="sheet"> <header> <div class="header-main"> <button class="exercise-actions-trigger" type="button" aria-label="Oefening opties">+</button> <div class="training-count"><button class="year-trigger" type="button">2026:</button> Laden...</div> <h1>Servé's Logboek</h1> <div class="day-line"><button class="day-trigger" type="button">Vandaag</button></div></div>
+ <main class="sheet"> <header> <div class="header-main"> <div class="training-count"><button class="year-trigger" type="button">2026:</button> Laden...</div> <h1>Servé's Logboek</h1> <div class="day-line"><button class="day-trigger" type="button">Vandaag</button></div></div>
 </header> <section class="grid" aria-label="Oefeningen">
       <div class="header-row">
         <div class="header exercise-header"></div> <div class="header">SETS</div> <div class="header">REPS</div> <div class="header">KG</div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-1" value="Abdominal Machine" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-1" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-1" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-1" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-1" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-2" value="Standing Buik" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-2" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-2" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-2" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-2" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-3" value="Chest Press" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-3" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-3" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-3" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-3" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-4" value="Incline Chest" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-4" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-4" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-4" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-4" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-5" value="Overhead Triceps" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-5" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-5" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-5" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-5" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-6" value="Tricep Dip" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-6" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-6" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-6" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-6" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div></section></main> <div class="year-modal" id="yearModal" aria-hidden="true"> <div class="year-modal__content" role="dialog" aria-modal="true" aria-labelledby="yearModalTitle"> <button class="year-modal__close" type="button" aria-label="Sluiten">&times;</button> <h2 id="yearModalTitle">Voorgaande jaren</h2> <ul class="year-modal__list"> <li><strong>2022:</strong> 18</li> <li><strong>2023:</strong> 14</li> <li><strong>2024:</strong> 22</li> <li><strong>2025:</strong> 301</li> <li id="yearCount2026"><strong>2026 (tot heden):</strong> 28</li> <li class="year-total"><strong>Totaal:</strong> 383 sessies</li></ul></div></div>
@@ -3002,147 +2914,223 @@
         const exerciseModal = document.getElementById("exerciseModal");
         const addExerciseBtn = document.querySelector(".add-exercise");
         const deleteExerciseBtn = document.querySelector(".delete-exercise");
-        const exerciseActionTrigger = document.querySelector(".exercise-actions-trigger");
-        const grid = document.querySelector(".grid");
         let selectedRow = null;
-        let deleteSelectionArmed = false;
-        let deleteSelectionHint = null;
+        let modalActionGuardUntil = 0;
+        let modalActionGuardTimer = null;
 
-        if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn || !grid) return;
+        let touchTimer = null;
+        let touchStartPoint = null;
+        let longPressTriggered = false;
+        let pendingLongPressRow = null;
+        let suppressRowTapUntil = 0;
 
-        const ensureDeleteSelectionHint = () => {
-          if (deleteSelectionHint && deleteSelectionHint.isConnected) return deleteSelectionHint;
-          const hint = document.createElement("div");
-          hint.className = "delete-selection-hint";
-          hint.setAttribute("aria-live", "polite");
-          document.body.appendChild(hint);
-          deleteSelectionHint = hint;
-          return hint;
+        const MODAL_ACTION_GUARD_MS = 430;
+        const LONG_PRESS_DURATION = 460;
+        const LONG_PRESS_MOVE_TOLERANCE = 10;
+
+        if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
+
+        const setActionButtonsEnabled = (enabled) => {
+          addExerciseBtn.disabled = !enabled;
+          deleteExerciseBtn.disabled = !enabled;
         };
 
-        const setDeleteSelectionArmed = (armed, message = "") => {
-          deleteSelectionArmed = armed;
-          document.body.classList.toggle("is-delete-selection-armed", armed);
-          const hint = ensureDeleteSelectionHint();
-          if (!armed) {
-            hint.classList.remove("is-visible");
-            hint.textContent = "";
-            return;
+        const isModalActionGuardActive = () => performance.now() < modalActionGuardUntil;
+
+        const armModalActionGuard = (durationMs = MODAL_ACTION_GUARD_MS) => {
+          modalActionGuardUntil = performance.now() + durationMs;
+          setActionButtonsEnabled(false);
+          if (modalActionGuardTimer) {
+            clearTimeout(modalActionGuardTimer);
           }
-          hint.textContent = message || "Kies een dag en tik daarna de oefening die je wilt verwijderen.";
-          hint.classList.add("is-visible");
+          modalActionGuardTimer = setTimeout(() => {
+            modalActionGuardTimer = null;
+            if (!exerciseModal.classList.contains("is-open")) return;
+            if (isModalActionGuardActive()) return;
+            setActionButtonsEnabled(true);
+          }, durationMs + 24);
         };
 
-        const openDayModalPanel = () => {
-          if (!dayModal) return;
-          dayModal.classList.add("is-open");
-          dayModal.setAttribute("aria-hidden", "false");
+        const clearTouchTimer = () => {
+          if (!touchTimer) return;
+          clearTimeout(touchTimer);
+          touchTimer = null;
         };
 
-        const closeDayModalPanel = () => {
-          if (!dayModal) return;
-          dayModal.classList.remove("is-open");
-          dayModal.setAttribute("aria-hidden", "true");
-        };
-
-        const resolveContextRow = () => {
+        const clearNativeSelection = () => {
           const active = document.activeElement;
-          const activeRow = active && active.closest ? active.closest(".row") : null;
-          if (activeRow && activeRow.parentNode) return activeRow;
-          const rows = getCurrentRows();
-          return rows.length ? rows[rows.length - 1] : null;
+          if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+            active.blur();
+          }
+          const selection = window.getSelection && window.getSelection();
+          if (selection && selection.rangeCount) {
+            selection.removeAllRanges();
+          }
         };
 
-        const openModal = (row) => {
-          selectedRow = row || resolveContextRow();
-          setDeleteSelectionArmed(false);
-          closeDayModalPanel();
+        const openModal = (row, { fromLongPress = false } = {}) => {
+          if (!row || !row.parentNode) return;
+          selectedRow = row;
           exerciseModal.classList.add("is-open");
           exerciseModal.setAttribute("aria-hidden", "false");
+
+          if (fromLongPress) {
+            armModalActionGuard();
+            suppressRowTapUntil = Date.now() + 520;
+          } else {
+            modalActionGuardUntil = 0;
+            setActionButtonsEnabled(true);
+          }
         };
 
         const closeModal = () => {
           exerciseModal.classList.remove("is-open");
           exerciseModal.setAttribute("aria-hidden", "true");
           selectedRow = null;
+          modalActionGuardUntil = 0;
+          if (modalActionGuardTimer) {
+            clearTimeout(modalActionGuardTimer);
+            modalActionGuardTimer = null;
+          }
+          setActionButtonsEnabled(true);
         };
 
-        const deleteSelectedRow = async (row) => {
-          if (!row || !row.parentNode) return;
-
-          const nameInput = row.querySelector(".exercise-name");
-          const rawName = nameInput ? String(nameInput.value || "").trim() : "";
-          const namePart = rawName || "deze oefening";
-          const dayLabel = day || getDayName();
-
-          const confirmed = window.confirm("Weet je zeker dat je " + namePart + " op " + dayLabel + " wilt verwijderen?");
-          if (!confirmed) return;
-
-          row.remove();
-          await reindexAndSaveAllRows();
-          setDeleteSelectionArmed(false);
+        const preventGuardedAction = (event) => {
+          if (!isModalActionGuardActive()) return;
+          event.preventDefault();
+          event.stopPropagation();
         };
+
+        addExerciseBtn.addEventListener("pointerdown", preventGuardedAction);
+        deleteExerciseBtn.addEventListener("pointerdown", preventGuardedAction);
+        addExerciseBtn.addEventListener("touchstart", preventGuardedAction, { passive: false });
+        deleteExerciseBtn.addEventListener("touchstart", preventGuardedAction, { passive: false });
+        addExerciseBtn.addEventListener("click", preventGuardedAction, true);
+        deleteExerciseBtn.addEventListener("click", preventGuardedAction, true);
 
         exerciseModal.addEventListener("click", (event) => {
           if (event.target === exerciseModal) closeModal();
         });
 
         document.addEventListener("keydown", (event) => {
-          if (event.key !== "Escape") return;
-          if (exerciseModal.classList.contains("is-open")) {
+          if (event.key === "Escape" && exerciseModal.classList.contains("is-open")) {
+            closeModal();
+          }
+        });
+
+        const handleTouchStart = (event, row) => {
+          if (!hasDataLoaded) return;
+          if (!row || row.closest(".grid.rest-day")) return;
+          if (event.target && event.target.closest && event.target.closest(".drag-handle")) return;
+          if (exerciseModal.classList.contains("is-open")) return;
+
+          longPressTriggered = false;
+          pendingLongPressRow = null;
+          touchStartPoint = {
+            x: event.touches && event.touches[0] ? event.touches[0].clientX : 0,
+            y: event.touches && event.touches[0] ? event.touches[0].clientY : 0,
+          };
+
+          clearTouchTimer();
+          touchTimer = setTimeout(() => {
+            longPressTriggered = true;
+            pendingLongPressRow = row;
+            clearNativeSelection();
+            try {
+              if (navigator.vibrate) navigator.vibrate(10);
+            } catch (error) {
+              // ignore
+            }
+          }, LONG_PRESS_DURATION);
+        };
+
+        const handleTouchMove = (event) => {
+          if (!touchTimer) return;
+          if (!touchStartPoint || !event.touches || !event.touches[0]) {
+            clearTouchTimer();
+            return;
+          }
+
+          const dx = Math.abs(event.touches[0].clientX - touchStartPoint.x);
+          const dy = Math.abs(event.touches[0].clientY - touchStartPoint.y);
+          if (dx > LONG_PRESS_MOVE_TOLERANCE || dy > LONG_PRESS_MOVE_TOLERANCE) {
+            clearTouchTimer();
+          }
+        };
+
+        const handleTouchEnd = (event) => {
+          clearTouchTimer();
+          touchStartPoint = null;
+
+          if (longPressTriggered && pendingLongPressRow) {
+            if (event && event.cancelable) event.preventDefault();
+            const rowForModal = pendingLongPressRow;
+            pendingLongPressRow = null;
+            longPressTriggered = false;
+
+            requestAnimationFrame(() => {
+              openModal(rowForModal, { fromLongPress: true });
+            });
+            return;
+          }
+
+          longPressTriggered = false;
+          pendingLongPressRow = null;
+        };
+
+        document.addEventListener(
+          "click",
+          (event) => {
+            if (Date.now() > suppressRowTapUntil) return;
+            const rowTarget = event.target && event.target.closest ? event.target.closest(".row") : null;
+            if (!rowTarget) return;
+            event.preventDefault();
+            event.stopPropagation();
+            clearNativeSelection();
+          },
+          true
+        );
+
+        attachTouchListeners = (row) => {
+          if (!row || row.dataset.contextTouchAttached === "1") return;
+          row.dataset.contextTouchAttached = "1";
+
+          row.addEventListener("touchstart", (event) => handleTouchStart(event, row), { passive: false });
+          row.addEventListener("touchmove", handleTouchMove, { passive: true });
+          row.addEventListener("touchend", handleTouchEnd, { passive: false });
+          row.addEventListener("touchcancel", handleTouchEnd, { passive: false });
+          row.addEventListener("contextmenu", (event) => {
+            if (!hasDataLoaded) return;
+            if (row.closest(".grid.rest-day")) return;
+            event.preventDefault();
+            openModal(row);
+          });
+        };
+
+        getCurrentRows().forEach((row) => {
+          attachTouchListeners(row);
+        });
+
+        deleteExerciseBtn.addEventListener("click", async () => {
+          if (isModalActionGuardActive()) return;
+          if (!selectedRow || !selectedRow.parentNode) {
             closeModal();
             return;
           }
-          if (deleteSelectionArmed) {
-            setDeleteSelectionArmed(false);
-          }
-        });
 
-        if (exerciseActionTrigger) {
-          exerciseActionTrigger.addEventListener("click", (event) => {
-            if (event.cancelable) event.preventDefault();
-            openModal(resolveContextRow());
-          });
-        }
+          const confirmed = window.confirm("Weet je zeker dat je deze oefening wilt verwijderen?");
+          if (!confirmed) return;
 
-        if (!grid.dataset.deleteSelectionAttached) {
-          grid.dataset.deleteSelectionAttached = "1";
-
-          grid.addEventListener(
-            "pointerdown",
-            (event) => {
-              if (!deleteSelectionArmed) return;
-              const row = event.target && event.target.closest ? event.target.closest(".row") : null;
-              if (!row) return;
-              if (event.cancelable) event.preventDefault();
-            },
-            true
-          );
-
-          grid.addEventListener(
-            "click",
-            async (event) => {
-              if (!deleteSelectionArmed) return;
-              const row = event.target && event.target.closest ? event.target.closest(".row") : null;
-              if (!row) return;
-
-              event.preventDefault();
-              event.stopPropagation();
-              await deleteSelectedRow(row);
-            },
-            true
-          );
-        }
-
-        attachTouchListeners = () => {};
-
-        deleteExerciseBtn.addEventListener("click", () => {
+          selectedRow.remove();
           closeModal();
-          setDeleteSelectionArmed(true, "Kies een dag en tik daarna de oefening die je wilt verwijderen.");
-          openDayModalPanel();
+
+          debugLog("Herindexeren en opslaan...");
+          await reindexAndSaveAllRows();
+          debugLog("Oefening verwijderd en opgeslagen");
         });
 
         addExerciseBtn.addEventListener("click", async () => {
+          if (isModalActionGuardActive()) return;
           const grid = document.querySelector(".grid");
           if (!grid) return;
 
@@ -3172,6 +3160,7 @@
 
       // Initialiseer exercise context menu
       setupExerciseContextMenu();
+
 
 
             const setupRowReorder = () => {
