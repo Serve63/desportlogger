@@ -357,6 +357,14 @@
       user-select: none !important;
     }
 
+    .exercise-cell .exercise-name,
+    .exercise-cell .exercise-note,
+    .mini-field {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
     .row.reorder-placeholder {
       min-height: 48px;
       border-radius: 12px;
@@ -2930,10 +2938,12 @@
         let pendingLongPressRow = null;
         let suppressRowTapUntil = 0;
         let activeLongPressRow = null;
+        let modalJustOpenedUntil = 0;
+        let suppressSyntheticTapUntil = 0;
 
-        const MODAL_ACTION_GUARD_MS = 430;
-        const LONG_PRESS_DURATION = 380;
-        const LONG_PRESS_MOVE_TOLERANCE = 10;
+        const MODAL_ACTION_GUARD_MS = 680;
+        const LONG_PRESS_DURATION = 340;
+        const LONG_PRESS_MOVE_TOLERANCE = 18;
 
         if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
 
@@ -2984,12 +2994,14 @@
         const openModal = (row, { fromLongPress = false } = {}) => {
           if (!row || !row.parentNode) return;
           selectedRow = row;
+          modalJustOpenedUntil = performance.now() + 760;
           exerciseModal.classList.add("is-open");
           exerciseModal.setAttribute("aria-hidden", "false");
 
           if (fromLongPress) {
             armModalActionGuard();
-            suppressRowTapUntil = Date.now() + 520;
+            suppressRowTapUntil = Date.now() + 760;
+            suppressSyntheticTapUntil = Date.now() + 760;
           } else {
             modalActionGuardUntil = 0;
             setActionButtonsEnabled(true);
@@ -3022,7 +3034,13 @@
         deleteExerciseBtn.addEventListener("click", preventGuardedAction, true);
 
         exerciseModal.addEventListener("click", (event) => {
-          if (event.target === exerciseModal) closeModal();
+          if (event.target !== exerciseModal) return;
+          if (performance.now() < modalJustOpenedUntil) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+          closeModal();
         });
 
         document.addEventListener("keydown", (event) => {
@@ -3037,11 +3055,20 @@
           if (event.target && event.target.closest && event.target.closest(".drag-handle")) return;
           if (exerciseModal.classList.contains("is-open")) return;
 
+          const editableTarget = event.target && event.target.closest
+            ? event.target.closest(".exercise-name, .exercise-note, .mini-field")
+            : null;
+          if (editableTarget) {
+            clearNativeSelection();
+          }
+
           longPressTriggered = false;
           pendingLongPressRow = null;
+          if (!event.touches || event.touches.length !== 1) return;
+
           touchStartPoint = {
-            x: event.touches && event.touches[0] ? event.touches[0].clientX : 0,
-            y: event.touches && event.touches[0] ? event.touches[0].clientY : 0,
+            x: event.touches[0].clientX,
+            y: event.touches[0].clientY,
           };
 
           clearTouchTimer();
@@ -3049,9 +3076,13 @@
           activeLongPressRow = row;
           row.classList.add("is-longpress-armed");
           touchTimer = setTimeout(() => {
+            clearTouchTimer();
+            if (exerciseModal.classList.contains("is-open")) return;
             longPressTriggered = true;
-            pendingLongPressRow = row;
+            pendingLongPressRow = null;
+            clearLongPressArmedRow();
             clearNativeSelection();
+            openModal(row, { fromLongPress: true });
             try {
               if (navigator.vibrate) navigator.vibrate(10);
             } catch (error) {
@@ -3061,6 +3092,7 @@
         };
 
         const handleTouchMove = (event) => {
+          if (longPressTriggered) return;
           if (!touchTimer) return;
           if (!touchStartPoint || !event.touches || !event.touches[0]) {
             clearTouchTimer();
@@ -3081,15 +3113,11 @@
           clearLongPressArmedRow();
           touchStartPoint = null;
 
-          if (longPressTriggered && pendingLongPressRow) {
+          if (longPressTriggered) {
             if (event && event.cancelable) event.preventDefault();
-            const rowForModal = pendingLongPressRow;
-            pendingLongPressRow = null;
+            if (event && event.stopPropagation) event.stopPropagation();
             longPressTriggered = false;
-
-            requestAnimationFrame(() => {
-              openModal(rowForModal, { fromLongPress: true });
-            });
+            pendingLongPressRow = null;
             return;
           }
 
@@ -3100,7 +3128,14 @@
         document.addEventListener(
           "click",
           (event) => {
-            if (Date.now() > suppressRowTapUntil) return;
+            const now = Date.now();
+            if (now <= suppressSyntheticTapUntil) {
+              event.preventDefault();
+              event.stopPropagation();
+              clearNativeSelection();
+              return;
+            }
+            if (now > suppressRowTapUntil) return;
             const rowTarget = event.target && event.target.closest ? event.target.closest(".row") : null;
             if (!rowTarget) return;
             event.preventDefault();
