@@ -1589,118 +1589,206 @@ transform: translateY(-2px);
                       position: fixed;
                       inset: 0;
                       display: none;
-                      flex-direction: column;
-                      justify-content: flex-end;
                       align-items: center;
-                      padding: 0 0 calc(var(--footer-offset, 72px) + env(safe-area-inset-bottom) + 48px) 0;
-                      background: rgba(10, 14, 20, 0.35);
-                      backdrop-filter: blur(2px) saturate(90%);
-                      -webkit-backdrop-filter: blur(2px) saturate(90%);
+                      justify-content: center;
+                      padding: 24px;
+                      background: rgba(0, 0, 0, 0.22);
+                      backdrop-filter: blur(3px) saturate(82%) brightness(96%);
+                      -webkit-backdrop-filter: blur(3px) saturate(82%) brightness(96%);
                       z-index: 12000;
                       pointer-events: all;
                       opacity: 0;
-                      transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
                     }
 
                     .session-lock-overlay.is-visible {
                       opacity: 1;
                     }
 
-                    .session-lock-bar {
-                      display: flex;
-                      align-items: center;
-                      gap: 12px;
-                      width: min(100% - 32px, 400px);
-                      padding: 14px 18px;
-                      border-radius: 16px;
-                      border: 1px solid rgba(255, 255, 255, 0.12);
-                      background:
-                        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.08), transparent 60%),
-                        rgba(22, 26, 33, 0.82);
-                      backdrop-filter: blur(16px) saturate(140%);
-                      -webkit-backdrop-filter: blur(16px) saturate(140%);
-                      box-shadow:
-                        0 8px 32px rgba(0, 0, 0, 0.35),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-                      transform: translateY(20px);
-                      opacity: 0;
-                      transition:
-                        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                        opacity 0.35s ease;
+                    .session-lock-overlay::before {
+                      content: "";
+                      position: absolute;
+                      inset: 0;
+                      background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.18) 100%);
+                      pointer-events: none;
                     }
 
-                    .session-lock-overlay.is-visible .session-lock-bar {
-                      transform: translateY(0);
+                    .session-lock-card {
+                      position: relative;
+                      width: min(100% - 40px, 340px);
+                      border-radius: 24px;
+                      padding: 40px 28px 32px;
+                      text-align: center;
+                      background:
+                        linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%),
+                        rgba(16, 20, 28, 0.82);
+                      backdrop-filter: blur(40px) saturate(160%);
+                      -webkit-backdrop-filter: blur(40px) saturate(160%);
+                      border: 1px solid rgba(255, 255, 255, 0.09);
+                      box-shadow:
+                        0 0 0 1px rgba(255, 255, 255, 0.04),
+                        0 4px 16px rgba(0, 0, 0, 0.18),
+                        0 16px 48px rgba(0, 0, 0, 0.22),
+                        0 32px 80px rgba(0, 0, 0, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                        inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+                      transform: scale(0.94) translateY(10px);
+                      opacity: 0;
+                      transition:
+                        transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.45s ease;
+                    }
+
+                    .session-lock-overlay.is-visible .session-lock-card {
+                      transform: scale(1) translateY(0);
                       opacity: 1;
                     }
 
-                    .session-lock-icon {
-                      flex-shrink: 0;
-                      width: 36px;
-                      height: 36px;
-                      border-radius: 10px;
-                      display: grid;
-                      place-items: center;
-                      background: rgba(74, 163, 255, 0.15);
-                      border: 1px solid rgba(74, 163, 255, 0.25);
-                      color: #7ab8ff;
-                      font-size: 1rem;
+                    .session-lock-card::after {
+                      content: "";
+                      position: absolute;
+                      inset: 0;
+                      border-radius: 24px;
+                      background: linear-gradient(
+                        105deg,
+                        transparent 38%,
+                        rgba(255, 255, 255, 0.04) 44%,
+                        rgba(255, 255, 255, 0.08) 50%,
+                        rgba(255, 255, 255, 0.04) 56%,
+                        transparent 62%
+                      );
+                      background-size: 250% 100%;
+                      animation: lockShimmer 4s ease-in-out infinite;
+                      pointer-events: none;
                     }
 
-                    .session-lock-text {
-                      flex: 1;
-                      min-width: 0;
+                    @keyframes lockShimmer {
+                      0% { background-position: 200% 0; }
+                      100% { background-position: -200% 0; }
+                    }
+
+                    .session-lock-badge {
+                      width: 64px;
+                      height: 64px;
+                      margin: 0 auto 22px;
+                      border-radius: 50%;
+                      display: grid;
+                      place-items: center;
+                      background:
+                        radial-gradient(circle at 35% 28%, rgba(74, 163, 255, 0.35), transparent 60%),
+                        linear-gradient(150deg, rgba(74, 163, 255, 0.18), rgba(46, 160, 67, 0.12));
+                      border: 1px solid rgba(74, 163, 255, 0.28);
+                      box-shadow:
+                        0 0 20px rgba(74, 163, 255, 0.12),
+                        0 8px 24px rgba(0, 0, 0, 0.18),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+                      animation: badgeGlow 3.5s ease-in-out infinite;
+                    }
+
+                    @keyframes badgeGlow {
+                      0%, 100% {
+                        box-shadow:
+                          0 0 20px rgba(74, 163, 255, 0.12),
+                          0 8px 24px rgba(0, 0, 0, 0.18),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+                      }
+                      50% {
+                        box-shadow:
+                          0 0 32px rgba(74, 163, 255, 0.22),
+                          0 8px 24px rgba(0, 0, 0, 0.18),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+                      }
+                    }
+
+                    .session-lock-badge svg {
+                      width: 28px;
+                      height: 28px;
+                      stroke: #7ab8ff;
+                      stroke-width: 2.5;
+                      fill: none;
+                      stroke-linecap: round;
+                      stroke-linejoin: round;
+                      filter: drop-shadow(0 0 5px rgba(74, 163, 255, 0.25));
                     }
 
                     .session-lock-title {
-                      margin: 0;
-                      color: var(--ink, #eef0f3);
-                      font-size: 0.88rem;
-                      font-weight: 600;
-                      letter-spacing: 0.01em;
-                      line-height: 1.2;
+                      margin: 0 0 8px;
+                      color: #f0f4f8;
+                      font-size: 1.18rem;
+                      font-weight: 700;
+                      letter-spacing: -0.01em;
+                      line-height: 1.25;
                     }
 
                     .session-lock-copy {
-                      margin: 2px 0 0;
-                      color: var(--muted, #c2c6cc);
-                      font-size: 0.74rem;
-                      line-height: 1.35;
+                      margin: 0 0 22px;
+                      color: rgba(195, 208, 225, 0.72);
+                      font-size: 0.84rem;
+                      line-height: 1.5;
+                    }
+
+                    .session-lock-divider {
+                      height: 1px;
+                      margin: 0 auto 18px;
+                      width: 44px;
+                      background: linear-gradient(90deg, transparent, rgba(74, 163, 255, 0.35), transparent);
                     }
 
                     .session-lock-chip {
-                      flex-shrink: 0;
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 6px;
                       border-radius: 999px;
-                      border: 1px solid rgba(74, 163, 255, 0.3);
-                      padding: 4px 10px;
-                      color: #7ab8ff;
-                      font-size: 0.66rem;
+                      border: 1px solid rgba(46, 160, 67, 0.3);
+                      padding: 6px 14px;
+                      color: rgba(130, 220, 155, 0.92);
+                      font-size: 0.7rem;
                       font-weight: 600;
-                      letter-spacing: 0.06em;
+                      letter-spacing: 0.05em;
                       text-transform: uppercase;
-                      background: rgba(74, 163, 255, 0.1);
+                      background: rgba(46, 160, 67, 0.08);
+                    }
+
+                    .session-lock-chip::before {
+                      content: "";
+                      width: 6px;
+                      height: 6px;
+                      border-radius: 50%;
+                      background: #4ade80;
+                      box-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
                     }
 
                     @media (max-width: 540px) {
-                      .session-lock-bar {
-                        gap: 10px;
-                        padding: 12px 14px;
-                        border-radius: 13px;
+                      .session-lock-overlay {
+                        padding: 20px;
                       }
 
-                      .session-lock-icon {
-                        width: 32px;
-                        height: 32px;
-                        border-radius: 8px;
-                        font-size: 0.9rem;
+                      .session-lock-card {
+                        padding: 32px 22px 26px;
+                        border-radius: 20px;
+                      }
+
+                      .session-lock-card::after {
+                        border-radius: 20px;
+                      }
+
+                      .session-lock-badge {
+                        width: 56px;
+                        height: 56px;
+                        margin-bottom: 18px;
+                      }
+
+                      .session-lock-badge svg {
+                        width: 24px;
+                        height: 24px;
                       }
 
                       .session-lock-title {
-                        font-size: 0.82rem;
+                        font-size: 1.08rem;
                       }
 
                       .session-lock-copy {
-                        font-size: 0.7rem;
+                        font-size: 0.8rem;
                       }
                     }
                   `;
@@ -1719,13 +1807,14 @@ transform: translateY(-2px);
                   overlay.setAttribute("aria-hidden", "true");
                   overlay.tabIndex = -1;
                   overlay.innerHTML = `
-                    <div class="session-lock-bar" role="document">
-                      <div class="session-lock-icon" aria-hidden="true">&#128274;</div>
-                      <div class="session-lock-text">
-                        <p class="session-lock-title">Sessie vergrendeld</p>
-                        <p class="session-lock-copy">Training afgerond — bewerkingen geblokkeerd tot morgen</p>
+                    <div class="session-lock-card">
+                      <div class="session-lock-badge" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
                       </div>
-                      <div class="session-lock-chip">Afgerond</div>
+                      <h2 class="session-lock-title">Sessie Afgerond</h2>
+                      <p class="session-lock-copy">Je training staat vast. Alles blijft zichtbaar, bewerkingen zijn vergrendeld tot morgen.</p>
+                      <div class="session-lock-divider" aria-hidden="true"></div>
+                      <div class="session-lock-chip">Voltooid</div>
                     </div>
                   `;
                   document.body.appendChild(overlay);
