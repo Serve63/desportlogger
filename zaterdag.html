@@ -592,12 +592,6 @@
       background: rgba(255, 107, 107, 0.1);
     }
 
-    .exercise-modal__actions button:disabled {
-      opacity: 0.45;
-      cursor: default;
-      pointer-events: none;
-    }
-
     .year-modal__close,
     .day-modal__close,
     .exercise-modal__close {
@@ -2802,97 +2796,20 @@
         const addExerciseBtn = document.querySelector(".add-exercise");
         const deleteExerciseBtn = document.querySelector(".delete-exercise");
         let selectedRow = null;
-        let modalActionsUnlockAt = 0;
-        let modalUnlockToken = 0;
-        let modalReleaseCleanup = null;
 
         if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
 
-        const setModalActionsEnabled = (enabled) => {
-          addExerciseBtn.disabled = !enabled;
-          deleteExerciseBtn.disabled = !enabled;
-          addExerciseBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
-          deleteExerciseBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
-        };
-
-        const clearModalReleaseUnlockListeners = () => {
-          if (typeof modalReleaseCleanup !== "function") return;
-          modalReleaseCleanup();
-          modalReleaseCleanup = null;
-        };
-
-        const armModalActionsAfterRelease = () => {
-          modalUnlockToken += 1;
-          const token = modalUnlockToken;
-          let released = false;
-          const releaseEvents = ["touchend", "touchcancel", "pointerup", "pointercancel"];
-
-          setModalActionsEnabled(false);
-          modalActionsUnlockAt = Date.now() + 900;
-          clearModalReleaseUnlockListeners();
-
-          const finishRelease = () => {
-            if (released) return;
-            released = true;
-            clearModalReleaseUnlockListeners();
-            setTimeout(() => {
-              if (token !== modalUnlockToken) return;
-              modalActionsUnlockAt = Date.now() + 120;
-              setModalActionsEnabled(true);
-            }, 80);
-          };
-
-          releaseEvents.forEach((type) => {
-            window.addEventListener(type, finishRelease, { capture: true, passive: true });
-          });
-          modalReleaseCleanup = () => {
-            releaseEvents.forEach((type) => {
-              window.removeEventListener(type, finishRelease, true);
-            });
-          };
-
-          // Failsafe als release-event niet doorkomt.
-          setTimeout(finishRelease, 900);
-        };
-
-        const areModalActionsBlocked = () => {
-          return addExerciseBtn.disabled || deleteExerciseBtn.disabled || Date.now() < modalActionsUnlockAt;
-        };
-
-        const openModal = (row, { fromLongPress = false } = {}) => {
+        const openModal = (row) => {
           selectedRow = row;
           exerciseModal.classList.add("is-open");
           exerciseModal.setAttribute("aria-hidden", "false");
-          if (fromLongPress) {
-            armModalActionsAfterRelease();
-          } else {
-            modalUnlockToken += 1;
-            clearModalReleaseUnlockListeners();
-            modalActionsUnlockAt = 0;
-            setModalActionsEnabled(true);
-          }
         };
 
         const closeModal = () => {
           exerciseModal.classList.remove("is-open");
           exerciseModal.setAttribute("aria-hidden", "true");
           selectedRow = null;
-          modalUnlockToken += 1;
-          clearModalReleaseUnlockListeners();
-          modalActionsUnlockAt = 0;
-          setModalActionsEnabled(true);
         };
-
-        const preventBlockedAction = (event) => {
-          if (!areModalActionsBlocked()) return;
-          event.preventDefault();
-          event.stopPropagation();
-        };
-
-        addExerciseBtn.addEventListener("touchstart", preventBlockedAction, { passive: false });
-        deleteExerciseBtn.addEventListener("touchstart", preventBlockedAction, { passive: false });
-        addExerciseBtn.addEventListener("pointerdown", preventBlockedAction);
-        deleteExerciseBtn.addEventListener("pointerdown", preventBlockedAction);
 
         exerciseModal.addEventListener("click", (event) => {
           if (event.target === exerciseModal) closeModal();
@@ -2907,6 +2824,7 @@
         let touchTimer = null;
         let touchStartPoint = null;
         let longPressTriggered = false;
+        let pendingLongPressRow = null;
         let suppressRowTapUntil = 0;
         const LONG_PRESS_DURATION = 500;
         const LONG_PRESS_MOVE_TOLERANCE = 10;
@@ -2931,6 +2849,7 @@
         const handleTouchStart = (e, row) => {
           if (e.target && e.target.closest && e.target.closest(".drag-handle")) return;
           longPressTriggered = false;
+          pendingLongPressRow = null;
           touchStartPoint = {
             x: e.touches && e.touches[0] ? e.touches[0].clientX : 0,
             y: e.touches && e.touches[0] ? e.touches[0].clientY : 0,
@@ -2938,20 +2857,30 @@
           clearTouchTimer();
           touchTimer = setTimeout(() => {
             longPressTriggered = true;
+            pendingLongPressRow = row;
             suppressRowTapUntil = Date.now() + 700;
             clearNativeSelection();
             if (e.cancelable) e.preventDefault();
-            openModal(row, { fromLongPress: true });
           }, LONG_PRESS_DURATION);
         };
 
         const handleTouchEnd = (e) => {
           clearTouchTimer();
           touchStartPoint = null;
-          if (longPressTriggered && e && e.cancelable) {
-            e.preventDefault();
+
+          if (longPressTriggered && pendingLongPressRow) {
+            if (e && e.cancelable) e.preventDefault();
+            const rowForModal = pendingLongPressRow;
+            pendingLongPressRow = null;
+            longPressTriggered = false;
+            requestAnimationFrame(() => {
+              openModal(rowForModal);
+            });
+            return;
           }
+
           longPressTriggered = false;
+          pendingLongPressRow = null;
         };
 
         const handleTouchMove = (e) => {
@@ -2995,12 +2924,7 @@
         });
 
         // Functie om oefening te verwijderen
-        deleteExerciseBtn.addEventListener("click", async (event) => {
-          if (areModalActionsBlocked()) {
-            event.preventDefault();
-            event.stopPropagation();
-            return;
-          }
+        deleteExerciseBtn.addEventListener("click", async () => {
           if (selectedRow) {
             console.log("Verwijderen oefening...");
             // Verwijder de row uit de DOM
@@ -3014,12 +2938,7 @@
         });
 
         // Functie om nieuwe oefening toe te voegen
-        addExerciseBtn.addEventListener("click", async (event) => {
-          if (areModalActionsBlocked()) {
-            event.preventDefault();
-            event.stopPropagation();
-            return;
-          }
+        addExerciseBtn.addEventListener("click", async () => {
           const grid = document.querySelector(".grid");
           if (!grid) return;
 
