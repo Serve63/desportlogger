@@ -2091,38 +2091,85 @@
                 // Toggle functie
                 let lastToggleAt = 0;
                 const triggerCompletionHaptic = (() => {
-                  let iosHapticSwitch = null;
+                  let iosToggleState = false;
 
-                  const ensureIosHapticSwitch = () => {
-                    if (iosHapticSwitch && document.body.contains(iosHapticSwitch)) return iosHapticSwitch;
-                    const el = document.createElement("input");
-                    el.type = "checkbox";
-                    el.setAttribute("switch", "");
-                    el.setAttribute("aria-hidden", "true");
-                    el.tabIndex = -1;
-                    el.style.position = "fixed";
-                    el.style.left = "-9999px";
-                    el.style.top = "-9999px";
-                    el.style.opacity = "0";
-                    el.style.pointerEvents = "none";
-                    document.body.appendChild(el);
-                    iosHapticSwitch = el;
-                    return iosHapticSwitch;
+                  const triggerVibrationApi = () => {
+                    if (typeof navigator.vibrate !== "function") return false;
+                    try {
+                      // Iets langer patroon zodat het op Android duidelijk voelbaar is.
+                      const didVibrate = navigator.vibrate([40, 30, 70]);
+                      return didVibrate !== false;
+                    } catch (error) {
+                      return false;
+                    }
+                  };
+
+                  const triggerIosSwitchHaptic = () => {
+                    try {
+                      // iOS/Safari fallback: hidden switch + label click (werkt beter dan input.click()).
+                      const wrapper = document.createElement("div");
+                      wrapper.style.position = "fixed";
+                      wrapper.style.left = "-9999px";
+                      wrapper.style.top = "-9999px";
+                      wrapper.style.width = "1px";
+                      wrapper.style.height = "1px";
+                      wrapper.style.opacity = "0";
+                      wrapper.style.pointerEvents = "none";
+                      wrapper.style.overflow = "hidden";
+
+                      const switchInput = document.createElement("input");
+                      switchInput.type = "checkbox";
+                      switchInput.setAttribute("switch", "");
+                      switchInput.setAttribute("aria-hidden", "true");
+                      switchInput.tabIndex = -1;
+                      switchInput.checked = iosToggleState;
+                      iosToggleState = !iosToggleState;
+
+                      const switchId = `haptic-switch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                      switchInput.id = switchId;
+
+                      const switchLabel = document.createElement("label");
+                      switchLabel.setAttribute("for", switchId);
+                      switchLabel.setAttribute("aria-hidden", "true");
+                      switchLabel.tabIndex = -1;
+                      switchLabel.style.display = "block";
+                      switchLabel.style.width = "1px";
+                      switchLabel.style.height = "1px";
+
+                      wrapper.appendChild(switchInput);
+                      wrapper.appendChild(switchLabel);
+                      document.body.appendChild(wrapper);
+
+                      switchLabel.click();
+                      setTimeout(() => wrapper.remove(), 64);
+                      return true;
+                    } catch (error) {
+                      return false;
+                    }
+                  };
+
+                  const triggerNativeBridgeHaptic = () => {
+                    try {
+                      const handlers = window.webkit && window.webkit.messageHandlers ? window.webkit.messageHandlers : null;
+                      if (!handlers) return false;
+                      if (handlers.haptic && typeof handlers.haptic.postMessage === "function") {
+                        handlers.haptic.postMessage({ type: "impact", style: "light" });
+                        return true;
+                      }
+                      if (handlers.vibrate && typeof handlers.vibrate.postMessage === "function") {
+                        handlers.vibrate.postMessage({ duration: 70 });
+                        return true;
+                      }
+                    } catch (error) {
+                      return false;
+                    }
+                    return false;
                   };
 
                   return () => {
-                    try {
-                      if (typeof navigator.vibrate === "function") {
-                        const didVibrate = navigator.vibrate([14, 22, 24]);
-                        if (didVibrate) return;
-                      }
-
-                      // iOS fallback: probeer haptic via hidden switch-toggle binnen user gesture
-                      const toggle = ensureIosHapticSwitch();
-                      toggle.click();
-                    } catch (error) {
-                      // no-op
-                    }
+                    if (triggerVibrationApi()) return;
+                    if (triggerIosSwitchHaptic()) return;
+                    triggerNativeBridgeHaptic();
                   };
                 })();
 
@@ -2174,7 +2221,7 @@
               };
                 // Event listeners
                 sessionCheckButton.addEventListener("click", toggleSession);
-                sessionCheckButton.addEventListener("touchstart", toggleSession, { passive: false });
+                sessionCheckButton.addEventListener("touchend", toggleSession, { passive: false });
               });
       // Bepaal de dag naam op basis van het bestand voor Supabase
       const getDayName = () => {
