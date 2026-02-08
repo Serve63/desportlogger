@@ -1361,14 +1361,15 @@
 
         const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
         let latestEndAt = performance.now();
-        const CONFETTI_STREAM_MS = 1400;
-        const CONFETTI_BATCH_INTERVAL_MS = 180;
-        const INITIAL_TROPHIES = 24;
-        const BATCH_TROPHIES = 4;
-        const MIN_FALL_SECONDS = 1.45;
-        const FALL_SPREAD_SECONDS = 1.15;
-        const MAX_START_DELAY_SECONDS = 0.18;
-        const FINISH_BUFFER_MS = 8;
+        const CONFETTI_STREAM_MS = 3000;
+        const CONFETTI_BATCH_INTERVAL_MS = 300;
+        const INITIAL_TROPHIES = 30;
+        const BATCH_TROPHIES = 6;
+        const MIN_FALL_SECONDS = 2.5;
+        const FALL_SPREAD_SECONDS = 2.5;
+        const MAX_START_DELAY_SECONDS = 0.8;
+        const FINISH_BUFFER_MS = 40;
+        const LOCKSCREEN_LEAD_MS = 1000;
 
         const createTrophy = () => {
           const piece = document.createElement("span");
@@ -1383,25 +1384,25 @@
           const size = 18 + Math.random() * 16;
           piece.style.fontSize = size + "px";
 
-          // Snellere valsnelheid zodat lockscreen eerder kan tonen
+          // Originele valsnelheid terug
           const fallDuration = MIN_FALL_SECONDS + Math.random() * FALL_SPREAD_SECONDS;
-          piece.style.setProperty('--fall-duration', fallDuration + 's');
+          piece.style.setProperty("--fall-duration", fallDuration + "s");
 
-          // Kortere startdelay
+          // Originele spreiding terug
           const delay = Math.random() * MAX_START_DELAY_SECONDS;
-          piece.style.setProperty('--fall-delay', delay + 's');
+          piece.style.setProperty("--fall-delay", delay + "s");
 
           const endAt = performance.now() + (fallDuration + delay) * 1000;
           if (endAt > latestEndAt) latestEndAt = endAt;
 
           // Horizontale sway (-80px tot +80px)
           const sway = (Math.random() - 0.5) * 160;
-          piece.style.setProperty('--sway', sway + 'px');
+          piece.style.setProperty("--sway", sway + "px");
 
           // Subtielere rotaties voor trofeeën
-          piece.style.setProperty('--spin-x', (Math.random() * 40 - 20) + 'deg');
-          piece.style.setProperty('--spin-y', (Math.random() * 40 - 20) + 'deg');
-          piece.style.setProperty('--spin-z', (Math.random() * 60 - 30) + 'deg');
+          piece.style.setProperty("--spin-x", (Math.random() * 40 - 20) + "deg");
+          piece.style.setProperty("--spin-y", (Math.random() * 40 - 20) + "deg");
+          piece.style.setProperty("--spin-z", (Math.random() * 60 - 30) + "deg");
 
           return piece;
         };
@@ -1417,14 +1418,19 @@
 
         return new Promise((resolve) => {
           let done = false;
+          let resolved = false;
+          const resolveOnce = () => {
+            if (resolved) return;
+            resolved = true;
+            resolve();
+          };
           const finish = () => {
             if (done) return;
             done = true;
             layer.remove();
-            resolve();
+            resolveOnce();
           };
 
-          // Continue stroom, korter voor sneller lockscreen
           let elapsed = 0;
           const interval = setInterval(() => {
             elapsed += CONFETTI_BATCH_INTERVAL_MS;
@@ -1432,8 +1438,11 @@
 
             if (elapsed >= CONFETTI_STREAM_MS) {
               clearInterval(interval);
-              const waitMs = Math.max(0, latestEndAt - performance.now()) + FINISH_BUFFER_MS;
-              setTimeout(finish, waitMs);
+              const remainingMs = Math.max(0, latestEndAt - performance.now());
+              const finishWaitMs = remainingMs + FINISH_BUFFER_MS;
+              const lockWaitMs = Math.max(0, finishWaitMs - LOCKSCREEN_LEAD_MS);
+              setTimeout(resolveOnce, lockWaitMs);
+              setTimeout(finish, finishWaitMs);
             }
           }, CONFETTI_BATCH_INTERVAL_MS);
 
