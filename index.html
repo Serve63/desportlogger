@@ -284,10 +284,9 @@
       width: 44px;
       height: 44px;
       margin: -12px;
-      border-radius: 12px;
-      border: 1px solid transparent;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+      border: none;
+      background: transparent;
+      box-shadow: none;
       color: #eef0f3;
       display: inline-flex;
       align-items: center;
@@ -298,7 +297,8 @@
       -webkit-touch-callout: none;
       touch-action: none;
       padding: 0;
-      transition: transform 0.12s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+      transition: transform 0.12s ease, opacity 0.16s ease;
+      opacity: 0.88;
     }
 
     .drag-handle::before {
@@ -307,50 +307,51 @@
       width: 12px;
       height: 2px;
       border-radius: 2px;
-      background: rgba(196, 224, 255, 0.9);
-      box-shadow: 0 4px 0 rgba(196, 224, 255, 0.9), 0 8px 0 rgba(196, 224, 255, 0.9);
+      background: rgba(196, 224, 255, 0.86);
+      box-shadow: 0 4px 0 rgba(196, 224, 255, 0.86), 0 8px 0 rgba(196, 224, 255, 0.86);
       transform: translateY(-2px);
       filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
     }
 
     .drag-handle:hover,
     .drag-handle:focus-visible {
-      border-color: rgba(74, 163, 255, 0.55);
-      background: linear-gradient(180deg, rgba(74, 163, 255, 0.18), rgba(255, 255, 255, 0.04));
-      box-shadow: 0 8px 18px rgba(18, 39, 76, 0.35);
+      opacity: 1;
       outline: none;
     }
 
     .drag-handle:active {
       cursor: grabbing;
-      transform: scale(0.94);
+      transform: scale(0.9);
+      opacity: 1;
     }
 
     .row.is-dragging-floating {
       position: fixed;
       z-index: 1300;
       pointer-events: none;
-      opacity: 0.98;
-      background: rgba(47, 51, 56, 0.96);
-      border-radius: 14px;
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(74, 163, 255, 0.3);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      opacity: 0.97;
+      background: rgba(47, 51, 56, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(74, 163, 255, 0.25);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transform: translate3d(0, 0, 0);
+      will-change: top;
     }
 
     .row.reorder-placeholder {
-      display: block !important;
       min-height: 48px;
       border-radius: 12px;
-      border: 1px dashed rgba(74, 163, 255, 0.48);
-      background: linear-gradient(180deg, rgba(74, 163, 255, 0.12), rgba(74, 163, 255, 0.04));
-      box-shadow: inset 0 0 0 1px rgba(74, 163, 255, 0.15);
+      border: 1px dashed rgba(74, 163, 255, 0.4);
+      background: rgba(74, 163, 255, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(74, 163, 255, 0.12);
+      pointer-events: none;
     }
 
     .row.reorder-drop-target {
-      box-shadow: 0 0 0 1px rgba(74, 163, 255, 0.26);
+      box-shadow: 0 0 0 1px rgba(74, 163, 255, 0.22);
       border-radius: 12px;
-      transition: box-shadow 0.12s ease;
+      transition: box-shadow 0.1s ease;
     }
 
     body.is-dragging-active {
@@ -2961,10 +2962,19 @@
 
         let dragState = null;
         let rafId = null;
+        let autoScrollRafId = null;
         let latestClientY = 0;
+        let activeDropTarget = null;
 
-        const clearDropTargets = () => {
-          grid.querySelectorAll(".row.reorder-drop-target").forEach((row) => row.classList.remove("reorder-drop-target"));
+        const setDropTarget = (row) => {
+          if (activeDropTarget === row) return;
+          if (activeDropTarget) {
+            activeDropTarget.classList.remove("reorder-drop-target");
+          }
+          activeDropTarget = row || null;
+          if (activeDropTarget) {
+            activeDropTarget.classList.add("reorder-drop-target");
+          }
         };
 
         const cleanupFloatingStyles = (row) => {
@@ -2974,47 +2984,78 @@
           row.style.width = "";
           row.style.height = "";
           row.style.margin = "";
+          row.style.willChange = "";
+          row.style.transform = "";
         };
 
-        const updateFloatingPosition = () => {
+        const applyFloatingPosition = () => {
           rafId = null;
           if (!dragState) return;
-          const deltaY = latestClientY - dragState.startClientY;
-          dragState.row.style.top = `${dragState.startTop + deltaY}px`;
+          const nextTop = latestClientY - dragState.pointerOffsetY;
+          dragState.row.style.top = `${nextTop}px`;
         };
 
         const scheduleFloatingPosition = (clientY) => {
           latestClientY = clientY;
           if (rafId !== null) return;
-          rafId = requestAnimationFrame(updateFloatingPosition);
+          rafId = requestAnimationFrame(applyFloatingPosition);
         };
 
-        const maybeAutoScroll = (clientY) => {
-          if (!sheet) return;
+        const scheduleAutoScroll = () => {
+          if (autoScrollRafId !== null) return;
+          autoScrollRafId = requestAnimationFrame(() => {
+            autoScrollRafId = null;
+            if (!dragState || !sheet) return;
+            const speed = dragState.autoScrollSpeed || 0;
+            if (!speed) return;
+
+            const prevScrollTop = sheet.scrollTop;
+            const maxScrollTop = Math.max(0, sheet.scrollHeight - sheet.clientHeight);
+            const nextScrollTop = Math.max(0, Math.min(maxScrollTop, prevScrollTop + speed));
+            if (nextScrollTop !== prevScrollTop) {
+              sheet.scrollTop = nextScrollTop;
+              movePlaceholder(latestClientY);
+              scheduleFloatingPosition(latestClientY);
+            }
+            if (dragState && dragState.autoScrollSpeed) {
+              scheduleAutoScroll();
+            }
+          });
+        };
+
+        const updateAutoScrollSpeed = (clientY) => {
+          if (!dragState || !sheet) return;
           const rect = sheet.getBoundingClientRect();
-          const edge = 64;
-          let delta = 0;
+          const edge = Math.min(92, rect.height * 0.24);
+          let speed = 0;
+
           if (clientY < rect.top + edge) {
-            delta = -Math.max(4, (rect.top + edge - clientY) / 6);
+            const t = Math.min(1, (rect.top + edge - clientY) / edge);
+            speed = -Math.max(2, t * t * 20);
           } else if (clientY > rect.bottom - edge) {
-            delta = Math.max(4, (clientY - (rect.bottom - edge)) / 6);
+            const t = Math.min(1, (clientY - (rect.bottom - edge)) / edge);
+            speed = Math.max(2, t * t * 20);
           }
-          if (delta !== 0) {
-            sheet.scrollBy({ top: delta, behavior: "auto" });
+
+          dragState.autoScrollSpeed = speed;
+          if (speed !== 0) {
+            scheduleAutoScroll();
           }
         };
 
         const movePlaceholder = (clientY) => {
           if (!dragState) return;
+
           const rows = getCurrentRows().filter((row) => row !== dragState.row && row !== dragState.placeholder);
-          clearDropTargets();
+          const dragTop = clientY - dragState.pointerOffsetY;
+          const probeY = dragTop + dragState.rowHeight * 0.5;
 
           let inserted = false;
           for (const row of rows) {
             const rect = row.getBoundingClientRect();
-            if (clientY < rect.top + rect.height / 2) {
+            if (probeY < rect.top + rect.height * 0.5) {
               row.before(dragState.placeholder);
-              row.classList.add("reorder-drop-target");
+              setDropTarget(row);
               inserted = true;
               break;
             }
@@ -3022,8 +3063,9 @@
 
           if (!inserted) {
             if (rows.length) {
-              rows[rows.length - 1].after(dragState.placeholder);
-              rows[rows.length - 1].classList.add("reorder-drop-target");
+              const lastRow = rows[rows.length - 1];
+              lastRow.after(dragState.placeholder);
+              setDropTarget(lastRow);
             } else {
               const header = grid.querySelector(".header-row");
               if (header) {
@@ -3031,6 +3073,7 @@
               } else {
                 grid.appendChild(dragState.placeholder);
               }
+              setDropTarget(null);
             }
           }
         };
@@ -3047,19 +3090,29 @@
             cancelAnimationFrame(rafId);
             rafId = null;
           }
+          if (autoScrollRafId !== null) {
+            cancelAnimationFrame(autoScrollRafId);
+            autoScrollRafId = null;
+          }
 
           const { row, placeholder, pointerId, startIndex } = dragState;
           dragState = null;
 
-          clearDropTargets();
+          setDropTarget(null);
           document.body.classList.remove("is-dragging-active");
 
           const activeHandle = row.querySelector(".drag-handle");
           if (activeHandle && activeHandle.hasPointerCapture(pointerId)) {
-            activeHandle.releasePointerCapture(pointerId);
+            try {
+              activeHandle.releasePointerCapture(pointerId);
+            } catch (error) {
+              // ignore
+            }
           }
 
-          placeholder.replaceWith(row);
+          if (placeholder.parentNode) {
+            placeholder.replaceWith(row);
+          }
           cleanupFloatingStyles(row);
           updateDynamicLayout();
 
@@ -3072,14 +3125,17 @@
         const onPointerMove = (event) => {
           if (!dragState || event.pointerId !== dragState.pointerId) return;
           if (event.cancelable) event.preventDefault();
+
           scheduleFloatingPosition(event.clientY);
           movePlaceholder(event.clientY);
-          maybeAutoScroll(event.clientY);
+          updateAutoScrollSpeed(event.clientY);
         };
 
         grid.addEventListener("pointerdown", (event) => {
           if (!hasDataLoaded) return;
+          if (dragState) return;
           if (event.button !== undefined && event.button !== 0) return;
+
           const handle = event.target.closest(".drag-handle");
           if (!handle) return;
           const row = handle.closest(".row");
@@ -3088,8 +3144,7 @@
           const rect = row.getBoundingClientRect();
           const placeholder = document.createElement("div");
           placeholder.className = "row reorder-placeholder";
-          placeholder.style.height = `${rect.height}px`;
-
+          placeholder.style.height = `${Math.max(40, Math.round(rect.height))}px`;
           row.after(placeholder);
 
           row.classList.add("is-dragging-floating");
@@ -3098,6 +3153,7 @@
           row.style.width = `${rect.width}px`;
           row.style.height = `${rect.height}px`;
           row.style.margin = "0";
+          row.style.willChange = "top";
 
           document.body.classList.add("is-dragging-active");
 
@@ -3105,13 +3161,21 @@
             row,
             placeholder,
             pointerId: event.pointerId,
-            startClientY: event.clientY,
-            startTop: rect.top,
             startIndex: getCurrentRows().indexOf(row),
+            rowHeight: rect.height,
+            pointerOffsetY: Math.max(0, Math.min(rect.height, event.clientY - rect.top)),
+            autoScrollSpeed: 0,
           };
 
-          handle.setPointerCapture(event.pointerId);
           latestClientY = event.clientY;
+          movePlaceholder(event.clientY);
+          scheduleFloatingPosition(event.clientY);
+
+          try {
+            handle.setPointerCapture(event.pointerId);
+          } catch (error) {
+            // ignore
+          }
 
           window.addEventListener("pointermove", onPointerMove, { passive: false });
           window.addEventListener("pointerup", stopDrag);
