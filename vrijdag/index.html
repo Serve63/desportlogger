@@ -1348,6 +1348,29 @@
           event.preventDefault();
         };
 
+        const clearSelection = () => {
+          const selection = window.getSelection && window.getSelection();
+          if (selection && selection.rangeCount) {
+            selection.removeAllRanges();
+          }
+        };
+
+        const collapseInputSelection = (target) => {
+          if (!target || (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA")) return;
+          try {
+            const valueLength = typeof target.value === "string" ? target.value.length : 0;
+            const caret = typeof target.selectionEnd === "number" ? target.selectionEnd : valueLength;
+            target.setSelectionRange(caret, caret);
+          } catch (error) {
+            // ignore
+          }
+        };
+
+        const findEditableTarget = (target) => {
+          if (!target || typeof target.closest !== "function") return null;
+          return target.closest("input, textarea, [contenteditable='true']");
+        };
+
         document.addEventListener("selectstart", prevent, true);
         document.addEventListener("copy", prevent, true);
         document.addEventListener("cut", prevent, true);
@@ -1381,6 +1404,52 @@
           },
           true
         );
+
+        document.addEventListener(
+          "selectionchange",
+          () => {
+            clearSelection();
+            collapseInputSelection(document.activeElement);
+          },
+          true
+        );
+
+        document.addEventListener(
+          "focusin",
+          (event) => {
+            collapseInputSelection(event.target);
+          },
+          true
+        );
+
+        let longPressBlockTimer = null;
+        const clearLongPressBlockTimer = () => {
+          if (!longPressBlockTimer) return;
+          clearTimeout(longPressBlockTimer);
+          longPressBlockTimer = null;
+        };
+
+        document.addEventListener(
+          "touchstart",
+          (event) => {
+            clearLongPressBlockTimer();
+            const editableTarget = findEditableTarget(event.target);
+            if (!editableTarget) return;
+
+            longPressBlockTimer = setTimeout(() => {
+              clearSelection();
+              collapseInputSelection(editableTarget);
+              if (typeof editableTarget.blur === "function") {
+                editableTarget.blur();
+              }
+            }, 240);
+          },
+          { capture: true, passive: true }
+        );
+
+        document.addEventListener("touchmove", clearLongPressBlockTimer, { capture: true, passive: true });
+        document.addEventListener("touchend", clearLongPressBlockTimer, { capture: true, passive: true });
+        document.addEventListener("touchcancel", clearLongPressBlockTimer, { capture: true, passive: true });
       };
 
       blockSelectionAndClipboard();
