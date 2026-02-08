@@ -2047,15 +2047,42 @@ transform: translateY(-2px);
                 }, 100);
                 // Toggle functie
                 let lastToggleAt = 0;
-                const triggerCompletionHaptic = () => {
-                  try {
-                    if (typeof navigator.vibrate === "function") {
-                      navigator.vibrate([14, 22, 24]);
+                const triggerCompletionHaptic = (() => {
+                  let iosHapticSwitch = null;
+
+                  const ensureIosHapticSwitch = () => {
+                    if (iosHapticSwitch && document.body.contains(iosHapticSwitch)) return iosHapticSwitch;
+                    const el = document.createElement("input");
+                    el.type = "checkbox";
+                    el.setAttribute("switch", "");
+                    el.setAttribute("aria-hidden", "true");
+                    el.tabIndex = -1;
+                    el.style.position = "fixed";
+                    el.style.left = "-9999px";
+                    el.style.top = "-9999px";
+                    el.style.opacity = "0";
+                    el.style.pointerEvents = "none";
+                    document.body.appendChild(el);
+                    iosHapticSwitch = el;
+                    return iosHapticSwitch;
+                  };
+
+                  return () => {
+                    try {
+                      if (typeof navigator.vibrate === "function") {
+                        const didVibrate = navigator.vibrate([14, 22, 24]);
+                        if (didVibrate) return;
+                      }
+
+                      // iOS fallback: probeer haptic via hidden switch-toggle binnen user gesture
+                      const toggle = ensureIosHapticSwitch();
+                      toggle.click();
+                    } catch (error) {
+                      // no-op
                     }
-                  } catch (error) {
-                    // no-op
-                  }
-                };
+                  };
+                })();
+
                 const toggleSession = async (e) => {
                   if (e && e.cancelable) e.preventDefault();
                   if (e) e.stopPropagation();
