@@ -350,6 +350,13 @@
       will-change: top;
     }
 
+    .row.is-longpress-armed .exercise-name,
+    .row.is-longpress-armed .exercise-note,
+    .row.is-longpress-armed .mini-field {
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+
     .row.reorder-placeholder {
       min-height: 48px;
       border-radius: 12px;
@@ -2922,9 +2929,10 @@
         let longPressTriggered = false;
         let pendingLongPressRow = null;
         let suppressRowTapUntil = 0;
+        let activeLongPressRow = null;
 
         const MODAL_ACTION_GUARD_MS = 430;
-        const LONG_PRESS_DURATION = 460;
+        const LONG_PRESS_DURATION = 380;
         const LONG_PRESS_MOVE_TOLERANCE = 10;
 
         if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
@@ -2948,6 +2956,12 @@
             if (isModalActionGuardActive()) return;
             setActionButtonsEnabled(true);
           }, durationMs + 24);
+        };
+
+        const clearLongPressArmedRow = () => {
+          if (!activeLongPressRow) return;
+          activeLongPressRow.classList.remove("is-longpress-armed");
+          activeLongPressRow = null;
         };
 
         const clearTouchTimer = () => {
@@ -3031,6 +3045,9 @@
           };
 
           clearTouchTimer();
+          clearLongPressArmedRow();
+          activeLongPressRow = row;
+          row.classList.add("is-longpress-armed");
           touchTimer = setTimeout(() => {
             longPressTriggered = true;
             pendingLongPressRow = row;
@@ -3047,6 +3064,7 @@
           if (!touchTimer) return;
           if (!touchStartPoint || !event.touches || !event.touches[0]) {
             clearTouchTimer();
+            clearLongPressArmedRow();
             return;
           }
 
@@ -3054,11 +3072,13 @@
           const dy = Math.abs(event.touches[0].clientY - touchStartPoint.y);
           if (dx > LONG_PRESS_MOVE_TOLERANCE || dy > LONG_PRESS_MOVE_TOLERANCE) {
             clearTouchTimer();
+            clearLongPressArmedRow();
           }
         };
 
         const handleTouchEnd = (event) => {
           clearTouchTimer();
+          clearLongPressArmedRow();
           touchStartPoint = null;
 
           if (longPressTriggered && pendingLongPressRow) {
