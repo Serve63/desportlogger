@@ -1907,10 +1907,21 @@ transform: translateY(-2px);
                   }
                   return error;
                 };
+                const hasLocalSessionComplete = () => {
+                  const localValue = localStorage.getItem(storageKey);
+                  const cookieValue = getCookie(storageKey);
+                  const localCompleteValue = localStorage.getItem(sessionCompleteKey);
+                  return localCompleteValue === "1" || localValue === "1" || cookieValue === "1";
+                };
                 // Herstel status bij laden
                 const restoreStatus = async () => {
                   let isComplete = false;
                   const countIncrementedKey = `session-count-incremented-${todayStr}`;
+                  if (hasLocalSessionComplete()) {
+                    isComplete = true;
+                    sessionCheckButton.classList.add("is-complete");
+                    setSessionLocked(true);
+                  }
                   try {
                     const { data, error } = await fetchSessionStatus();
                     if (!error && data) {
@@ -1930,24 +1941,18 @@ transform: translateY(-2px);
                         localStorage.removeItem(countIncrementedKey);
                       }
                     } else if (!error) {
-                      const localValue = localStorage.getItem(storageKey);
-                      const cookieValue = getCookie(storageKey);
-                      if (localValue === "1" || cookieValue === "1") {
+                      if (hasLocalSessionComplete()) {
                         isComplete = true;
                         await saveSessionStatus(true);
                       }
                     } else {
-                      const localValue = localStorage.getItem(storageKey);
-                      const cookieValue = getCookie(storageKey);
-                      if (localValue === "1" || cookieValue === "1") {
+                      if (hasLocalSessionComplete()) {
                         isComplete = true;
                       }
                     }
                   } catch (e) {
                     console.error("Error checking session status:", e);
-                    const localValue = localStorage.getItem(storageKey);
-                    const cookieValue = getCookie(storageKey);
-                    if (localValue === "1" || cookieValue === "1") {
+                    if (hasLocalSessionComplete()) {
                       isComplete = true;
                     }
                   }
@@ -1971,6 +1976,11 @@ transform: translateY(-2px);
                   }
                   setSessionLocked(isComplete);
                 };
+                if (hasLocalSessionComplete()) {
+                  sessionCheckButton.classList.add("is-complete");
+                  setSessionLocked(true);
+                }
+
                 // Wacht even zodat Supabase is geïnitialiseerd
                 setTimeout(() => {
                   restoreStatus();
