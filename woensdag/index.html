@@ -611,14 +611,16 @@ transform: translateY(-2px);
     }
 
     .session-check-button.is-complete::after {
-      content: "\2713";
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 700;
-      color: #eaffef;
+      content: "";
+      display: block;
+      width: 13px;
+      height: 8px;
+      border-left: 2.5px solid #f3fff7;
+      border-bottom: 2.5px solid #f3fff7;
+      transform: translateY(-1px) rotate(-45deg);
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
     }
+
 
     html.not-today .session-check-button,
     body.not-today .session-check-button {
