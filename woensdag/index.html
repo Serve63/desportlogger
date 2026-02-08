@@ -212,44 +212,101 @@
       cursor: pointer;
     }
 
-
     .header-main {
       width: min(980px, 100%);
+      margin: 0 auto;
       position: relative;
-      padding-right: 44px;
     }
 
     .exercise-actions-trigger {
-      position: absolute;
-      top: 70px;
-      right: 0;
-      width: 36px;
-      height: 36px;
-      border: 1px solid rgba(185, 188, 195, 0.55);
-      border-radius: 10px;
-      background: rgba(47, 51, 56, 0.9);
-      color: #f1f2f4;
-      font-size: 1.25rem;
+      position: fixed;
+      top: calc(env(safe-area-inset-top) + 12px);
+      right: calc(env(safe-area-inset-right) + 12px);
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(144, 198, 255, 0.45);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(173, 220, 255, 0.28), transparent 52%),
+        linear-gradient(155deg, rgba(40, 52, 66, 0.96), rgba(27, 33, 42, 0.96));
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(74, 163, 255, 0.18);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color: transparent;
+      font-size: 0;
       line-height: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: transform 0.14s ease, background-color 0.16s ease, border-color 0.16s ease;
+      transition: transform 0.14s ease, border-color 0.16s ease, box-shadow 0.16s ease;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      z-index: 1500;
+    }
+
+    .exercise-actions-trigger::before,
+    .exercise-actions-trigger::after {
+      content: "";
+      position: absolute;
+      width: 16px;
+      height: 2px;
+      border-radius: 2px;
+      background: rgba(236, 244, 252, 0.98);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
+    .exercise-actions-trigger::after {
+      transform: rotate(90deg);
     }
 
     .exercise-actions-trigger:hover,
     .exercise-actions-trigger:focus-visible {
-      background: rgba(59, 63, 69, 0.95);
-      border-color: rgba(74, 163, 255, 0.65);
+      border-color: rgba(120, 197, 255, 0.82);
+      box-shadow: 0 14px 26px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(74, 163, 255, 0.34);
       outline: none;
     }
 
     .exercise-actions-trigger:active {
       transform: scale(0.94);
     }
+
+    .delete-selection-hint {
+      position: fixed;
+      top: calc(env(safe-area-inset-top) + 64px);
+      right: calc(env(safe-area-inset-right) + 12px);
+      left: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(130, 198, 255, 0.45);
+      background: rgba(24, 30, 38, 0.94);
+      color: #e8eef5;
+      font-size: 0.76rem;
+      letter-spacing: 0.01em;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 0.14s ease, transform 0.14s ease;
+      z-index: 1490;
+    }
+
+    .delete-selection-hint.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    body.is-delete-selection-armed .row {
+      cursor: pointer;
+    }
+
+    body.is-delete-selection-armed .row:not(.is-dragging-floating):hover {
+      box-shadow: 0 0 0 1px rgba(74, 163, 255, 0.45);
+      border-radius: 12px;
+    }
+
 
     .grid {
       display: flex;
@@ -2940,18 +2997,47 @@
         const addExerciseBtn = document.querySelector(".add-exercise");
         const deleteExerciseBtn = document.querySelector(".delete-exercise");
         const exerciseActionTrigger = document.querySelector(".exercise-actions-trigger");
+        const grid = document.querySelector(".grid");
         let selectedRow = null;
-        let modalActionGuardUntil = 0;
-        let modalActionGuardTimer = null;
+        let deleteSelectionArmed = false;
+        let deleteSelectionHint = null;
 
-        if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
+        if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn || !grid) return;
 
-        const setActionButtonsEnabled = (enabled) => {
-          addExerciseBtn.disabled = !enabled;
-          deleteExerciseBtn.disabled = !enabled;
+        const ensureDeleteSelectionHint = () => {
+          if (deleteSelectionHint && deleteSelectionHint.isConnected) return deleteSelectionHint;
+          const hint = document.createElement("div");
+          hint.className = "delete-selection-hint";
+          hint.setAttribute("aria-live", "polite");
+          document.body.appendChild(hint);
+          deleteSelectionHint = hint;
+          return hint;
         };
 
-        const isModalActionGuardActive = () => performance.now() < modalActionGuardUntil;
+        const setDeleteSelectionArmed = (armed, message = "") => {
+          deleteSelectionArmed = armed;
+          document.body.classList.toggle("is-delete-selection-armed", armed);
+          const hint = ensureDeleteSelectionHint();
+          if (!armed) {
+            hint.classList.remove("is-visible");
+            hint.textContent = "";
+            return;
+          }
+          hint.textContent = message || "Kies een dag en tik daarna de oefening die je wilt verwijderen.";
+          hint.classList.add("is-visible");
+        };
+
+        const openDayModalPanel = () => {
+          if (!dayModal) return;
+          dayModal.classList.add("is-open");
+          dayModal.setAttribute("aria-hidden", "false");
+        };
+
+        const closeDayModalPanel = () => {
+          if (!dayModal) return;
+          dayModal.classList.remove("is-open");
+          dayModal.setAttribute("aria-hidden", "true");
+        };
 
         const resolveContextRow = () => {
           const active = document.activeElement;
@@ -2963,43 +3049,46 @@
 
         const openModal = (row) => {
           selectedRow = row || resolveContextRow();
+          setDeleteSelectionArmed(false);
+          closeDayModalPanel();
           exerciseModal.classList.add("is-open");
           exerciseModal.setAttribute("aria-hidden", "false");
-          modalActionGuardUntil = 0;
-          setActionButtonsEnabled(true);
         };
 
         const closeModal = () => {
           exerciseModal.classList.remove("is-open");
           exerciseModal.setAttribute("aria-hidden", "true");
           selectedRow = null;
-          modalActionGuardUntil = 0;
-          if (modalActionGuardTimer) {
-            clearTimeout(modalActionGuardTimer);
-            modalActionGuardTimer = null;
-          }
-          setActionButtonsEnabled(true);
         };
 
-        const preventGuardedAction = (event) => {
-          if (!isModalActionGuardActive()) return;
-          event.preventDefault();
-          event.stopPropagation();
-        };
+        const deleteSelectedRow = async (row) => {
+          if (!row || !row.parentNode) return;
 
-        addExerciseBtn.addEventListener("pointerdown", preventGuardedAction);
-        deleteExerciseBtn.addEventListener("pointerdown", preventGuardedAction);
-        addExerciseBtn.addEventListener("touchstart", preventGuardedAction, { passive: false });
-        deleteExerciseBtn.addEventListener("touchstart", preventGuardedAction, { passive: false });
-        addExerciseBtn.addEventListener("click", preventGuardedAction, true);
-        deleteExerciseBtn.addEventListener("click", preventGuardedAction, true);
+          const nameInput = row.querySelector(".exercise-name");
+          const rawName = nameInput ? String(nameInput.value || "").trim() : "";
+          const namePart = rawName || "deze oefening";
+          const dayLabel = day || getDayName();
+
+          const confirmed = window.confirm("Weet je zeker dat je " + namePart + " op " + dayLabel + " wilt verwijderen?");
+          if (!confirmed) return;
+
+          row.remove();
+          await reindexAndSaveAllRows();
+          setDeleteSelectionArmed(false);
+        };
 
         exerciseModal.addEventListener("click", (event) => {
           if (event.target === exerciseModal) closeModal();
         });
+
         document.addEventListener("keydown", (event) => {
-          if (event.key === "Escape" && exerciseModal.classList.contains("is-open")) {
+          if (event.key !== "Escape") return;
+          if (exerciseModal.classList.contains("is-open")) {
             closeModal();
+            return;
+          }
+          if (deleteSelectionArmed) {
+            setDeleteSelectionArmed(false);
           }
         });
 
@@ -3010,59 +3099,62 @@
           });
         }
 
+        if (!grid.dataset.deleteSelectionAttached) {
+          grid.dataset.deleteSelectionAttached = "1";
+
+          grid.addEventListener(
+            "pointerdown",
+            (event) => {
+              if (!deleteSelectionArmed) return;
+              const row = event.target && event.target.closest ? event.target.closest(".row") : null;
+              if (!row) return;
+              if (event.cancelable) event.preventDefault();
+            },
+            true
+          );
+
+          grid.addEventListener(
+            "click",
+            async (event) => {
+              if (!deleteSelectionArmed) return;
+              const row = event.target && event.target.closest ? event.target.closest(".row") : null;
+              if (!row) return;
+
+              event.preventDefault();
+              event.stopPropagation();
+              await deleteSelectedRow(row);
+            },
+            true
+          );
+        }
+
         attachTouchListeners = () => {};
 
-
-        // Functie om oefening te verwijderen
-        deleteExerciseBtn.addEventListener("click", async () => {
-          if (isModalActionGuardActive()) return;
-          const rowToDelete = selectedRow || resolveContextRow();
-          if (!rowToDelete) {
-            closeModal();
-            return;
-          }
-
-          selectedRow = rowToDelete;
-          const confirmed = window.confirm("Weet je zeker dat je deze oefening wilt verwijderen?");
-          if (!confirmed) return;
-
-          debugLog("Verwijderen oefening...");
-          rowToDelete.remove();
+        deleteExerciseBtn.addEventListener("click", () => {
           closeModal();
-
-          debugLog("Herindexeren en opslaan...");
-          await reindexAndSaveAllRows();
-          debugLog("Oefening verwijderd en opgeslagen");
+          setDeleteSelectionArmed(true, "Kies een dag en tik daarna de oefening die je wilt verwijderen.");
+          openDayModalPanel();
         });
 
-        // Functie om nieuwe oefening toe te voegen
         addExerciseBtn.addEventListener("click", async () => {
-          if (isModalActionGuardActive()) return;
           const grid = document.querySelector(".grid");
           if (!grid) return;
 
-          // Bepaal het volgende nummer voor de nieuwe oefening
           const existingRows = getCurrentRows();
           const nextIndex = Math.max(1, existingRows.length);
-
-          // Maak nieuwe row
           const newRow = buildRow(nextIndex);
 
-          // Voeg toe boven de ingehouden (geselecteerde) row
           const inserted = insertRowBeforeSelected(newRow, selectedRow);
           if (!inserted) {
             insertRowBeforeLast(newRow);
           }
 
-          // Initialiseer de nieuwe row
           initRow(newRow);
 
-          // Herindexeer en sla alles op zodat indices blijven kloppen
           debugLog("Herindexeren en opslaan...");
           await reindexAndSaveAllRows();
           debugLog("Nieuwe oefening toegevoegd en opgeslagen");
 
-          // Focus op het naam veld
           const nameInput = newRow.querySelector(".exercise-name");
           if (nameInput) {
             setTimeout(() => nameInput.focus(), 100);
@@ -3074,6 +3166,7 @@
 
       // Initialiseer exercise context menu
       setupExerciseContextMenu();
+
 
             const setupRowReorder = () => {
         const grid = document.querySelector(".grid");
