@@ -1817,6 +1817,11 @@ transform: translateY(-2px);
                       <div class="session-lock-chip">Voltooid</div>
                     </div>
                   `;
+                  overlay.addEventListener("click", (event) => {
+                    if (event.target !== overlay) return;
+                    overlay.style.display = "none";
+                    overlay.setAttribute("aria-hidden", "true");
+                  });
                   document.body.appendChild(overlay);
                   return overlay;
                 };
