@@ -37,6 +37,7 @@
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html {
@@ -355,6 +356,8 @@
     .row.is-longpress-armed .mini-field {
       -webkit-user-select: none !important;
       user-select: none !important;
+      -webkit-touch-callout: none !important;
+      caret-color: transparent !important;
     }
 
     .exercise-cell .exercise-name,
@@ -1377,8 +1380,14 @@
           event.preventDefault();
         };
 
+        const isExerciseField = (target) => {
+          if (!target || typeof target.closest !== "function") return false;
+          return Boolean(target.closest(".exercise-name, .exercise-note, .mini-field"));
+        };
+
         const isEditableTarget = (target) => {
           if (!target || typeof target.closest !== "function") return false;
+          if (isExerciseField(target)) return false;
           return Boolean(target.closest("input, textarea, [contenteditable='true']"));
         };
 
@@ -3083,11 +3092,6 @@
             clearLongPressArmedRow();
             clearNativeSelection();
             openModal(row, { fromLongPress: true });
-            try {
-              if (navigator.vibrate) navigator.vibrate(10);
-            } catch (error) {
-              // ignore
-            }
           }, LONG_PRESS_DURATION);
         };
 
