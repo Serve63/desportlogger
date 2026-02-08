@@ -1261,6 +1261,45 @@ transform: translateY(-2px);
       };
       document.querySelectorAll(".mini-field").forEach(cursorToEnd);
 
+      // Best effort: blokkeer iOS undo/redo acties (incl. shake-to-undo)
+      const blockSystemUndoActions = () => {
+        document.addEventListener("beforeinput", (event) => {
+          if (event.inputType === "historyUndo" || event.inputType === "historyRedo") {
+            event.preventDefault();
+          }
+        }, true);
+
+        document.addEventListener("keydown", (event) => {
+          const key = (event.key || "").toLowerCase();
+          if ((event.metaKey || event.ctrlKey) && (key === "z" || key === "y")) {
+            event.preventDefault();
+          }
+        }, true);
+
+        let lastShakeBlurAt = 0;
+        const blurActiveField = () => {
+          const active = document.activeElement;
+          if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+            active.blur();
+          }
+        };
+
+        const handleMotion = (event) => {
+          const acc = event.accelerationIncludingGravity;
+          if (!acc) return;
+          const magnitude = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
+          if (magnitude < 42) return;
+          const now = Date.now();
+          if (now - lastShakeBlurAt < 900) return;
+          lastShakeBlurAt = now;
+          blurActiveField();
+        };
+
+        window.addEventListener("devicemotion", handleMotion);
+      };
+
+      blockSystemUndoActions();
+
       const autoResizeNote = (note) => {
         if (!note || note.tagName !== "TEXTAREA") return;
         note.style.height = "auto";
