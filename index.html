@@ -34,6 +34,9 @@
 
     * {
       box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
     }
 
     html {
@@ -125,8 +128,9 @@
 
     input,
     textarea {
-      -webkit-user-select: text;
-      user-select: text;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
     }
 
     
@@ -1344,6 +1348,48 @@
       };
 
       blockSystemUndoActions();
+
+      const blockSelectionAndClipboard = () => {
+        const prevent = (event) => {
+          event.preventDefault();
+        };
+
+        document.addEventListener("selectstart", prevent, true);
+        document.addEventListener("copy", prevent, true);
+        document.addEventListener("cut", prevent, true);
+        document.addEventListener("contextmenu", prevent, true);
+        document.addEventListener("dragstart", prevent, true);
+
+        document.addEventListener(
+          "beforeinput",
+          (event) => {
+            if (
+              event.inputType === "insertFromPaste" ||
+              event.inputType === "insertFromDrop" ||
+              event.inputType === "insertFromYank"
+            ) {
+              event.preventDefault();
+            }
+          },
+          true
+        );
+
+        document.addEventListener(
+          "keydown",
+          (event) => {
+            const key = (event.key || "").toLowerCase();
+            if ((event.metaKey || event.ctrlKey) && (key === "a" || key === "c" || key === "x" || key === "v" || key === "insert")) {
+              event.preventDefault();
+            }
+            if (event.shiftKey && key === "insert") {
+              event.preventDefault();
+            }
+          },
+          true
+        );
+      };
+
+      blockSelectionAndClipboard();
 
       const autoResizeNote = (note) => {
         if (!note || note.tagName !== "TEXTAREA") return;
