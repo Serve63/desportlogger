@@ -2802,9 +2802,9 @@
         const addExerciseBtn = document.querySelector(".add-exercise");
         const deleteExerciseBtn = document.querySelector(".delete-exercise");
         let selectedRow = null;
-        let modalActionUnlockTimer = null;
-        let modalAwaitingRelease = false;
-        let modalActionsLockedUntil = 0;
+        let modalActionsUnlockAt = 0;
+        let modalUnlockToken = 0;
+        let modalReleaseCleanup = null;
 
         if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
 
@@ -2815,41 +2815,48 @@
           deleteExerciseBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
         };
 
-        const lockModalActionsForLongPress = () => {
-          modalAwaitingRelease = true;
-          modalActionsLockedUntil = Date.now() + 650;
-          setModalActionsEnabled(false);
-          if (modalActionUnlockTimer) {
-            clearTimeout(modalActionUnlockTimer);
-          }
-          // Failsafe: nooit permanent locken als release-events niet doorkomen.
-          modalActionUnlockTimer = setTimeout(() => {
-            modalAwaitingRelease = false;
-            modalActionsLockedUntil = 0;
-            setModalActionsEnabled(true);
-            modalActionUnlockTimer = null;
-          }, 1100);
+        const clearModalReleaseUnlockListeners = () => {
+          if (typeof modalReleaseCleanup !== "function") return;
+          modalReleaseCleanup();
+          modalReleaseCleanup = null;
         };
 
-        const maybeUnlockModalActionsOnRelease = () => {
-          if (!exerciseModal.classList.contains("is-open")) return;
-          if (!modalAwaitingRelease) return;
+        const armModalActionsAfterRelease = () => {
+          modalUnlockToken += 1;
+          const token = modalUnlockToken;
+          let released = false;
+          const releaseEvents = ["touchend", "touchcancel", "pointerup", "pointercancel"];
 
-          modalAwaitingRelease = false;
-          modalActionsLockedUntil = Date.now() + 120;
-          if (modalActionUnlockTimer) {
-            clearTimeout(modalActionUnlockTimer);
-          }
-          modalActionUnlockTimer = setTimeout(() => {
-            modalActionsLockedUntil = 0;
-            setModalActionsEnabled(true);
-            modalActionUnlockTimer = null;
-          }, 120);
+          setModalActionsEnabled(false);
+          modalActionsUnlockAt = Date.now() + 900;
+          clearModalReleaseUnlockListeners();
+
+          const finishRelease = () => {
+            if (released) return;
+            released = true;
+            clearModalReleaseUnlockListeners();
+            setTimeout(() => {
+              if (token !== modalUnlockToken) return;
+              modalActionsUnlockAt = Date.now() + 120;
+              setModalActionsEnabled(true);
+            }, 80);
+          };
+
+          releaseEvents.forEach((type) => {
+            window.addEventListener(type, finishRelease, { capture: true, passive: true });
+          });
+          modalReleaseCleanup = () => {
+            releaseEvents.forEach((type) => {
+              window.removeEventListener(type, finishRelease, true);
+            });
+          };
+
+          // Failsafe als release-event niet doorkomt.
+          setTimeout(finishRelease, 900);
         };
 
         const areModalActionsBlocked = () => {
-          if (modalAwaitingRelease) return true;
-          return Date.now() < modalActionsLockedUntil;
+          return addExerciseBtn.disabled || deleteExerciseBtn.disabled || Date.now() < modalActionsUnlockAt;
         };
 
         const openModal = (row, { fromLongPress = false } = {}) => {
@@ -2857,10 +2864,11 @@
           exerciseModal.classList.add("is-open");
           exerciseModal.setAttribute("aria-hidden", "false");
           if (fromLongPress) {
-            lockModalActionsForLongPress();
+            armModalActionsAfterRelease();
           } else {
-            modalAwaitingRelease = false;
-            modalActionsLockedUntil = 0;
+            modalUnlockToken += 1;
+            clearModalReleaseUnlockListeners();
+            modalActionsUnlockAt = 0;
             setModalActionsEnabled(true);
           }
         };
@@ -2869,14 +2877,22 @@
           exerciseModal.classList.remove("is-open");
           exerciseModal.setAttribute("aria-hidden", "true");
           selectedRow = null;
-          modalAwaitingRelease = false;
-          modalActionsLockedUntil = 0;
-          if (modalActionUnlockTimer) {
-            clearTimeout(modalActionUnlockTimer);
-            modalActionUnlockTimer = null;
-          }
+          modalUnlockToken += 1;
+          clearModalReleaseUnlockListeners();
+          modalActionsUnlockAt = 0;
           setModalActionsEnabled(true);
         };
+
+        const preventBlockedAction = (event) => {
+          if (!areModalActionsBlocked()) return;
+          event.preventDefault();
+          event.stopPropagation();
+        };
+
+        addExerciseBtn.addEventListener("touchstart", preventBlockedAction, { passive: false });
+        deleteExerciseBtn.addEventListener("touchstart", preventBlockedAction, { passive: false });
+        addExerciseBtn.addEventListener("pointerdown", preventBlockedAction);
+        deleteExerciseBtn.addEventListener("pointerdown", preventBlockedAction);
 
         exerciseModal.addEventListener("click", (event) => {
           if (event.target === exerciseModal) closeModal();
@@ -2886,10 +2902,6 @@
             closeModal();
           }
         });
-        window.addEventListener("touchend", maybeUnlockModalActionsOnRelease, { capture: true, passive: true });
-        window.addEventListener("touchcancel", maybeUnlockModalActionsOnRelease, { capture: true, passive: true });
-        window.addEventListener("pointerup", maybeUnlockModalActionsOnRelease, { capture: true, passive: true });
-        window.addEventListener("pointercancel", maybeUnlockModalActionsOnRelease, { capture: true, passive: true });
 
         // Touch long press detection
         let touchTimer = null;
