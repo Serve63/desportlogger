@@ -534,21 +534,40 @@
       background: linear-gradient(180deg, rgba(74, 163, 255, 0.18), rgba(255, 255, 255, 0.04));
     }
 
-
     .year-modal,
-    .day-modal {
+    .day-modal,
+    .exercise-modal {
       position: fixed;
       inset: 0;
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(10, 10, 12, 0.45);
-      z-index: 1000;
-      padding: 24px;
+      background: rgba(10, 10, 12, 0.38);
+      z-index: 2200;
+      padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+      isolation: isolate;
+      overflow: hidden;
+      backdrop-filter: blur(2px) saturate(90%);
+      -webkit-backdrop-filter: blur(2px) saturate(90%);
+    }
+
+    .year-modal::after,
+    .day-modal::after,
+    .exercise-modal::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: calc(120px + env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(21, 24, 29, 0) 0%, #15181d 100%);
+      pointer-events: none;
+      z-index: 0;
     }
 
     .year-modal.is-open,
-    .day-modal.is-open {
+    .day-modal.is-open,
+    .exercise-modal.is-open {
       display: flex;
     }
 
@@ -562,6 +581,7 @@
       border: 1px solid #b9bcc3;
       box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
       position: relative;
+      z-index: 1;
     }
 
     .year-modal__content h2,
@@ -618,21 +638,6 @@
       color: #4aa3ff;
     }
 
-    .exercise-modal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(10, 10, 12, 0.45);
-      z-index: 1000;
-      padding: 24px;
-    }
-
-    .exercise-modal.is-open {
-      display: flex;
-    }
-
     .exercise-modal__content {
       width: min(320px, 90%);
       background: #3b3f45;
@@ -642,6 +647,7 @@
       border: 1px solid #b9bcc3;
       box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
       position: relative;
+      z-index: 1;
     }
 
     .exercise-modal__content h2 {
