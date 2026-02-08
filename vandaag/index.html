@@ -2760,36 +2760,87 @@
 
         // Touch long press detection
         let touchTimer = null;
-        const LONG_PRESS_DURATION = 500; // 500ms
+        let touchStartPoint = null;
+        let longPressTriggered = false;
+        let suppressRowTapUntil = 0;
+        const LONG_PRESS_DURATION = 500;
+        const LONG_PRESS_MOVE_TOLERANCE = 10;
+
+        const clearTouchTimer = () => {
+          if (!touchTimer) return;
+          clearTimeout(touchTimer);
+          touchTimer = null;
+        };
+
+        const clearNativeSelection = () => {
+          const active = document.activeElement;
+          if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+            active.blur();
+          }
+          const selection = window.getSelection && window.getSelection();
+          if (selection && selection.rangeCount) {
+            selection.removeAllRanges();
+          }
+        };
 
         const handleTouchStart = (e, row) => {
           if (e.target && e.target.closest && e.target.closest(".drag-handle")) return;
+          longPressTriggered = false;
+          touchStartPoint = {
+            x: e.touches && e.touches[0] ? e.touches[0].clientX : 0,
+            y: e.touches && e.touches[0] ? e.touches[0].clientY : 0,
+          };
+          clearTouchTimer();
           touchTimer = setTimeout(() => {
-            e.preventDefault();
+            longPressTriggered = true;
+            suppressRowTapUntil = Date.now() + 700;
+            clearNativeSelection();
+            if (e.cancelable) e.preventDefault();
             openModal(row);
           }, LONG_PRESS_DURATION);
         };
 
-        const handleTouchEnd = () => {
-          if (touchTimer) {
-            clearTimeout(touchTimer);
-            touchTimer = null;
+        const handleTouchEnd = (e) => {
+          clearTouchTimer();
+          touchStartPoint = null;
+          if (longPressTriggered && e && e.cancelable) {
+            e.preventDefault();
+          }
+          longPressTriggered = false;
+        };
+
+        const handleTouchMove = (e) => {
+          if (!touchTimer) return;
+          if (!touchStartPoint || !e.touches || !e.touches[0]) {
+            clearTouchTimer();
+            return;
+          }
+          const dx = Math.abs(e.touches[0].clientX - touchStartPoint.x);
+          const dy = Math.abs(e.touches[0].clientY - touchStartPoint.y);
+          if (dx > LONG_PRESS_MOVE_TOLERANCE || dy > LONG_PRESS_MOVE_TOLERANCE) {
+            clearTouchTimer();
           }
         };
 
-        const handleTouchMove = () => {
-          if (touchTimer) {
-            clearTimeout(touchTimer);
-            touchTimer = null;
-          }
-        };
+        document.addEventListener(
+          "click",
+          (event) => {
+            if (Date.now() > suppressRowTapUntil) return;
+            const rowTarget = event.target && event.target.closest ? event.target.closest(".row") : null;
+            if (!rowTarget) return;
+            event.preventDefault();
+            event.stopPropagation();
+            clearNativeSelection();
+          },
+          true
+        );
 
         // Functie om touch listeners toe te voegen aan een row
         attachTouchListeners = (row) => {
           row.addEventListener("touchstart", (e) => handleTouchStart(e, row), { passive: false });
-          row.addEventListener("touchend", handleTouchEnd);
-          row.addEventListener("touchmove", handleTouchMove);
-          row.addEventListener("touchcancel", handleTouchEnd);
+          row.addEventListener("touchend", handleTouchEnd, { passive: false });
+          row.addEventListener("touchmove", handleTouchMove, { passive: true });
+          row.addEventListener("touchcancel", handleTouchEnd, { passive: false });
         };
 
         // Voeg touch event listeners toe aan alle rows
