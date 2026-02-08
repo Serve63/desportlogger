@@ -1356,6 +1356,14 @@
 
         const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
         let latestEndAt = performance.now();
+        const CONFETTI_STREAM_MS = 1400;
+        const CONFETTI_BATCH_INTERVAL_MS = 180;
+        const INITIAL_TROPHIES = 24;
+        const BATCH_TROPHIES = 4;
+        const MIN_FALL_SECONDS = 1.45;
+        const FALL_SPREAD_SECONDS = 1.15;
+        const MAX_START_DELAY_SECONDS = 0.18;
+        const FINISH_BUFFER_MS = 8;
 
         const createTrophy = () => {
           const piece = document.createElement("span");
@@ -1370,12 +1378,12 @@
           const size = 18 + Math.random() * 16;
           piece.style.fontSize = size + "px";
 
-          // Variabele valsnelheid (2.5s tot 5s)
-          const fallDuration = 2.5 + Math.random() * 2.5;
+          // Snellere valsnelheid zodat lockscreen eerder kan tonen
+          const fallDuration = MIN_FALL_SECONDS + Math.random() * FALL_SPREAD_SECONDS;
           piece.style.setProperty('--fall-duration', fallDuration + 's');
 
-          // Willekeurige delay voor spreiding
-          const delay = Math.random() * 0.8;
+          // Kortere startdelay
+          const delay = Math.random() * MAX_START_DELAY_SECONDS;
           piece.style.setProperty('--fall-delay', delay + 's');
 
           const endAt = performance.now() + (fallDuration + delay) * 1000;
@@ -1400,7 +1408,7 @@
         };
 
         // Initiële burst
-        createTrophyBatch(30);
+        createTrophyBatch(INITIAL_TROPHIES);
 
         return new Promise((resolve) => {
           let done = false;
@@ -1411,18 +1419,18 @@
             resolve();
           };
 
-          // Continue stroom voor 3 seconden
+          // Continue stroom, korter voor sneller lockscreen
           let elapsed = 0;
           const interval = setInterval(() => {
-            elapsed += 300;
-            createTrophyBatch(6);
+            elapsed += CONFETTI_BATCH_INTERVAL_MS;
+            createTrophyBatch(BATCH_TROPHIES);
 
-            if (elapsed >= 3000) {
+            if (elapsed >= CONFETTI_STREAM_MS) {
               clearInterval(interval);
-              const waitMs = Math.max(0, latestEndAt - performance.now()) + 40;
+              const waitMs = Math.max(0, latestEndAt - performance.now()) + FINISH_BUFFER_MS;
               setTimeout(finish, waitMs);
             }
-          }, 300);
+          }, CONFETTI_BATCH_INTERVAL_MS);
 
           // Veiligheidsnet
           setTimeout(finish, 12500);
@@ -1693,7 +1701,7 @@
                       z-index: 12000;
                       pointer-events: all;
                       opacity: 0;
-                      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                      transition: opacity 0.24s cubic-bezier(0.4, 0, 0.2, 1);
                     }
 
                     .session-lock-overlay.is-visible {
@@ -1744,8 +1752,8 @@
                       transform: scale(0.94) translateY(10px);
                       opacity: 0;
                       transition:
-                        transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
-                        opacity 0.45s ease;
+                        transform 0.34s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.26s ease;
                     }
 
                     .session-lock-overlay.is-visible .session-lock-card {
@@ -1939,9 +1947,7 @@
                   if (locked) {
                     overlay.style.display = "flex";
                     requestAnimationFrame(() => {
-                      requestAnimationFrame(() => {
-                        overlay.classList.add("is-visible");
-                      });
+                      overlay.classList.add("is-visible");
                     });
                     overlay.setAttribute("aria-hidden", "false");
                     if (document.activeElement instanceof HTMLElement) {
