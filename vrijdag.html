@@ -284,9 +284,10 @@
       width: 44px;
       height: 44px;
       margin: -12px;
-      border: none;
-      background: transparent;
-      box-shadow: none;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
       color: #eef0f3;
       display: inline-flex;
       align-items: center;
@@ -294,8 +295,10 @@
       cursor: grab;
       -webkit-user-select: none;
       user-select: none;
+      -webkit-touch-callout: none;
       touch-action: none;
       padding: 0;
+      transition: transform 0.12s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
     }
 
     .drag-handle::before {
@@ -303,24 +306,59 @@
       display: block;
       width: 12px;
       height: 2px;
-      background: rgba(74, 163, 255, 0.6);
-      box-shadow: 0 4px 0 rgba(74, 163, 255, 0.6), 0 8px 0 rgba(74, 163, 255, 0.6);
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
-transform: translateY(-2px);
-      border-radius: 1px;
+      border-radius: 2px;
+      background: rgba(196, 224, 255, 0.9);
+      box-shadow: 0 4px 0 rgba(196, 224, 255, 0.9), 0 8px 0 rgba(196, 224, 255, 0.9);
+      transform: translateY(-2px);
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
     }
 
-    .row.is-dragging {
-      opacity: 0.85;
-      background: rgba(47, 51, 56, 0.95);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-      position: relative;
-      z-index: 100;
+    .drag-handle:hover,
+    .drag-handle:focus-visible {
+      border-color: rgba(74, 163, 255, 0.55);
+      background: linear-gradient(180deg, rgba(74, 163, 255, 0.18), rgba(255, 255, 255, 0.04));
+      box-shadow: 0 8px 18px rgba(18, 39, 76, 0.35);
+      outline: none;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+      transform: scale(0.94);
+    }
+
+    .row.is-dragging-floating {
+      position: fixed;
+      z-index: 1300;
+      pointer-events: none;
+      opacity: 0.98;
+      background: rgba(47, 51, 56, 0.96);
+      border-radius: 14px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(74, 163, 255, 0.3);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .row.reorder-placeholder {
+      display: block !important;
+      min-height: 48px;
+      border-radius: 12px;
+      border: 1px dashed rgba(74, 163, 255, 0.48);
+      background: linear-gradient(180deg, rgba(74, 163, 255, 0.12), rgba(74, 163, 255, 0.04));
+      box-shadow: inset 0 0 0 1px rgba(74, 163, 255, 0.15);
+    }
+
+    .row.reorder-drop-target {
+      box-shadow: 0 0 0 1px rgba(74, 163, 255, 0.26);
+      border-radius: 12px;
+      transition: box-shadow 0.12s ease;
     }
 
     body.is-dragging-active {
       cursor: grabbing;
+      -webkit-user-select: none;
+      user-select: none;
     }
+
 
     .exercise-cell .exercise-name,
     .exercise-cell .exercise-note {
@@ -2817,58 +2855,171 @@ transform: translateY(-2px);
       // Initialiseer exercise context menu
       setupExerciseContextMenu();
 
-      const setupRowReorder = () => {
+            const setupRowReorder = () => {
         const grid = document.querySelector(".grid");
+        const sheet = document.querySelector(".sheet");
         if (!grid) return;
 
-        let draggingRow = null;
+        let dragState = null;
+        let rafId = null;
+        let latestClientY = 0;
 
-        const onPointerDown = (event) => {
-          if (!hasDataLoaded) return;
-          const handle = event.target.closest(".drag-handle");
-          if (!handle) return;
-          const row = handle.closest(".row");
-          if (!row) return;
-          event.preventDefault();
-          grid.setPointerCapture(event.pointerId);
-          draggingRow = row;
-          draggingRow.classList.add("is-dragging");
-          document.body.classList.add("is-dragging-active");
+        const clearDropTargets = () => {
+          grid.querySelectorAll(".row.reorder-drop-target").forEach((row) => row.classList.remove("reorder-drop-target"));
         };
 
-        const onPointerMove = (event) => {
-          if (!draggingRow) return;
-          if (event.cancelable) event.preventDefault();
-          const y = event.clientY;
-          const rows = getCurrentRows().filter((r) => r !== draggingRow);
+        const cleanupFloatingStyles = (row) => {
+          row.classList.remove("is-dragging-floating");
+          row.style.left = "";
+          row.style.top = "";
+          row.style.width = "";
+          row.style.height = "";
+          row.style.margin = "";
+        };
+
+        const updateFloatingPosition = () => {
+          rafId = null;
+          if (!dragState) return;
+          const deltaY = latestClientY - dragState.startClientY;
+          dragState.row.style.top = `${dragState.startTop + deltaY}px`;
+        };
+
+        const scheduleFloatingPosition = (clientY) => {
+          latestClientY = clientY;
+          if (rafId !== null) return;
+          rafId = requestAnimationFrame(updateFloatingPosition);
+        };
+
+        const maybeAutoScroll = (clientY) => {
+          if (!sheet) return;
+          const rect = sheet.getBoundingClientRect();
+          const edge = 64;
+          let delta = 0;
+          if (clientY < rect.top + edge) {
+            delta = -Math.max(4, (rect.top + edge - clientY) / 6);
+          } else if (clientY > rect.bottom - edge) {
+            delta = Math.max(4, (clientY - (rect.bottom - edge)) / 6);
+          }
+          if (delta !== 0) {
+            sheet.scrollBy({ top: delta, behavior: "auto" });
+          }
+        };
+
+        const movePlaceholder = (clientY) => {
+          if (!dragState) return;
+          const rows = getCurrentRows().filter((row) => row !== dragState.row && row !== dragState.placeholder);
+          clearDropTargets();
+
           let inserted = false;
           for (const row of rows) {
             const rect = row.getBoundingClientRect();
-            const midpoint = rect.top + rect.height / 2;
-            if (y < midpoint) {
-              row.before(draggingRow);
+            if (clientY < rect.top + rect.height / 2) {
+              row.before(dragState.placeholder);
+              row.classList.add("reorder-drop-target");
               inserted = true;
               break;
             }
           }
-          if (!inserted && rows.length) {
-            rows[rows.length - 1].after(draggingRow);
+
+          if (!inserted) {
+            if (rows.length) {
+              rows[rows.length - 1].after(dragState.placeholder);
+              rows[rows.length - 1].classList.add("reorder-drop-target");
+            } else {
+              const header = grid.querySelector(".header-row");
+              if (header) {
+                header.after(dragState.placeholder);
+              } else {
+                grid.appendChild(dragState.placeholder);
+              }
+            }
           }
-          updateDynamicLayout();
         };
 
-        const onPointerUp = async () => {
-          if (!draggingRow) return;
-          draggingRow.classList.remove("is-dragging");
+        const stopDrag = async (event) => {
+          if (!dragState) return;
+          if (event && event.pointerId !== dragState.pointerId) return;
+
+          window.removeEventListener("pointermove", onPointerMove);
+          window.removeEventListener("pointerup", stopDrag);
+          window.removeEventListener("pointercancel", stopDrag);
+
+          if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+
+          const { row, placeholder, pointerId, startIndex } = dragState;
+          dragState = null;
+
+          clearDropTargets();
           document.body.classList.remove("is-dragging-active");
-          draggingRow = null;
-          await reindexAndSaveAllRows();
+
+          const activeHandle = row.querySelector(".drag-handle");
+          if (activeHandle && activeHandle.hasPointerCapture(pointerId)) {
+            activeHandle.releasePointerCapture(pointerId);
+          }
+
+          placeholder.replaceWith(row);
+          cleanupFloatingStyles(row);
+          updateDynamicLayout();
+
+          const endIndex = getCurrentRows().indexOf(row);
+          if (startIndex !== endIndex) {
+            await reindexAndSaveAllRows();
+          }
         };
 
-        grid.addEventListener("pointerdown", onPointerDown);
-        grid.addEventListener("pointermove", onPointerMove);
-        grid.addEventListener("pointerup", onPointerUp);
-        grid.addEventListener("pointercancel", onPointerUp);
+        const onPointerMove = (event) => {
+          if (!dragState || event.pointerId !== dragState.pointerId) return;
+          if (event.cancelable) event.preventDefault();
+          scheduleFloatingPosition(event.clientY);
+          movePlaceholder(event.clientY);
+          maybeAutoScroll(event.clientY);
+        };
+
+        grid.addEventListener("pointerdown", (event) => {
+          if (!hasDataLoaded) return;
+          if (event.button !== undefined && event.button !== 0) return;
+          const handle = event.target.closest(".drag-handle");
+          if (!handle) return;
+          const row = handle.closest(".row");
+          if (!row) return;
+
+          const rect = row.getBoundingClientRect();
+          const placeholder = document.createElement("div");
+          placeholder.className = "row reorder-placeholder";
+          placeholder.style.height = `${rect.height}px`;
+
+          row.after(placeholder);
+
+          row.classList.add("is-dragging-floating");
+          row.style.left = `${rect.left}px`;
+          row.style.top = `${rect.top}px`;
+          row.style.width = `${rect.width}px`;
+          row.style.height = `${rect.height}px`;
+          row.style.margin = "0";
+
+          document.body.classList.add("is-dragging-active");
+
+          dragState = {
+            row,
+            placeholder,
+            pointerId: event.pointerId,
+            startClientY: event.clientY,
+            startTop: rect.top,
+            startIndex: getCurrentRows().indexOf(row),
+          };
+
+          handle.setPointerCapture(event.pointerId);
+          latestClientY = event.clientY;
+
+          window.addEventListener("pointermove", onPointerMove, { passive: false });
+          window.addEventListener("pointerup", stopDrag);
+          window.addEventListener("pointercancel", stopDrag);
+
+          if (event.cancelable) event.preventDefault();
+        });
       };
 
       setupRowReorder();
