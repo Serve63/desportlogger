@@ -2816,20 +2816,69 @@
         const addExerciseBtn = document.querySelector(".add-exercise");
         const deleteExerciseBtn = document.querySelector(".delete-exercise");
         let selectedRow = null;
+        let modalActionGuardUntil = 0;
+        let modalActionGuardTimer = null;
+        const MODAL_ACTION_GUARD_MS = 450;
 
         if (!exerciseModal || !addExerciseBtn || !deleteExerciseBtn) return;
 
-        const openModal = (row) => {
+        const setActionButtonsEnabled = (enabled) => {
+          addExerciseBtn.disabled = !enabled;
+          deleteExerciseBtn.disabled = !enabled;
+        };
+
+        const isModalActionGuardActive = () => performance.now() < modalActionGuardUntil;
+
+        const armModalActionGuard = (durationMs = MODAL_ACTION_GUARD_MS) => {
+          modalActionGuardUntil = performance.now() + durationMs;
+          setActionButtonsEnabled(false);
+          if (modalActionGuardTimer) {
+            clearTimeout(modalActionGuardTimer);
+          }
+          modalActionGuardTimer = setTimeout(() => {
+            modalActionGuardTimer = null;
+            if (!exerciseModal.classList.contains("is-open")) return;
+            if (isModalActionGuardActive()) return;
+            setActionButtonsEnabled(true);
+          }, durationMs + 24);
+        };
+
+        const openModal = (row, { fromLongPress = false } = {}) => {
           selectedRow = row;
           exerciseModal.classList.add("is-open");
           exerciseModal.setAttribute("aria-hidden", "false");
+          if (fromLongPress) {
+            armModalActionGuard();
+          } else {
+            modalActionGuardUntil = 0;
+            setActionButtonsEnabled(true);
+          }
         };
 
         const closeModal = () => {
           exerciseModal.classList.remove("is-open");
           exerciseModal.setAttribute("aria-hidden", "true");
           selectedRow = null;
+          modalActionGuardUntil = 0;
+          if (modalActionGuardTimer) {
+            clearTimeout(modalActionGuardTimer);
+            modalActionGuardTimer = null;
+          }
+          setActionButtonsEnabled(true);
         };
+
+        const preventGuardedAction = (event) => {
+          if (!isModalActionGuardActive()) return;
+          event.preventDefault();
+          event.stopPropagation();
+        };
+
+        addExerciseBtn.addEventListener("pointerdown", preventGuardedAction);
+        deleteExerciseBtn.addEventListener("pointerdown", preventGuardedAction);
+        addExerciseBtn.addEventListener("touchstart", preventGuardedAction, { passive: false });
+        deleteExerciseBtn.addEventListener("touchstart", preventGuardedAction, { passive: false });
+        addExerciseBtn.addEventListener("click", preventGuardedAction, true);
+        deleteExerciseBtn.addEventListener("click", preventGuardedAction, true);
 
         exerciseModal.addEventListener("click", (event) => {
           if (event.target === exerciseModal) closeModal();
@@ -2894,7 +2943,7 @@
             pendingLongPressRow = null;
             longPressTriggered = false;
             requestAnimationFrame(() => {
-              openModal(rowForModal);
+              openModal(rowForModal, { fromLongPress: true });
             });
             return;
           }
@@ -2947,7 +2996,10 @@
 
         // Functie om oefening te verwijderen
         deleteExerciseBtn.addEventListener("click", async () => {
+          if (isModalActionGuardActive()) return;
           if (selectedRow) {
+            const confirmed = window.confirm("Weet je zeker dat je deze oefening wilt verwijderen?");
+            if (!confirmed) return;
             debugLog("Verwijderen oefening...");
             // Verwijder de row uit de DOM
             selectedRow.remove();
@@ -2961,6 +3013,7 @@
 
         // Functie om nieuwe oefening toe te voegen
         addExerciseBtn.addEventListener("click", async () => {
+          if (isModalActionGuardActive()) return;
           const grid = document.querySelector(".grid");
           if (!grid) return;
 
