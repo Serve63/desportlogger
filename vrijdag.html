@@ -2709,23 +2709,28 @@
       };
       const templateRows = (WORKOUT_TEMPLATE_ROWS[day] || WORKOUT_TEMPLATE_ROWS.Maandag || []).map((item) => ({ ...item }));
 
-      const WORKOUT_SCHEMA_VERSION = "2026-02-11-v2";
+            const LEGACY_WORKOUT_CACHE_PREFIX = "workout_cache_v1:";
+      const parseWorkoutCachePayload = (raw) => {
+        if (!raw) return null;
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+          if (parsed && Array.isArray(parsed.data)) return parsed.data;
+        } catch (e) {
+          return null;
+        }
+        return null;
+      };
+      const getLegacyCachedWorkoutData = (dayName) => {
+        if (!dayName) return null;
+        try {
+          return parseWorkoutCachePayload(localStorage.getItem(`${LEGACY_WORKOUT_CACHE_PREFIX}${dayName}`));
+        } catch (e) {
+          return null;
+        }
+      };
       const normalizeExerciseNameValue = (value) => (value || "").trim().toLowerCase();
-      const getWorkoutSchemaVersionKey = (dayName) => `workout_schema_version:${dayName}`;
-      const hasCurrentWorkoutSchema = (dayName) => {
-        try {
-          return localStorage.getItem(getWorkoutSchemaVersionKey(dayName)) === WORKOUT_SCHEMA_VERSION;
-        } catch (e) {
-          return false;
-        }
-      };
-      const markCurrentWorkoutSchema = (dayName) => {
-        try {
-          localStorage.setItem(getWorkoutSchemaVersionKey(dayName), WORKOUT_SCHEMA_VERSION);
-        } catch (e) {
-          // ignore
-        }
-      };
+      const isValueEmpty = (value) => value == null || `${value}`.trim() === "";
       const rowsMatchTemplateByName = (rows, dayTemplateRows) => {
         if (!Array.isArray(rows) || rows.length !== dayTemplateRows.length) return false;
         const sorted = [...rows].sort(
@@ -2737,23 +2742,69 @@
           return currentName === templateName;
         });
       };
-      const syncDayToCurrentTemplate = async (dayName, rows) => {
+      const hasMeaningfulTrainingData = (rows, dayName) => {
+        if (!Array.isArray(rows) || rows.length === 0) return false;
+        const dayTemplateRows = WORKOUT_TEMPLATE_ROWS[dayName] || [];
+        const sorted = [...rows].sort(
+          (a, b) => (Number(a.exercise_index) || 0) - (Number(b.exercise_index) || 0)
+        );
+
+        return sorted.some((item, index) => {
+          const templateItem = dayTemplateRows[index] || null;
+          const currentName = normalizeExerciseNameValue(item.exercise_name);
+          const templateName = normalizeExerciseNameValue(templateItem?.exercise_name);
+          const setsValue = toNumber(item?.sets);
+          const hasNameOverride = !!currentName && (!!templateName ? currentName !== templateName : true);
+          const hasSetOverride = setsValue != null && setsValue !== 3;
+          return (
+            !isValueEmpty(item.note) ||
+            !isValueEmpty(item.reps) ||
+            !isValueEmpty(item.weight) ||
+            hasNameOverride ||
+            hasSetOverride
+          );
+        });
+      };
+      const isTemplateOnlyData = (rows, dayName) => {
+        if (!Array.isArray(rows) || rows.length === 0) return false;
+        const dayTemplateRows = WORKOUT_TEMPLATE_ROWS[dayName] || [];
+        if (!dayTemplateRows.length) return false;
+        if (!rowsMatchTemplateByName(rows, dayTemplateRows)) return false;
+        return rows.every((item) => {
+          const setsValue = toNumber(item?.sets);
+          const setsUntouched = setsValue == null || setsValue === 3;
+          return (
+            setsUntouched &&
+            isValueEmpty(item.note) &&
+            isValueEmpty(item.reps) &&
+            isValueEmpty(item.weight)
+          );
+        });
+      };
+      const restoreDayFromLegacyCache = async (dayName, currentRows) => {
         const dayTemplateRows = WORKOUT_TEMPLATE_ROWS[dayName] || [];
         if (!dayTemplateRows.length) return null;
-        if (hasCurrentWorkoutSchema(dayName)) return null;
 
-        if (rowsMatchTemplateByName(rows, dayTemplateRows)) {
-          markCurrentWorkoutSchema(dayName);
-          return null;
-        }
+        const legacyRows = getLegacyCachedWorkoutData(dayName);
+        if (!legacyRows || !legacyRows.length) return null;
 
-        const syncedRows = dayTemplateRows.map((item, idx) => normalizeEntry(item, idx, dayName));
-        const { error: upsertError } = await supabase
+        const normalizedLegacyRows = legacyRows.map((item, idx) => normalizeEntry(item, idx, dayName));
+        const normalizedCurrentRows = Array.isArray(currentRows)
+          ? currentRows.map((item, idx) => normalizeEntry(item, idx, dayName))
+          : [];
+
+        if (!hasMeaningfulTrainingData(normalizedLegacyRows, dayName)) return null;
+
+        const currentHasMeaningfulData = hasMeaningfulTrainingData(normalizedCurrentRows, dayName);
+        const currentLooksTemplateOnly = isTemplateOnlyData(normalizedCurrentRows, dayName);
+        if (currentHasMeaningfulData && !currentLooksTemplateOnly) return null;
+
+        const { error: restoreError } = await supabase
           .from("workout_entries")
-          .upsert(syncedRows, { onConflict: "day,exercise_index" });
+          .upsert(normalizedLegacyRows, { onConflict: "day,exercise_index" });
 
-        if (upsertError) {
-          console.error("Fout bij schema-sync:", upsertError);
+        if (restoreError) {
+          console.error("Fout bij herstellen uit legacy cache:", restoreError);
           return null;
         }
 
@@ -2761,15 +2812,14 @@
           .from("workout_entries")
           .delete()
           .eq("day", dayName)
-          .gt("exercise_index", syncedRows.length);
+          .gt("exercise_index", normalizedLegacyRows.length);
 
         if (cleanupError) {
-          console.error("Fout bij schema-sync cleanup:", cleanupError);
+          console.error("Fout bij legacy restore cleanup:", cleanupError);
         }
 
-        setCachedWorkoutData(dayName, syncedRows);
-        markCurrentWorkoutSchema(dayName);
-        return syncedRows;
+        setCachedWorkoutData(dayName, normalizedLegacyRows);
+        return normalizedLegacyRows;
       };
 
       const upsertRow = async (row, index) => {
@@ -3675,11 +3725,12 @@
         }
         debugLog("Loaded data:", data);
 
-        const syncedTemplateData = await syncDayToCurrentTemplate(dayName, data);
-        if (syncedTemplateData) {
-          data = syncedTemplateData;
-          debugLog("Workout schema synced for day:", dayName);
+                const restoredFromLegacyCache = await restoreDayFromLegacyCache(dayName, data);
+        if (restoredFromLegacyCache) {
+          data = restoredFromLegacyCache;
+          debugLog("Data hersteld vanuit workout_cache_v1 voor dag:", dayName);
         }
+
 
         let resolvedData = Array.isArray(data) ? data : [];
         let usedCache = false;
