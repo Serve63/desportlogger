@@ -1,4 +1,4 @@
-const SW_VERSION = "2026-02-08-v1";
+const SW_VERSION = "2026-02-11-v2";
 const STATIC_CACHE = `desportlogger-static-${SW_VERSION}`;
 const RUNTIME_CACHE = `desportlogger-runtime-${SW_VERSION}`;
 

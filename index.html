@@ -2708,50 +2708,51 @@
       };
       const templateRows = (WORKOUT_TEMPLATE_ROWS[day] || WORKOUT_TEMPLATE_ROWS.Maandag || []).map((item) => ({ ...item }));
 
-      const LEGACY_SHARED_TEMPLATE_NAMES = [
-        "abdominal machine",
-        "standing buik",
-        "chest press",
-        "incline chest",
-        "overhead triceps",
-        "tricep dip",
-      ];
+      const WORKOUT_SCHEMA_VERSION = "2026-02-11-v2";
       const normalizeExerciseNameValue = (value) => (value || "").trim().toLowerCase();
-      const isFieldEmpty = (value) => value == null || `${value}`.trim() === "";
-      const toNumericOrNull = (value) => {
-        if (value == null || value === "") return null;
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : null;
+      const getWorkoutSchemaVersionKey = (dayName) => `workout_schema_version:${dayName}`;
+      const hasCurrentWorkoutSchema = (dayName) => {
+        try {
+          return localStorage.getItem(getWorkoutSchemaVersionKey(dayName)) === WORKOUT_SCHEMA_VERSION;
+        } catch (e) {
+          return false;
+        }
       };
-      const isLegacySharedTemplateRowSet = (rows) => {
-        if (!Array.isArray(rows) || rows.length !== LEGACY_SHARED_TEMPLATE_NAMES.length) return false;
+      const markCurrentWorkoutSchema = (dayName) => {
+        try {
+          localStorage.setItem(getWorkoutSchemaVersionKey(dayName), WORKOUT_SCHEMA_VERSION);
+        } catch (e) {
+          // ignore
+        }
+      };
+      const rowsMatchTemplateByName = (rows, dayTemplateRows) => {
+        if (!Array.isArray(rows) || rows.length !== dayTemplateRows.length) return false;
         const sorted = [...rows].sort(
           (a, b) => (Number(a.exercise_index) || 0) - (Number(b.exercise_index) || 0)
         );
         return sorted.every((item, index) => {
-          if (normalizeExerciseNameValue(item.exercise_name) !== LEGACY_SHARED_TEMPLATE_NAMES[index]) return false;
-          const setsValue = toNumericOrNull(item.sets);
-          const setsUntouched = setsValue == null || setsValue === 3;
-          return (
-            setsUntouched &&
-            isFieldEmpty(item.note) &&
-            isFieldEmpty(item.reps) &&
-            isFieldEmpty(item.weight)
-          );
+          const currentName = normalizeExerciseNameValue(item.exercise_name);
+          const templateName = normalizeExerciseNameValue(dayTemplateRows[index]?.exercise_name);
+          return currentName === templateName;
         });
       };
-      const migrateLegacyTemplateData = async (dayName, rows) => {
+      const syncDayToCurrentTemplate = async (dayName, rows) => {
         const dayTemplateRows = WORKOUT_TEMPLATE_ROWS[dayName] || [];
         if (!dayTemplateRows.length) return null;
-        if (!isLegacySharedTemplateRowSet(rows)) return null;
+        if (hasCurrentWorkoutSchema(dayName)) return null;
 
-        const migratedRows = dayTemplateRows.map((item, idx) => normalizeEntry(item, idx, dayName));
+        if (rowsMatchTemplateByName(rows, dayTemplateRows)) {
+          markCurrentWorkoutSchema(dayName);
+          return null;
+        }
+
+        const syncedRows = dayTemplateRows.map((item, idx) => normalizeEntry(item, idx, dayName));
         const { error: upsertError } = await supabase
           .from("workout_entries")
-          .upsert(migratedRows, { onConflict: "day,exercise_index" });
+          .upsert(syncedRows, { onConflict: "day,exercise_index" });
 
         if (upsertError) {
-          console.error("Fout bij schema-migratie:", upsertError);
+          console.error("Fout bij schema-sync:", upsertError);
           return null;
         }
 
@@ -2759,14 +2760,15 @@
           .from("workout_entries")
           .delete()
           .eq("day", dayName)
-          .gt("exercise_index", migratedRows.length);
+          .gt("exercise_index", syncedRows.length);
 
         if (cleanupError) {
-          console.error("Fout bij schema-migratie cleanup:", cleanupError);
+          console.error("Fout bij schema-sync cleanup:", cleanupError);
         }
 
-        setCachedWorkoutData(dayName, migratedRows);
-        return migratedRows;
+        setCachedWorkoutData(dayName, syncedRows);
+        markCurrentWorkoutSchema(dayName);
+        return syncedRows;
       };
 
       const upsertRow = async (row, index) => {
@@ -3672,10 +3674,10 @@
         }
         debugLog("Loaded data:", data);
 
-        const migratedTemplateData = await migrateLegacyTemplateData(dayName, data);
-        if (migratedTemplateData) {
-          data = migratedTemplateData;
-          debugLog("Legacy schema migrated for day:", dayName);
+        const syncedTemplateData = await syncDayToCurrentTemplate(dayName, data);
+        if (syncedTemplateData) {
+          data = syncedTemplateData;
+          debugLog("Workout schema synced for day:", dayName);
         }
 
         let resolvedData = Array.isArray(data) ? data : [];
