@@ -2822,6 +2822,150 @@
         return normalizedLegacyRows;
       };
 
+            const TEMPLATE_SCHEMA_VERSION = "2026-02-11-v1";
+      const TEMPLATE_SCHEMA_KEY_PREFIX = "workout_template_schema:";
+      const TEMPLATE_BACKUP_KEY_PREFIX = "workout_template_backup_v1:";
+      const getTemplateSchemaKey = (dayName) => `${TEMPLATE_SCHEMA_KEY_PREFIX}${dayName}`;
+      const hasTemplateSchemaApplied = (dayName) => {
+        try {
+          return localStorage.getItem(getTemplateSchemaKey(dayName)) === TEMPLATE_SCHEMA_VERSION;
+        } catch (e) {
+          return false;
+        }
+      };
+      const markTemplateSchemaApplied = (dayName) => {
+        try {
+          localStorage.setItem(getTemplateSchemaKey(dayName), TEMPLATE_SCHEMA_VERSION);
+        } catch (e) {
+          // ignore
+        }
+      };
+      const backupTemplateExtras = (dayName, rows) => {
+        if (!dayName || !Array.isArray(rows) || rows.length === 0) return;
+        try {
+          localStorage.setItem(
+            `${TEMPLATE_BACKUP_KEY_PREFIX}${dayName}`,
+            JSON.stringify({ ts: Date.now(), data: rows })
+          );
+        } catch (e) {
+          // ignore
+        }
+      };
+      const isMeaningfulRow = (item) => {
+        const setsValue = toNumber(item?.sets);
+        return (
+          !isValueEmpty(item?.exercise_name) ||
+          !isValueEmpty(item?.note) ||
+          !isValueEmpty(item?.reps) ||
+          !isValueEmpty(item?.weight) ||
+          (setsValue != null && setsValue !== 3)
+        );
+      };
+      const alignRowsToTemplate = (dayName, rows) => {
+        const dayTemplateRows = WORKOUT_TEMPLATE_ROWS[dayName] || [];
+        const normalizedRows = Array.isArray(rows)
+          ? rows.map((item, idx) => normalizeEntry(item, idx, dayName))
+          : [];
+
+        const templateNameSet = new Set(
+          dayTemplateRows
+            .map((item) => normalizeExerciseNameValue(item?.exercise_name))
+            .filter(Boolean)
+        );
+
+        const existingByName = new Map();
+        normalizedRows.forEach((item) => {
+          const key = normalizeExerciseNameValue(item?.exercise_name);
+          if (!key) return;
+          if (!existingByName.has(key)) existingByName.set(key, item);
+        });
+
+        const nowIso = new Date().toISOString();
+        const alignedTemplateRows = dayTemplateRows.map((templateItem, idx) => {
+          const key = normalizeExerciseNameValue(templateItem?.exercise_name);
+          const existing = key ? existingByName.get(key) : null;
+          if (!existing) return normalizeEntry(templateItem, idx, dayName);
+
+          return {
+            ...existing,
+            day: dayName,
+            exercise_index: idx + 1,
+            exercise_name: templateItem.exercise_name,
+            sets: existing.sets != null ? existing.sets : toNumber(templateItem.sets),
+            reps: existing.reps != null ? existing.reps : toNumber(templateItem.reps),
+            weight: existing.weight != null ? existing.weight : toNumber(templateItem.weight),
+            note: existing.note != null ? existing.note : templateItem.note ?? null,
+            updated_at: existing.updated_at || nowIso,
+          };
+        });
+
+        const extraRows = normalizedRows.filter((item) => {
+          const key = normalizeExerciseNameValue(item?.exercise_name);
+          return !templateNameSet.has(key);
+        });
+        const meaningfulExtras = extraRows.filter(isMeaningfulRow);
+        const appendedExtras = meaningfulExtras.map((item, idx) => ({
+          ...item,
+          day: dayName,
+          exercise_index: alignedTemplateRows.length + idx + 1,
+          updated_at: item.updated_at || nowIso,
+        }));
+
+        const alignedRows = [...alignedTemplateRows, ...appendedExtras];
+        const changed =
+          normalizedRows.length !== alignedRows.length ||
+          normalizedRows.some((item, idx) => {
+            const aligned = alignedRows[idx];
+            if (!aligned) return true;
+            return (
+              normalizeExerciseNameValue(item.exercise_name) !==
+              normalizeExerciseNameValue(aligned.exercise_name)
+            );
+          });
+
+        return {
+          alignedRows,
+          changed,
+          removedExtras: extraRows.filter((item) => !isMeaningfulRow(item)),
+        };
+      };
+      const applyTemplateSchemaOnce = async (dayName, rows) => {
+        const dayTemplateRows = WORKOUT_TEMPLATE_ROWS[dayName] || [];
+        if (!dayTemplateRows.length) return null;
+        if (hasTemplateSchemaApplied(dayName)) return null;
+
+        const { alignedRows, changed, removedExtras } = alignRowsToTemplate(dayName, rows);
+        if (!changed) {
+          markTemplateSchemaApplied(dayName);
+          return null;
+        }
+
+        if (removedExtras.length) backupTemplateExtras(dayName, removedExtras);
+
+        const { error: upsertError } = await supabase
+          .from("workout_entries")
+          .upsert(alignedRows, { onConflict: "day,exercise_index" });
+
+        if (upsertError) {
+          console.error("Fout bij template-schema toepassen:", upsertError);
+          return null;
+        }
+
+        const { error: cleanupError } = await supabase
+          .from("workout_entries")
+          .delete()
+          .eq("day", dayName)
+          .gt("exercise_index", alignedRows.length);
+
+        if (cleanupError) {
+          console.error("Fout bij template-schema cleanup:", cleanupError);
+        }
+
+        setCachedWorkoutData(dayName, alignedRows);
+        markTemplateSchemaApplied(dayName);
+        return alignedRows;
+      };
+
       const upsertRow = async (row, index) => {
         if (index == null || index < 0) return;
         const payload = getRowData(row, index);
@@ -3724,12 +3868,18 @@
           }
         }
         debugLog("Loaded data:", data);
-
-                const restoredFromLegacyCache = await restoreDayFromLegacyCache(dayName, data);
+        const restoredFromLegacyCache = await restoreDayFromLegacyCache(dayName, data);
         if (restoredFromLegacyCache) {
           data = restoredFromLegacyCache;
           debugLog("Data hersteld vanuit workout_cache_v1 voor dag:", dayName);
         }
+
+        const templateSchemaRows = await applyTemplateSchemaOnce(dayName, data);
+        if (templateSchemaRows) {
+          data = templateSchemaRows;
+          debugLog("Nieuw schema toegepast voor dag:", dayName);
+        }
+
 
 
         let resolvedData = Array.isArray(data) ? data : [];
