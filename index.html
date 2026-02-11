@@ -2708,6 +2708,67 @@
       };
       const templateRows = (WORKOUT_TEMPLATE_ROWS[day] || WORKOUT_TEMPLATE_ROWS.Maandag || []).map((item) => ({ ...item }));
 
+      const LEGACY_SHARED_TEMPLATE_NAMES = [
+        "abdominal machine",
+        "standing buik",
+        "chest press",
+        "incline chest",
+        "overhead triceps",
+        "tricep dip",
+      ];
+      const normalizeExerciseNameValue = (value) => (value || "").trim().toLowerCase();
+      const isFieldEmpty = (value) => value == null || `${value}`.trim() === "";
+      const toNumericOrNull = (value) => {
+        if (value == null || value === "") return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+      const isLegacySharedTemplateRowSet = (rows) => {
+        if (!Array.isArray(rows) || rows.length !== LEGACY_SHARED_TEMPLATE_NAMES.length) return false;
+        const sorted = [...rows].sort(
+          (a, b) => (Number(a.exercise_index) || 0) - (Number(b.exercise_index) || 0)
+        );
+        return sorted.every((item, index) => {
+          if (normalizeExerciseNameValue(item.exercise_name) !== LEGACY_SHARED_TEMPLATE_NAMES[index]) return false;
+          const setsValue = toNumericOrNull(item.sets);
+          const setsUntouched = setsValue == null || setsValue === 3;
+          return (
+            setsUntouched &&
+            isFieldEmpty(item.note) &&
+            isFieldEmpty(item.reps) &&
+            isFieldEmpty(item.weight)
+          );
+        });
+      };
+      const migrateLegacyTemplateData = async (dayName, rows) => {
+        const dayTemplateRows = WORKOUT_TEMPLATE_ROWS[dayName] || [];
+        if (!dayTemplateRows.length) return null;
+        if (!isLegacySharedTemplateRowSet(rows)) return null;
+
+        const migratedRows = dayTemplateRows.map((item, idx) => normalizeEntry(item, idx, dayName));
+        const { error: upsertError } = await supabase
+          .from("workout_entries")
+          .upsert(migratedRows, { onConflict: "day,exercise_index" });
+
+        if (upsertError) {
+          console.error("Fout bij schema-migratie:", upsertError);
+          return null;
+        }
+
+        const { error: cleanupError } = await supabase
+          .from("workout_entries")
+          .delete()
+          .eq("day", dayName)
+          .gt("exercise_index", migratedRows.length);
+
+        if (cleanupError) {
+          console.error("Fout bij schema-migratie cleanup:", cleanupError);
+        }
+
+        setCachedWorkoutData(dayName, migratedRows);
+        return migratedRows;
+      };
+
       const upsertRow = async (row, index) => {
         if (index == null || index < 0) return;
         const payload = getRowData(row, index);
@@ -3610,6 +3671,12 @@
           }
         }
         debugLog("Loaded data:", data);
+
+        const migratedTemplateData = await migrateLegacyTemplateData(dayName, data);
+        if (migratedTemplateData) {
+          data = migratedTemplateData;
+          debugLog("Legacy schema migrated for day:", dayName);
+        }
 
         let resolvedData = Array.isArray(data) ? data : [];
         let usedCache = false;
