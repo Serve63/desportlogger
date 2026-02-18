@@ -191,6 +191,24 @@
       margin-left: 0;
       color: var(--muted);
       font-variant-numeric: tabular-nums;
+      cursor: pointer;
+    }
+
+    .training-count-reset {
+      margin-left: 8px;
+      border: none;
+      padding: 0;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.56rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .training-count-reset[hidden] {
+      display: none;
     }
 
     .training-count-line {
@@ -930,7 +948,7 @@
   <header>
     <div class="header-main">
       <div class="training-count">
-        <div class="training-count-quote"><span class="training-count-timer" id="liveSecondTimer">0 sec</span></div>
+        <div class="training-count-quote"><span class="training-count-timer" id="liveSecondTimer">0 sec</span><button class="training-count-reset" id="headerTimerReset" type="button" hidden>Reset</button></div>
         <div class="training-count-line"><button class="year-trigger" type="button">2026:</button> Laden...</div>
       </div>
       <h1>Servé's Logboek</h1>
@@ -1777,6 +1795,7 @@
 
       const startHeaderSecondTimer = () => {
         const timerEl = document.getElementById("liveSecondTimer");
+        const resetButton = document.getElementById("headerTimerReset");
         if (!timerEl || timerEl.dataset.running === "true") return;
 
         const formatElapsedTime = (elapsedSeconds) => {
@@ -1816,13 +1835,21 @@
         const timerStorageKey = "headerTimerStartedAt";
         let startedAt = Date.now();
 
+        const persistStartedAt = () => {
+          try {
+            window.localStorage.setItem(timerStorageKey, String(startedAt));
+          } catch (error) {
+            // localStorage may be unavailable; timer still works for this session
+          }
+        };
+
         try {
           const storedValue = window.localStorage.getItem(timerStorageKey);
           const parsedValue = Number.parseInt(storedValue || "", 10);
           if (Number.isFinite(parsedValue) && parsedValue > 0 && parsedValue <= Date.now()) {
             startedAt = parsedValue;
           } else {
-            window.localStorage.setItem(timerStorageKey, String(startedAt));
+            persistStartedAt();
           }
         } catch (error) {
           // localStorage may be unavailable; fallback keeps timer running for this session
@@ -1832,6 +1859,22 @@
           const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
           timerEl.textContent = formatElapsedTime(elapsedSeconds);
         };
+
+        timerEl.addEventListener("click", () => {
+          if (resetButton) {
+            resetButton.hidden = false;
+          }
+        });
+
+        if (resetButton) {
+          resetButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            startedAt = Date.now();
+            persistStartedAt();
+            renderElapsed();
+            resetButton.hidden = true;
+          });
+        }
 
         renderElapsed();
         timerEl.dataset.running = "true";
