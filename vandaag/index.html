@@ -784,6 +784,18 @@
         padding: var(--page-top) 16px calc(var(--page-bottom) + env(safe-area-inset-bottom));
       }
 
+      html,
+      body {
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+
+      .sheet {
+        overflow-y: hidden;
+        touch-action: none;
+        -webkit-overflow-scrolling: auto;
+      }
+
       :root {
         --page-top: 73px;
         --page-bottom: 96px;
