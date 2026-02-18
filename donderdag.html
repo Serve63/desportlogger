@@ -9,7 +9,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Servé's Logboek" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.webmanifest?v=20260205" />
+  <link rel="manifest" href="/manifest.webmanifest?v=20260218" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -1069,7 +1069,7 @@
       const updateAppLinks = () => {
         const manifestLink = document.querySelector('link[rel="manifest"]');
         if (manifestLink) {
-          manifestLink.setAttribute("href", withBase("manifest.webmanifest?v=20260205"));
+          manifestLink.setAttribute("href", withBase("manifest.webmanifest?v=20260218"));
         }
         const appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
         if (appleIcon) {
@@ -1883,13 +1883,10 @@
           return `${elapsedYears} ${elapsedYears === 1 ? "jaar" : "jaren"}`;
         };
 
-        const timerRecordId = "global";
-        const timerFallbackDay = "__header_timer__";
-        const timerFallbackExerciseIndex = 0;
+        const timerStorageDay = "__header_timer__";
+        const timerStorageIndex = 0;
         let startedAt = Date.now();
-        let timerSyncDisabled = false;
         let timerSyncInFlight = false;
-        let timerUseWorkoutFallback = false;
 
         const parseSupabaseTimer = (value) => {
           const parsed = new Date(value || "").getTime();
@@ -1900,86 +1897,42 @@
           return parsed;
         };
 
-        const selectTimerRecord = async () => {
-          if (timerUseWorkoutFallback) {
+        const readStartedAtFromSupabase = async () => {
+          try {
             const { data, error } = await supabase
               .from("workout_entries")
               .select("updated_at")
-              .eq("day", timerFallbackDay)
-              .eq("exercise_index", timerFallbackExerciseIndex)
+              .eq("day", timerStorageDay)
+              .eq("exercise_index", timerStorageIndex)
               .maybeSingle();
-            return { value: data?.updated_at, error };
+
+            if (error) {
+              console.error("Error loading header timer:", error);
+              return Number.NaN;
+            }
+
+            return parseSupabaseTimer(data?.updated_at);
+          } catch (error) {
+            console.error("Error loading header timer:", error);
+            return Number.NaN;
           }
-
-          const { data, error } = await supabase
-            .from("header_timer")
-            .select("started_at")
-            .eq("id", timerRecordId)
-            .maybeSingle();
-
-          if (error && error.code === "42P01") {
-            timerUseWorkoutFallback = true;
-            const fallback = await supabase
-              .from("workout_entries")
-              .select("updated_at")
-              .eq("day", timerFallbackDay)
-              .eq("exercise_index", timerFallbackExerciseIndex)
-              .maybeSingle();
-            return { value: fallback.data?.updated_at, error: fallback.error };
-          }
-
-          return { value: data?.started_at, error };
-        };
-
-        const upsertTimerRecord = async (isoStartedAt) => {
-          if (timerUseWorkoutFallback) {
-            return supabase
-              .from("workout_entries")
-              .upsert(
-                {
-                  day: timerFallbackDay,
-                  exercise_index: timerFallbackExerciseIndex,
-                  updated_at: isoStartedAt,
-                  completed: false
-                },
-                { onConflict: "day,exercise_index" }
-              );
-          }
-
-          const primary = await supabase
-            .from("header_timer")
-            .upsert(
-              {
-                id: timerRecordId,
-                started_at: isoStartedAt,
-                updated_at: new Date().toISOString()
-              },
-              { onConflict: "id" }
-            );
-
-          if (primary.error && primary.error.code === "42P01") {
-            timerUseWorkoutFallback = true;
-            return supabase
-              .from("workout_entries")
-              .upsert(
-                {
-                  day: timerFallbackDay,
-                  exercise_index: timerFallbackExerciseIndex,
-                  updated_at: isoStartedAt,
-                  completed: false
-                },
-                { onConflict: "day,exercise_index" }
-              );
-          }
-
-          return primary;
         };
 
         const persistStartedAt = async () => {
-          if (timerSyncDisabled) return;
           try {
             const isoStartedAt = new Date(startedAt).toISOString();
-            const { error } = await upsertTimerRecord(isoStartedAt);
+            const { error } = await supabase
+              .from("workout_entries")
+              .upsert(
+                {
+                  day: timerStorageDay,
+                  exercise_index: timerStorageIndex,
+                  updated_at: isoStartedAt,
+                  completed: false
+                },
+                { onConflict: "day,exercise_index" }
+              );
+
             if (error) {
               console.error("Error saving header timer:", error);
             }
@@ -1989,16 +1942,10 @@
         };
 
         const syncStartedAtFromSupabase = async () => {
-          if (timerSyncDisabled || timerSyncInFlight) return;
+          if (timerSyncInFlight) return;
           timerSyncInFlight = true;
           try {
-            const { value, error } = await selectTimerRecord();
-            if (error) {
-              console.error("Error loading header timer:", error);
-              return;
-            }
-
-            const parsedStartedAt = parseSupabaseTimer(value);
+            const parsedStartedAt = await readStartedAtFromSupabase();
             if (Number.isFinite(parsedStartedAt)) {
               startedAt = parsedStartedAt;
               renderElapsed();
@@ -2006,8 +1953,6 @@
             }
 
             await persistStartedAt();
-          } catch (error) {
-            console.error("Error loading header timer:", error);
           } finally {
             timerSyncInFlight = false;
           }
@@ -2049,12 +1994,12 @@
         }
 
         if (resetButton) {
-          resetButton.addEventListener("click", (event) => {
+          resetButton.addEventListener("click", async (event) => {
             event.preventDefault();
             startedAt = Date.now();
-            void persistStartedAt();
             renderElapsed();
             closeResetModal();
+            await persistStartedAt();
           });
         }
 
@@ -2067,7 +2012,7 @@
         const initializeHeaderTimer = async () => {
           await Promise.race([
             syncStartedAtFromSupabase(),
-            new Promise((resolve) => setTimeout(resolve, 1600))
+            new Promise((resolve) => setTimeout(resolve, 2500))
           ]);
 
           renderElapsed();
@@ -2076,7 +2021,7 @@
 
           setInterval(() => {
             void syncStartedAtFromSupabase();
-          }, 30000);
+          }, 15000);
 
           document.addEventListener("visibilitychange", () => {
             if (!document.hidden) {
