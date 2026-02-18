@@ -1896,83 +1896,93 @@
           return `${elapsedYears} ${elapsedYears === 1 ? "jaar" : "jaren"}`;
         };
 
-        const timerStorageDay = "__header_timer__";
-        const timerStorageIndex = 0;
-        let startedAt = Date.now();
+        // null totdat Supabase de echte starttijd bevestigt
+        let startedAt = null;
         let timerSyncInFlight = false;
+        let timerSyncLockTimer = null;
 
-        const parseSupabaseTimer = (value) => {
-          const parsed = new Date(value || "").getTime();
-          const now = Date.now();
-          if (!Number.isFinite(parsed) || parsed <= 0 || parsed > now) {
-            return Number.NaN;
-          }
-          return parsed;
-        };
-
+        // Geeft terug: number (ms) als gevonden
+        //              null      als rij ontbreekt (eerste keer / DB-reset)
+        //              undefined als leesfout – schrijf NOOIT bij een fout
         const readStartedAtFromSupabase = async () => {
           try {
             const { data, error } = await supabase
-              .from("workout_entries")
-              .select("updated_at")
-              .eq("day", timerStorageDay)
-              .eq("exercise_index", timerStorageIndex)
+              .from("header_timer")
+              .select("started_at")
+              .eq("id", "global")
               .maybeSingle();
 
             if (error) {
               console.error("Error loading header timer:", error);
-              return Number.NaN;
+              return undefined;
             }
 
-            return parseSupabaseTimer(data?.updated_at);
-          } catch (error) {
-            console.error("Error loading header timer:", error);
-            return Number.NaN;
+            if (!data) return null;
+
+            const parsed = new Date(data.started_at || "").getTime();
+            const now = Date.now();
+            if (!Number.isFinite(parsed) || parsed <= 0 || parsed > now) {
+              return null;
+            }
+            return parsed;
+          } catch (err) {
+            console.error("Error loading header timer:", err);
+            return undefined;
           }
         };
 
         const persistStartedAt = async () => {
+          if (startedAt === null) return;
           try {
-            const isoStartedAt = new Date(startedAt).toISOString();
             const { error } = await supabase
-              .from("workout_entries")
+              .from("header_timer")
               .upsert(
-                {
-                  day: timerStorageDay,
-                  exercise_index: timerStorageIndex,
-                  updated_at: isoStartedAt,
-                  completed: false
-                },
-                { onConflict: "day,exercise_index" }
+                { id: "global", started_at: new Date(startedAt).toISOString() },
+                { onConflict: "id" }
               );
 
             if (error) {
               console.error("Error saving header timer:", error);
             }
-          } catch (error) {
-            console.error("Error saving header timer:", error);
+          } catch (err) {
+            console.error("Error saving header timer:", err);
           }
+        };
+
+        const renderElapsed = () => {
+          if (startedAt === null) return;
+          const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+          timerEl.textContent = formatElapsedTime(elapsedSeconds);
         };
 
         const syncStartedAtFromSupabase = async () => {
           if (timerSyncInFlight) return;
           timerSyncInFlight = true;
+          // Veiligheidsklep: geef lock vrij na 8 s zodat een hangende request
+          // de periodieke syncs niet eeuwig blokkeert
+          timerSyncLockTimer = setTimeout(() => { timerSyncInFlight = false; }, 8000);
           try {
-            const parsedStartedAt = await readStartedAtFromSupabase();
-            if (Number.isFinite(parsedStartedAt)) {
-              startedAt = parsedStartedAt;
+            const result = await readStartedAtFromSupabase();
+
+            if (result === undefined) {
+              // Leesfout – doe NIETS, schrijf niet naar Supabase
+              return;
+            }
+
+            if (result !== null) {
+              // Geldige starttijd gevonden – altijd de Supabase-waarde gebruiken
+              startedAt = result;
               renderElapsed();
               return;
             }
 
+            // Geen rij gevonden – eerste keer of na DB-reset
+            if (startedAt === null) startedAt = Date.now();
             await persistStartedAt();
           } finally {
+            clearTimeout(timerSyncLockTimer);
             timerSyncInFlight = false;
           }
-        };
-        const renderElapsed = () => {
-          const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
-          timerEl.textContent = formatElapsedTime(elapsedSeconds);
         };
 
         const openResetModal = () => {
@@ -2023,10 +2033,20 @@
         });
 
         const initializeHeaderTimer = async () => {
+          // Toon neutrale placeholder terwijl Supabase antwoordt
+          timerEl.textContent = "…";
+
           await Promise.race([
             syncStartedAtFromSupabase(),
-            new Promise((resolve) => setTimeout(resolve, 2500))
+            new Promise((resolve) => setTimeout(resolve, 3500))
           ]);
+
+          if (startedAt === null) {
+            // Supabase reageerde niet op tijd of gaf een fout.
+            // Gebruik huidig moment als lokale fallback – schrijf NIET naar Supabase
+            // om een echte waarde die nog onderweg is niet te overschrijven.
+            startedAt = Date.now();
+          }
 
           renderElapsed();
           timerEl.dataset.running = "true";
