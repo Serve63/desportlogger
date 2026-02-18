@@ -1873,28 +1873,103 @@
         };
 
         const timerStorageKey = "headerTimerStartedAt";
+        const timerWindowNameKey = "__desportloggerHeaderTimerStartedAt";
         let startedAt = Date.now();
 
-        const persistStartedAt = () => {
+        const parseStoredTimestamp = (value) => {
+          const parsed = Number.parseInt(value || "", 10);
+          const now = Date.now();
+          if (!Number.isFinite(parsed) || parsed <= 0 || parsed > now || parsed < 1000000000000) {
+            return Number.NaN;
+          }
+          return parsed;
+        };
+
+        const readTimerCookie = () => {
+          const cookieItems = document.cookie ? document.cookie.split("; ") : [];
+          for (const item of cookieItems) {
+            if (item.startsWith(`${timerStorageKey}=`)) {
+              return decodeURIComponent(item.slice(timerStorageKey.length + 1));
+            }
+          }
+          return null;
+        };
+
+        const readTimerWindowName = () => {
           try {
-            window.localStorage.setItem(timerStorageKey, String(startedAt));
+            const windowNameItems = window.name ? window.name.split(";") : [];
+            for (const item of windowNameItems) {
+              const trimmedItem = item.trim();
+              if (trimmedItem.startsWith(`${timerWindowNameKey}=`)) {
+                return decodeURIComponent(trimmedItem.slice(timerWindowNameKey.length + 1));
+              }
+            }
           } catch (error) {
-            // localStorage may be unavailable; timer still works for this session
+            // window.name parsing failed; ignore
+          }
+          return null;
+        };
+
+        const persistStartedAt = () => {
+          const value = String(startedAt);
+          try {
+            window.localStorage.setItem(timerStorageKey, value);
+          } catch (error) {
+            // localStorage may be unavailable; other fallbacks below keep persistence
+          }
+
+          try {
+            window.sessionStorage.setItem(timerStorageKey, value);
+          } catch (error) {
+            // sessionStorage may be unavailable; ignore
+          }
+
+          try {
+            document.cookie = `${timerStorageKey}=${encodeURIComponent(value)}; Max-Age=31536000; Path=/; SameSite=Lax`;
+          } catch (error) {
+            // cookies may be unavailable; ignore
+          }
+
+          try {
+            const windowNameItems = window.name
+              ? window.name.split(";").map((item) => item.trim()).filter(Boolean)
+              : [];
+            const filteredItems = windowNameItems.filter((item) => !item.startsWith(`${timerWindowNameKey}=`));
+            filteredItems.push(`${timerWindowNameKey}=${encodeURIComponent(value)}`);
+            window.name = filteredItems.join(";");
+          } catch (error) {
+            // window.name write failed; ignore
           }
         };
 
+        let parsedValue = Number.NaN;
         try {
-          const storedValue = window.localStorage.getItem(timerStorageKey);
-          const parsedValue = Number.parseInt(storedValue || "", 10);
-          if (Number.isFinite(parsedValue) && parsedValue > 0 && parsedValue <= Date.now()) {
-            startedAt = parsedValue;
-          } else {
-            persistStartedAt();
-          }
+          parsedValue = parseStoredTimestamp(window.localStorage.getItem(timerStorageKey));
         } catch (error) {
-          // localStorage may be unavailable; fallback keeps timer running for this session
+          // localStorage may be unavailable; continue with fallback sources
         }
 
+        if (!Number.isFinite(parsedValue)) {
+          try {
+            parsedValue = parseStoredTimestamp(window.sessionStorage.getItem(timerStorageKey));
+          } catch (error) {
+            // sessionStorage may be unavailable; continue with fallback sources
+          }
+        }
+
+        if (!Number.isFinite(parsedValue)) {
+          parsedValue = parseStoredTimestamp(readTimerCookie());
+        }
+
+        if (!Number.isFinite(parsedValue)) {
+          parsedValue = parseStoredTimestamp(readTimerWindowName());
+        }
+
+        if (Number.isFinite(parsedValue)) {
+          startedAt = parsedValue;
+        }
+
+        persistStartedAt();
         const renderElapsed = () => {
           const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
           timerEl.textContent = formatElapsedTime(elapsedSeconds);
