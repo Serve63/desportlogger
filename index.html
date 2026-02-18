@@ -179,7 +179,9 @@
     }
 
     .training-count-quote {
-      display: block;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 6px;
       color: var(--ink);
       font-size: 0.62rem;
@@ -187,8 +189,16 @@
       text-transform: none;
     }
 
+    .training-count-clock {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      color: var(--ink);
+    }
+
     .training-count-timer {
-      margin-left: 8px;
+      margin-left: 0;
       color: var(--muted);
       font-variant-numeric: tabular-nums;
     }
@@ -930,7 +940,7 @@
   <header>
     <div class="header-main">
       <div class="training-count">
-        <div class="training-count-quote">THE WAY, THE TRUTH AND THE LIFE <span class="training-count-timer" id="liveSecondTimer">0s</span></div>
+        <div class="training-count-quote"><span class="training-count-clock" aria-hidden="true">&#128339;</span><span class="training-count-timer" id="liveSecondTimer">0 sec</span></div>
         <div class="training-count-line"><button class="year-trigger" type="button">2026:</button> Laden...</div>
       </div>
       <h1>Servé's Logboek</h1>
@@ -1779,10 +1789,44 @@
         const timerEl = document.getElementById("liveSecondTimer");
         if (!timerEl || timerEl.dataset.running === "true") return;
 
+        const formatElapsedTime = (elapsedSeconds) => {
+          if (elapsedSeconds < 60) {
+            return `${elapsedSeconds} sec`;
+          }
+
+          const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+          if (elapsedMinutes < 60) {
+            return `${elapsedMinutes} min`;
+          }
+
+          const elapsedHours = Math.floor(elapsedMinutes / 60);
+          if (elapsedHours < 24) {
+            return `${elapsedHours} uur`;
+          }
+
+          const elapsedDays = Math.floor(elapsedHours / 24);
+          if (elapsedDays < 7) {
+            return `${elapsedDays} ${elapsedDays === 1 ? "dag" : "dagen"}`;
+          }
+
+          if (elapsedDays < 31) {
+            const elapsedWeeks = Math.floor(elapsedDays / 7);
+            return `${elapsedWeeks} ${elapsedWeeks === 1 ? "week" : "weken"}`;
+          }
+
+          const elapsedMonths = Math.floor(elapsedDays / 31);
+          if (elapsedMonths < 12) {
+            return `${elapsedMonths} ${elapsedMonths === 1 ? "maand" : "maanden"}`;
+          }
+
+          const elapsedYears = Math.floor(elapsedMonths / 12);
+          return `${elapsedYears} ${elapsedYears === 1 ? "jaar" : "jaren"}`;
+        };
+
         const startedAt = Date.now();
         const renderElapsed = () => {
           const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
-          timerEl.textContent = `${elapsedSeconds}s`;
+          timerEl.textContent = formatElapsedTime(elapsedSeconds);
         };
 
         renderElapsed();
