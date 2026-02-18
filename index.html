@@ -9,7 +9,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Servé's Logboek" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.webmanifest?v=20260218" />
+  <link rel="manifest" href="/manifest.webmanifest?v=20260218v2" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -1083,7 +1083,7 @@
       const updateAppLinks = () => {
         const manifestLink = document.querySelector('link[rel="manifest"]');
         if (manifestLink) {
-          manifestLink.setAttribute("href", withBase("manifest.webmanifest?v=20260218"));
+          manifestLink.setAttribute("href", withBase("manifest.webmanifest?v=20260218v2"));
         }
         const appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
         if (appleIcon) {
@@ -3243,7 +3243,17 @@
         if (!dayTemplateRows.length) return null;
         if (hasTemplateSchemaApplied(dayName)) return null;
 
-        const { alignedRows, changed, removedExtras } = alignRowsToTemplate(dayName, rows);
+        const normalizedRows = Array.isArray(rows)
+          ? rows.map((item, idx) => normalizeEntry(item, idx, dayName))
+          : [];
+
+        // Respecteer altijd bestaande schema-aanpassingen uit Supabase.
+        if (normalizedRows.length > 0 && !isTemplateOnlyData(normalizedRows, dayName)) {
+          markTemplateSchemaApplied(dayName);
+          return null;
+        }
+
+        const { alignedRows, changed, removedExtras } = alignRowsToTemplate(dayName, normalizedRows);
         if (!changed) {
           markTemplateSchemaApplied(dayName);
           return null;
