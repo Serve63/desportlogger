@@ -1884,104 +1884,77 @@
           return `${elapsedYears} ${elapsedYears === 1 ? "jaar" : "jaren"}`;
         };
 
-        const timerStorageKey = "headerTimerStartedAt";
-        const timerWindowNameKey = "__desportloggerHeaderTimerStartedAt";
+        const timerRecordId = "global";
         let startedAt = Date.now();
+        let timerSyncDisabled = false;
+        let timerSyncInFlight = false;
 
-        const parseStoredTimestamp = (value) => {
-          const parsed = Number.parseInt(value || "", 10);
+        const parseSupabaseTimer = (value) => {
+          const parsed = new Date(value || "").getTime();
           const now = Date.now();
-          if (!Number.isFinite(parsed) || parsed <= 0 || parsed > now || parsed < 1000000000000) {
+          if (!Number.isFinite(parsed) || parsed <= 0 || parsed > now) {
             return Number.NaN;
           }
           return parsed;
         };
 
-        const readTimerCookie = () => {
-          const cookieItems = document.cookie ? document.cookie.split("; ") : [];
-          for (const item of cookieItems) {
-            if (item.startsWith(`${timerStorageKey}=`)) {
-              return decodeURIComponent(item.slice(timerStorageKey.length + 1));
-            }
-          }
-          return null;
-        };
-
-        const readTimerWindowName = () => {
+        const persistStartedAt = async () => {
+          if (timerSyncDisabled) return;
           try {
-            const windowNameItems = window.name ? window.name.split(";") : [];
-            for (const item of windowNameItems) {
-              const trimmedItem = item.trim();
-              if (trimmedItem.startsWith(`${timerWindowNameKey}=`)) {
-                return decodeURIComponent(trimmedItem.slice(timerWindowNameKey.length + 1));
+            const { error } = await supabase
+              .from("header_timer")
+              .upsert(
+                {
+                  id: timerRecordId,
+                  started_at: new Date(startedAt).toISOString(),
+                  updated_at: new Date().toISOString()
+                },
+                { onConflict: "id" }
+              );
+
+            if (error) {
+              if (error.code === "42P01") {
+                timerSyncDisabled = true;
               }
+              console.error("Error saving header timer:", error);
             }
           } catch (error) {
-            // window.name parsing failed; ignore
-          }
-          return null;
-        };
-
-        const persistStartedAt = () => {
-          const value = String(startedAt);
-          try {
-            window.localStorage.setItem(timerStorageKey, value);
-          } catch (error) {
-            // localStorage may be unavailable; other fallbacks below keep persistence
-          }
-
-          try {
-            window.sessionStorage.setItem(timerStorageKey, value);
-          } catch (error) {
-            // sessionStorage may be unavailable; ignore
-          }
-
-          try {
-            document.cookie = `${timerStorageKey}=${encodeURIComponent(value)}; Max-Age=31536000; Path=/; SameSite=Lax`;
-          } catch (error) {
-            // cookies may be unavailable; ignore
-          }
-
-          try {
-            const windowNameItems = window.name
-              ? window.name.split(";").map((item) => item.trim()).filter(Boolean)
-              : [];
-            const filteredItems = windowNameItems.filter((item) => !item.startsWith(`${timerWindowNameKey}=`));
-            filteredItems.push(`${timerWindowNameKey}=${encodeURIComponent(value)}`);
-            window.name = filteredItems.join(";");
-          } catch (error) {
-            // window.name write failed; ignore
+            console.error("Error saving header timer:", error);
           }
         };
 
-        let parsedValue = Number.NaN;
-        try {
-          parsedValue = parseStoredTimestamp(window.localStorage.getItem(timerStorageKey));
-        } catch (error) {
-          // localStorage may be unavailable; continue with fallback sources
-        }
-
-        if (!Number.isFinite(parsedValue)) {
+        const syncStartedAtFromSupabase = async () => {
+          if (timerSyncDisabled || timerSyncInFlight) return;
+          timerSyncInFlight = true;
           try {
-            parsedValue = parseStoredTimestamp(window.sessionStorage.getItem(timerStorageKey));
+            const { data, error } = await supabase
+              .from("header_timer")
+              .select("started_at")
+              .eq("id", timerRecordId)
+              .maybeSingle();
+
+            if (error) {
+              if (error.code === "42P01") {
+                timerSyncDisabled = true;
+              }
+              console.error("Error loading header timer:", error);
+              return;
+            }
+
+            const parsedStartedAt = parseSupabaseTimer(data?.started_at);
+            if (Number.isFinite(parsedStartedAt)) {
+              startedAt = parsedStartedAt;
+              renderElapsed();
+              return;
+            }
+
+            await persistStartedAt();
           } catch (error) {
-            // sessionStorage may be unavailable; continue with fallback sources
+            console.error("Error loading header timer:", error);
+          } finally {
+            timerSyncInFlight = false;
           }
-        }
-
-        if (!Number.isFinite(parsedValue)) {
-          parsedValue = parseStoredTimestamp(readTimerCookie());
-        }
-
-        if (!Number.isFinite(parsedValue)) {
-          parsedValue = parseStoredTimestamp(readTimerWindowName());
-        }
-
-        if (Number.isFinite(parsedValue)) {
-          startedAt = parsedValue;
-        }
-
-        persistStartedAt();
+        };
         const renderElapsed = () => {
           const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
           timerEl.textContent = formatElapsedTime(elapsedSeconds);
@@ -2022,7 +1995,7 @@
           resetButton.addEventListener("click", (event) => {
             event.preventDefault();
             startedAt = Date.now();
-            persistStartedAt();
+            void persistStartedAt();
             renderElapsed();
             closeResetModal();
           });
@@ -2037,6 +2010,17 @@
         renderElapsed();
         timerEl.dataset.running = "true";
         setInterval(renderElapsed, 1000);
+
+        void syncStartedAtFromSupabase();
+        setInterval(() => {
+          void syncStartedAtFromSupabase();
+        }, 30000);
+
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) {
+            void syncStartedAtFromSupabase();
+          }
+        });
       };
       startHeaderSecondTimer();
       // Initialiseer sessie counts voor alle jaren (alleen als record nog niet bestaat)

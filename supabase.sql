@@ -47,3 +47,24 @@ create policy "public insert" on session_counts
 
 create policy "public update" on session_counts
   for update using (true);
+
+create table if not exists header_timer (
+  id text primary key,
+  started_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table header_timer enable row level security;
+
+create policy "public read" on header_timer
+  for select using (true);
+
+create policy "public insert" on header_timer
+  for insert with check (true);
+
+create policy "public update" on header_timer
+  for update using (true);
+
+insert into header_timer (id, started_at, updated_at)
+values ('global', now(), now())
+on conflict (id) do nothing;
