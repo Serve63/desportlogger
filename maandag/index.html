@@ -194,21 +194,62 @@
       cursor: pointer;
     }
 
-    .training-count-reset {
-      margin-left: 8px;
-      border: none;
-      padding: 0;
-      background: transparent;
+    .timer-reset-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(10, 12, 15, 0.4);
+      z-index: 12010;
+    }
+
+    .timer-reset-modal.is-open {
+      display: flex;
+    }
+
+    .timer-reset-modal__content {
+      width: min(280px, 100%);
+      border-radius: 14px;
+      padding: 16px 14px;
+      background: #2f3338;
+      border: 1px solid rgba(74, 163, 255, 0.25);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .timer-reset-modal__title {
+      margin: 0 0 12px;
+      color: var(--ink);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .timer-reset-modal__actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .timer-reset-modal__button {
+      border: 1px solid rgba(74, 163, 255, 0.3);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: rgba(74, 163, 255, 0.1);
       color: var(--ink);
       font: inherit;
-      font-size: 0.56rem;
+      font-size: 0.62rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
     }
 
-    .training-count-reset[hidden] {
-      display: none;
+    .timer-reset-modal__button--ghost {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.22);
+      color: var(--muted);
     }
 
     .training-count-line {
@@ -940,7 +981,7 @@
     <div class="loading-text">Laden...</div>
   </div>
 
- <main class="sheet"> <header> <div class="header-main"> <div class="training-count"> <div class="training-count-quote"><span class="training-count-timer" id="liveSecondTimer">0 sec</span><button class="training-count-reset" id="headerTimerReset" type="button" hidden>Reset</button></div> <div class="training-count-line"><button class="year-trigger" type="button">2026:</button> Laden...</div></div> <h1>Servé's Logboek</h1> <div class="day-line"><button class="day-trigger" type="button">Vandaag</button></div></div>
+ <main class="sheet"> <header> <div class="header-main"> <div class="training-count"> <div class="training-count-quote"><span class="training-count-timer" id="liveSecondTimer">0 sec</span></div> <div class="training-count-line"><button class="year-trigger" type="button">2026:</button> Laden...</div></div> <h1>Servé's Logboek</h1> <div class="day-line"><button class="day-trigger" type="button">Vandaag</button></div></div>
 </header> <section class="grid" aria-label="Oefeningen">
       <div class="header-row">
         <div class="header exercise-header"></div> <div class="header">SETS</div> <div class="header">REPS</div> <div class="header">KG</div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-1" value="Abdominal Machine" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-1" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-1" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-1" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-1" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-2" value="Chest Press" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-2" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-2" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-2" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-2" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-3" value="Incline Chest" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-3" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-3" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-3" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-3" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-4" value="Overhead Triceps" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-4" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-4" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-4" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-4" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-5" value="Tricep Dip" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-5" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-5" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-5" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-5" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div> <div class="row"> <div class="exercise-cell"> <input spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-name" type="text" name="oefening-6" value="Standing Buik" /> <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" class="exercise-note" name="note-6" rows="2"></textarea></div> <div class="mini-wrap" data-label="Sets"><input type="text" class="mini-field" name="sets-6" data-max="9" inputmode="numeric" pattern="[0-9]*" maxlength="1" value="3" /></div> <div class="mini-wrap" data-label="Reps"><input type="text" class="mini-field" name="reps-6" data-max="30" inputmode="numeric" pattern="[0-9]*" maxlength="2" /></div> <div class="mini-wrap" data-label="Gewicht"><input type="text" class="mini-field" name="gewicht-6" data-max="999" inputmode="numeric" pattern="[0-9]*" maxlength="3" /></div></div></section></main> <div class="year-modal" id="yearModal" aria-hidden="true"> <div class="year-modal__content" role="dialog" aria-modal="true" aria-labelledby="yearModalTitle"> <button class="year-modal__close" type="button" aria-label="Sluiten">&times;</button> <h2 id="yearModalTitle">Voorgaande jaren</h2> <ul class="year-modal__list"> <li><strong>2022:</strong> 18</li> <li><strong>2023:</strong> 14</li> <li><strong>2024:</strong> 22</li> <li><strong>2025:</strong> 301</li> <li id="yearCount2026"><strong>2026 (tot heden):</strong> 28</li> <li class="year-total"><strong>Totaal:</strong> 383 sessies</li></ul></div></div>
@@ -966,6 +1007,16 @@
       <div class="exercise-modal__actions">
         <button type="button" class="add-exercise">Nieuwe oefening toevoegen</button>
         <button type="button" class="delete-exercise delete">Oefening verwijderen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="timer-reset-modal" id="timerResetModal" aria-hidden="true">
+    <div class="timer-reset-modal__content" role="dialog" aria-modal="true" aria-labelledby="timerResetTitle">
+      <h2 class="timer-reset-modal__title" id="timerResetTitle">Timer opnieuw starten?</h2>
+      <div class="timer-reset-modal__actions">
+        <button class="timer-reset-modal__button timer-reset-modal__button--ghost" id="timerResetCancel" type="button">Annuleren</button>
+        <button class="timer-reset-modal__button" id="headerTimerReset" type="button">Reset</button>
       </div>
     </div>
   </div>
@@ -1782,7 +1833,9 @@
 
       const startHeaderSecondTimer = () => {
         const timerEl = document.getElementById("liveSecondTimer");
+        const resetModal = document.getElementById("timerResetModal");
         const resetButton = document.getElementById("headerTimerReset");
+        const resetCancelButton = document.getElementById("timerResetCancel");
         if (!timerEl || timerEl.dataset.running === "true") return;
 
         const formatElapsedTime = (elapsedSeconds) => {
@@ -1847,11 +1900,36 @@
           timerEl.textContent = formatElapsedTime(elapsedSeconds);
         };
 
+        const openResetModal = () => {
+          if (!resetModal) return;
+          resetModal.classList.add("is-open");
+          resetModal.setAttribute("aria-hidden", "false");
+        };
+
+        const closeResetModal = () => {
+          if (!resetModal) return;
+          resetModal.classList.remove("is-open");
+          resetModal.setAttribute("aria-hidden", "true");
+        };
+
         timerEl.addEventListener("click", () => {
-          if (resetButton) {
-            resetButton.hidden = false;
-          }
+          openResetModal();
         });
+
+        if (resetModal) {
+          resetModal.addEventListener("click", (event) => {
+            if (event.target === resetModal) {
+              closeResetModal();
+            }
+          });
+        }
+
+        if (resetCancelButton) {
+          resetCancelButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            closeResetModal();
+          });
+        }
 
         if (resetButton) {
           resetButton.addEventListener("click", (event) => {
@@ -1859,9 +1937,15 @@
             startedAt = Date.now();
             persistStartedAt();
             renderElapsed();
-            resetButton.hidden = true;
+            closeResetModal();
           });
         }
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && resetModal && resetModal.classList.contains("is-open")) {
+            closeResetModal();
+          }
+        });
 
         renderElapsed();
         timerEl.dataset.running = "true";

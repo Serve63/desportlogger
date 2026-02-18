@@ -194,21 +194,62 @@
       cursor: pointer;
     }
 
-    .training-count-reset {
-      margin-left: 8px;
-      border: none;
-      padding: 0;
-      background: transparent;
+    .timer-reset-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(10, 12, 15, 0.4);
+      z-index: 12010;
+    }
+
+    .timer-reset-modal.is-open {
+      display: flex;
+    }
+
+    .timer-reset-modal__content {
+      width: min(280px, 100%);
+      border-radius: 14px;
+      padding: 16px 14px;
+      background: #2f3338;
+      border: 1px solid rgba(74, 163, 255, 0.25);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .timer-reset-modal__title {
+      margin: 0 0 12px;
+      color: var(--ink);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .timer-reset-modal__actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .timer-reset-modal__button {
+      border: 1px solid rgba(74, 163, 255, 0.3);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: rgba(74, 163, 255, 0.1);
       color: var(--ink);
       font: inherit;
-      font-size: 0.56rem;
+      font-size: 0.62rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
     }
 
-    .training-count-reset[hidden] {
-      display: none;
+    .timer-reset-modal__button--ghost {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.22);
+      color: var(--muted);
     }
 
     .training-count-line {
@@ -948,7 +989,7 @@
   <header>
     <div class="header-main">
       <div class="training-count">
-        <div class="training-count-quote"><span class="training-count-timer" id="liveSecondTimer">0 sec</span><button class="training-count-reset" id="headerTimerReset" type="button" hidden>Reset</button></div>
+        <div class="training-count-quote"><span class="training-count-timer" id="liveSecondTimer">0 sec</span></div>
         <div class="training-count-line"><button class="year-trigger" type="button">2026:</button> Laden...</div>
       </div>
       <h1>Servé's Logboek</h1>
@@ -980,6 +1021,16 @@
       <div class="exercise-modal__actions">
         <button type="button" class="add-exercise">Nieuwe oefening toevoegen</button>
         <button type="button" class="delete-exercise delete">Oefening verwijderen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="timer-reset-modal" id="timerResetModal" aria-hidden="true">
+    <div class="timer-reset-modal__content" role="dialog" aria-modal="true" aria-labelledby="timerResetTitle">
+      <h2 class="timer-reset-modal__title" id="timerResetTitle">Timer opnieuw starten?</h2>
+      <div class="timer-reset-modal__actions">
+        <button class="timer-reset-modal__button timer-reset-modal__button--ghost" id="timerResetCancel" type="button">Annuleren</button>
+        <button class="timer-reset-modal__button" id="headerTimerReset" type="button">Reset</button>
       </div>
     </div>
   </div>
@@ -1795,7 +1846,9 @@
 
       const startHeaderSecondTimer = () => {
         const timerEl = document.getElementById("liveSecondTimer");
+        const resetModal = document.getElementById("timerResetModal");
         const resetButton = document.getElementById("headerTimerReset");
+        const resetCancelButton = document.getElementById("timerResetCancel");
         if (!timerEl || timerEl.dataset.running === "true") return;
 
         const formatElapsedTime = (elapsedSeconds) => {
@@ -1860,11 +1913,36 @@
           timerEl.textContent = formatElapsedTime(elapsedSeconds);
         };
 
+        const openResetModal = () => {
+          if (!resetModal) return;
+          resetModal.classList.add("is-open");
+          resetModal.setAttribute("aria-hidden", "false");
+        };
+
+        const closeResetModal = () => {
+          if (!resetModal) return;
+          resetModal.classList.remove("is-open");
+          resetModal.setAttribute("aria-hidden", "true");
+        };
+
         timerEl.addEventListener("click", () => {
-          if (resetButton) {
-            resetButton.hidden = false;
-          }
+          openResetModal();
         });
+
+        if (resetModal) {
+          resetModal.addEventListener("click", (event) => {
+            if (event.target === resetModal) {
+              closeResetModal();
+            }
+          });
+        }
+
+        if (resetCancelButton) {
+          resetCancelButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            closeResetModal();
+          });
+        }
 
         if (resetButton) {
           resetButton.addEventListener("click", (event) => {
@@ -1872,9 +1950,15 @@
             startedAt = Date.now();
             persistStartedAt();
             renderElapsed();
-            resetButton.hidden = true;
+            closeResetModal();
           });
         }
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && resetModal && resetModal.classList.contains("is-open")) {
+            closeResetModal();
+          }
+        });
 
         renderElapsed();
         timerEl.dataset.running = "true";
