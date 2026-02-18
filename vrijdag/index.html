@@ -722,9 +722,8 @@
 
     .session-check-button {
       position: fixed;
-      bottom: calc(var(--footer-offset) + env(safe-area-inset-bottom));
-      left: 50%;
-      transform: translateX(-50%);
+      top: calc(18px + env(safe-area-inset-top));
+      right: 18px;
       width: 42px;
       height: 42px;
       border-radius: 999px;
@@ -748,7 +747,7 @@
     }
 
     .session-check-button:active {
-      transform: translateX(-50%) scale(0.92);
+      transform: scale(0.92);
     }
 
     .session-check-button.is-complete {
@@ -758,9 +757,9 @@
     }
 
     @keyframes checkPop {
-      0% { transform: translateX(-50%) scale(1); }
-      40% { transform: translateX(-50%) scale(1.2); }
-      100% { transform: translateX(-50%) scale(1); }
+      0% { transform: scale(1); }
+      40% { transform: scale(1.2); }
+      100% { transform: scale(1); }
     }
 
     .session-check-button.is-complete::after {
