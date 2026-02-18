@@ -179,22 +179,12 @@
     }
 
     .training-count-quote {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      display: block;
       margin-bottom: 6px;
       color: var(--ink);
       font-size: 0.62rem;
       letter-spacing: 0.08em;
       text-transform: none;
-    }
-
-    .training-count-clock {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-      color: var(--ink);
     }
 
     .training-count-timer {
@@ -940,7 +930,7 @@
   <header>
     <div class="header-main">
       <div class="training-count">
-        <div class="training-count-quote"><span class="training-count-clock" aria-hidden="true">&#128339;</span><span class="training-count-timer" id="liveSecondTimer">0 sec</span></div>
+        <div class="training-count-quote"><span class="training-count-timer" id="liveSecondTimer">0 sec</span></div>
         <div class="training-count-line"><button class="year-trigger" type="button">2026:</button> Laden...</div>
       </div>
       <h1>Servé's Logboek</h1>
