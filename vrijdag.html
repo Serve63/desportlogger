@@ -1883,89 +1883,98 @@
           return `${elapsedYears} ${elapsedYears === 1 ? "jaar" : "jaren"}`;
         };
 
+        const TIMER_DAY = "__header_timer__";
+        const TIMER_IDX = 0;
+
         // null totdat Supabase de echte starttijd bevestigt
         let startedAt = null;
         let timerSyncInFlight = false;
         let timerSyncLockTimer = null;
 
-        // Geeft terug: number (ms) als gevonden
-        //              null      als rij ontbreekt (eerste keer / DB-reset)
-        //              undefined als leesfout – schrijf NOOIT bij een fout
-        const readStartedAtFromSupabase = async () => {
+        const parseTs = (val) => {
+          const t = new Date(val || "").getTime();
+          return Number.isFinite(t) && t > 0 && t <= Date.now() ? t : null;
+        };
+
+        // Geeft terug:
+        //   number    – starttijd gevonden
+        //   null      – rij ontbreekt (eerste run / DB-reset): SCHRIJF dan
+        //   undefined – netwerk-/leesfout: schrijf NOOIT op fout
+        const readTimer = async () => {
           try {
             const { data, error } = await supabase
-              .from("header_timer")
-              .select("started_at")
-              .eq("id", "global")
+              .from("workout_entries")
+              .select("note, updated_at")
+              .eq("day", TIMER_DAY)
+              .eq("exercise_index", TIMER_IDX)
               .maybeSingle();
 
             if (error) {
-              console.error("Error loading header timer:", error);
+              console.error("[timer] read error:", error);
               return undefined;
             }
-
             if (!data) return null;
 
-            const parsed = new Date(data.started_at || "").getTime();
-            const now = Date.now();
-            if (!Number.isFinite(parsed) || parsed <= 0 || parsed > now) {
-              return null;
-            }
-            return parsed;
+            // note heeft voorrang (opgeslagen door nieuwe code);
+            // updated_at als fallback voor bestaande rijen
+            return parseTs(data.note) ?? parseTs(data.updated_at) ?? null;
           } catch (err) {
-            console.error("Error loading header timer:", err);
+            console.error("[timer] read exception:", err);
             return undefined;
           }
         };
 
-        const persistStartedAt = async () => {
+        const writeTimer = async () => {
           if (startedAt === null) return;
           try {
+            const iso = new Date(startedAt).toISOString();
             const { error } = await supabase
-              .from("header_timer")
+              .from("workout_entries")
               .upsert(
-                { id: "global", started_at: new Date(startedAt).toISOString() },
-                { onConflict: "id" }
+                {
+                  day: TIMER_DAY,
+                  exercise_index: TIMER_IDX,
+                  note: iso,
+                  updated_at: iso,
+                  completed: false,
+                },
+                { onConflict: "day,exercise_index" }
               );
-
-            if (error) {
-              console.error("Error saving header timer:", error);
-            }
+            if (error) console.error("[timer] write error:", error);
           } catch (err) {
-            console.error("Error saving header timer:", err);
+            console.error("[timer] write exception:", err);
           }
         };
 
         const renderElapsed = () => {
           if (startedAt === null) return;
-          const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
-          timerEl.textContent = formatElapsedTime(elapsedSeconds);
+          const secs = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+          timerEl.textContent = formatElapsedTime(secs);
         };
 
-        const syncStartedAtFromSupabase = async () => {
+        const sync = async () => {
           if (timerSyncInFlight) return;
           timerSyncInFlight = true;
-          // Veiligheidsklep: geef lock vrij na 8 s zodat een hangende request
-          // de periodieke syncs niet eeuwig blokkeert
+          // Veiligheidsklep: geef lock vrij na 8 s als request blijft hangen
           timerSyncLockTimer = setTimeout(() => { timerSyncInFlight = false; }, 8000);
           try {
-            const result = await readStartedAtFromSupabase();
+            const result = await readTimer();
 
             if (result === undefined) {
-              // Leesfout – doe NIETS, schrijf niet naar Supabase
+              // Leesfout – doe niets, schrijf niet
               return;
             }
 
             if (result !== null) {
-              // Geldige starttijd gevonden – altijd de Supabase-waarde gebruiken
+              // Bestaande starttijd gevonden – altijd Supabase-waarde gebruiken
               startedAt = result;
               renderElapsed();
               return;
             }
 
-            // Geen rij gevonden – eerste keer of na DB-reset
+            // Geen rij → eerste run: maak aan met huidige tijd
             if (startedAt === null) startedAt = Date.now();
-            await persistStartedAt();
+            await writeTimer();
           } finally {
             clearTimeout(timerSyncLockTimer);
             timerSyncInFlight = false;
@@ -2009,7 +2018,7 @@
             startedAt = Date.now();
             renderElapsed();
             closeResetModal();
-            await persistStartedAt();
+            await writeTimer();
           });
         }
 
@@ -2020,18 +2029,17 @@
         });
 
         const initializeHeaderTimer = async () => {
-          // Toon neutrale placeholder terwijl Supabase antwoordt
           timerEl.textContent = "…";
 
           await Promise.race([
-            syncStartedAtFromSupabase(),
+            sync(),
             new Promise((resolve) => setTimeout(resolve, 3500))
           ]);
 
           if (startedAt === null) {
-            // Supabase reageerde niet op tijd of gaf een fout.
-            // Gebruik huidig moment als lokale fallback – schrijf NIET naar Supabase
-            // om een echte waarde die nog onderweg is niet te overschrijven.
+            // Supabase reageerde niet op tijd of gaf fout.
+            // Gebruik huidig moment als noodoplossing;
+            // schrijf NIET naar Supabase om echte waarde niet te overschrijven.
             startedAt = Date.now();
           }
 
@@ -2040,12 +2048,12 @@
           setInterval(renderElapsed, 1000);
 
           setInterval(() => {
-            void syncStartedAtFromSupabase();
+            void sync();
           }, 15000);
 
           document.addEventListener("visibilitychange", () => {
             if (!document.hidden) {
-              void syncStartedAtFromSupabase();
+              void sync();
             }
           });
         };
